@@ -1,0 +1,10 @@
+[workspace]
+resolver = "2"
+members = ["boluo", "boluo-*"]
+
+[workspace.package]
+edition = "2021"
+license = "MIT"
+homepage = "https://github.com/dakai-chen/boluo"
+repository = "https://github.com/dakai-chen/boluo"
+rust-version = "1.75"

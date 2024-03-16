@@ -1,0 +1,28 @@
+[package]
+name = "boluo-core"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+readme = "README.md"
+description = "boluo的核心类型和特征"
+keywords = ["http", "web", "framework", "async"]
+categories = ["asynchronous", "network-programming", "web-programming"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+http = "1"
+http-body = "1"
+http-body-util = "0.1.0"
+mime = "0.3"
+bytes = "1"
+sync_wrapper = "1"
+futures-core = "0.3"
+pin-project-lite = "0.2"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]

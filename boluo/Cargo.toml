@@ -1,0 +1,82 @@
+[package]
+name = "boluo"
+version = "0.1.0"
+edition = { workspace = true }
+license = { workspace = true }
+homepage = { workspace = true }
+repository = { workspace = true }
+rust-version = { workspace = true }
+readme = "README.md"
+description = "简单易用的异步网络框架"
+keywords = ["http", "web", "framework", "async"]
+categories = [
+    "asynchronous",
+    "network-programming",
+    "web-programming::http-server",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+boluo-core = { path = "../boluo-core", version = "0.1.0" }
+boluo-macros = { path = "../boluo-macros", version = "0.1.0" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_urlencoded = "0.7"
+matchit = "0.8"
+futures-util = "0.3"
+pin-project-lite = "0.2"
+mime = "0.3"
+bytes = "1"
+percent-encoding = "2"
+
+multer = { version = "3", optional = true }
+hyper = { version = "1", optional = true }
+hyper-util = { version = "0.1", optional = true }
+tokio = { version = "1", optional = true }
+tokio-util = { version = "0.7", optional = true }
+tokio-tungstenite = { version = "0.21", optional = true }
+sha1 = { version = "0.10", optional = true }
+base64 = { version = "0.22", optional = true }
+headers = { version = "0.4", optional = true }
+mime_guess = { version = "2", optional = true }
+memchr = { version = "2", optional = true }
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["async_tokio"] }
+tokio = { version = "1", features = ["full"] }
+
+[features]
+default = ["server", "http1"]
+listener = ["tokio/net"]
+server = [
+    "listener",
+    "hyper/server",
+    "hyper-util/tokio",
+    "hyper-util/server",
+    "hyper-util/server-auto",
+    "tokio/rt",
+    "tokio/macros",
+    "tokio-util",
+]
+http1 = ["hyper/http1"]
+http2 = ["hyper/http2"]
+multipart = ["multer"]
+sse = ["tokio/time", "memchr"]
+ws = [
+    "hyper",
+    "hyper-util/tokio",
+    "tokio/rt",
+    "tokio-tungstenite",
+    "sha1",
+    "base64",
+]
+fs = ["tokio/fs", "tokio/io-util", "tokio-util/io", "headers", "mime_guess"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[[bench]]
+name = "bench"
+harness = false
