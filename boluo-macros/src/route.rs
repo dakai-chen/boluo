@@ -105,7 +105,11 @@ impl Parse for RouteAttr {
             input.parse::<Token![,]>()?;
         }
 
-        let methods = MethodAttr::parse(input)?;
+        let methods = if input.is_empty() {
+            vec![]
+        } else {
+            MethodAttr::parse(input)?
+        };
 
         Ok(Self { path, methods })
     }
