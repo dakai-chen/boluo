@@ -219,16 +219,16 @@ impl std::fmt::Display for WebSocketUpgradeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             WebSocketUpgradeError::InvalidConnectionHeader => {
-                f.write_str("invalid request header `Connection`")
+                f.write_str("invalid request header `connection`")
             }
             WebSocketUpgradeError::InvalidUpgradeHeader => {
-                f.write_str("invalid request header `Upgrade`")
+                f.write_str("invalid request header `upgrade`")
             }
             WebSocketUpgradeError::InvalidSecWebSocketVersionHeader => {
-                f.write_str("invalid request header `Sec-WebSocket-Version`")
+                f.write_str("invalid request header `sec-websocket-version`")
             }
             WebSocketUpgradeError::MissingSecWebSocketKeyHeader => {
-                f.write_str("missing request header `Sec-WebSocket-Key`")
+                f.write_str("missing request header `sec-websocket-key`")
             }
             WebSocketUpgradeError::ConnectionNotUpgradable => {
                 f.write_str("connection not upgradable")
