@@ -47,10 +47,10 @@ impl<N> FromRequest for RawHeaderOfName<N>
 where
     N: Name,
 {
-    type Error = ExtractHeaderOfNameError;
+    type Error = HeaderOfNameExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        header_by_name(req, N::name())
+        find_header_by_name(req, N::name())
             .map(|value| RawHeaderOfName(value.to_owned(), Default::default()))
     }
 }
@@ -100,15 +100,15 @@ where
     T: FromStr,
     T::Err: Into<BoxError>,
 {
-    type Error = ExtractHeaderOfNameError;
+    type Error = HeaderOfNameExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         let name = N::name();
 
-        let value = header_by_name(req, name)?;
+        let value = find_header_by_name(req, name)?;
         let value = percent_encoding::percent_decode(value.as_bytes())
             .decode_utf8()
-            .map_err(|e| ExtractHeaderOfNameError::InvalidHeaderValue {
+            .map_err(|e| HeaderOfNameExtractError::InvalidHeaderValue {
                 name,
                 source: e.into(),
             })?;
@@ -116,7 +116,7 @@ where
         value
             .parse::<T>()
             .map(|value| HeaderOfName(value, Default::default()))
-            .map_err(|e| ExtractHeaderOfNameError::InvalidHeaderValue {
+            .map_err(|e| HeaderOfNameExtractError::InvalidHeaderValue {
                 name,
                 source: e.into(),
             })
@@ -166,14 +166,14 @@ impl<N> FromRequest for OptionalRawHeaderOfName<N>
 where
     N: Name,
 {
-    type Error = ExtractHeaderOfNameError;
+    type Error = HeaderOfNameExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         match RawHeaderOfName::<N>::from_request(req).await {
             Ok(RawHeaderOfName(value, _)) => {
                 Ok(OptionalRawHeaderOfName(Some(value), Default::default()))
             }
-            Err(ExtractHeaderOfNameError::Missing { .. }) => {
+            Err(HeaderOfNameExtractError::MissingHeader { .. }) => {
                 Ok(OptionalRawHeaderOfName(None, Default::default()))
             }
             Err(e) => Err(e),
@@ -228,12 +228,12 @@ where
     T: FromStr,
     T::Err: Into<BoxError>,
 {
-    type Error = ExtractHeaderOfNameError;
+    type Error = HeaderOfNameExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         match HeaderOfName::<N, T>::from_request(req).await {
             Ok(HeaderOfName(value, _)) => Ok(OptionalHeaderOfName(Some(value), Default::default())),
-            Err(ExtractHeaderOfNameError::Missing { .. }) => {
+            Err(HeaderOfNameExtractError::MissingHeader { .. }) => {
                 Ok(OptionalHeaderOfName(None, Default::default()))
             }
             Err(e) => Err(e),
@@ -241,22 +241,22 @@ where
     }
 }
 
-fn header_by_name<'a>(
+fn find_header_by_name<'a>(
     req: &'a mut Request,
     name: &'static str,
-) -> Result<&'a HeaderValue, ExtractHeaderOfNameError> {
+) -> Result<&'a HeaderValue, HeaderOfNameExtractError> {
     let Ok(header_name) = HeaderName::from_str(name) else {
-        return Err(ExtractHeaderOfNameError::InvalidHeaderName { name });
+        return Err(HeaderOfNameExtractError::InvalidHeaderName { name });
     };
     let Some(header_value) = req.headers().get(header_name) else {
-        return Err(ExtractHeaderOfNameError::Missing { name });
+        return Err(HeaderOfNameExtractError::MissingHeader { name });
     };
     Ok(header_value)
 }
 
 #[derive(Debug)]
-pub enum ExtractHeaderOfNameError {
-    Missing {
+pub enum HeaderOfNameExtractError {
+    MissingHeader {
         name: &'static str,
     },
     InvalidHeaderName {
@@ -268,20 +268,20 @@ pub enum ExtractHeaderOfNameError {
     },
 }
 
-impl std::fmt::Display for ExtractHeaderOfNameError {
+impl std::fmt::Display for HeaderOfNameExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExtractHeaderOfNameError::Missing { name } => {
-                write!(f, "missing header `{name}`")
+            HeaderOfNameExtractError::MissingHeader { name } => {
+                write!(f, "missing request header `{name}`")
             }
-            ExtractHeaderOfNameError::InvalidHeaderName { name } => {
-                write!(f, "invalid header name `{name}`")
+            HeaderOfNameExtractError::InvalidHeaderName { name } => {
+                write!(f, "invalid request header name `{name}`")
             }
-            ExtractHeaderOfNameError::InvalidHeaderValue { name, source } => {
-                write!(f, "invalid header value `{name}` ({source})")
+            HeaderOfNameExtractError::InvalidHeaderValue { name, source } => {
+                write!(f, "invalid request header value `{name}` ({source})")
             }
         }
     }
 }
 
-impl std::error::Error for ExtractHeaderOfNameError {}
+impl std::error::Error for HeaderOfNameExtractError {}

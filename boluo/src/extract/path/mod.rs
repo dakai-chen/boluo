@@ -78,7 +78,7 @@ impl<T> FromRequest for Path<T>
 where
     T: DeserializeOwned,
 {
-    type Error = ExtractPathError;
+    type Error = PathExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         let path_params = match req.extensions().get::<PathParams>() {
@@ -92,7 +92,7 @@ where
 }
 
 #[derive(Debug)]
-pub enum ExtractPathError {
+pub enum PathExtractError {
     /// 参数数量不正确
     WrongNumberOfParameters { got: usize, expected: usize },
 
@@ -106,39 +106,39 @@ pub enum ExtractPathError {
     ParseError(String),
 }
 
-impl std::fmt::Display for ExtractPathError {
+impl std::fmt::Display for PathExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExtractPathError::WrongNumberOfParameters { got, expected } => write!(
+            PathExtractError::WrongNumberOfParameters { got, expected } => write!(
                 f,
                 "wrong number of path arguments. expected {expected} but got {got}"
             ),
-            ExtractPathError::UnsupportedKeyType { name } => {
+            PathExtractError::UnsupportedKeyType { name } => {
                 write!(f, "unsupported key type `{name}`")
             }
-            ExtractPathError::UnsupportedValueType { name } => {
+            PathExtractError::UnsupportedValueType { name } => {
                 write!(f, "unsupported value type `{name}`")
             }
-            ExtractPathError::ParseError(msg) => write!(f, "{msg}"),
+            PathExtractError::ParseError(msg) => write!(f, "{msg}"),
         }
     }
 }
 
-impl std::error::Error for ExtractPathError {}
+impl std::error::Error for PathExtractError {}
 
-impl From<de::PathDeserializationError> for ExtractPathError {
+impl From<de::PathDeserializationError> for PathExtractError {
     fn from(error: de::PathDeserializationError) -> Self {
         match error {
             de::PathDeserializationError::WrongNumberOfParameters { got, expected } => {
-                ExtractPathError::WrongNumberOfParameters { got, expected }
+                PathExtractError::WrongNumberOfParameters { got, expected }
             }
             de::PathDeserializationError::UnsupportedKeyType { name } => {
-                ExtractPathError::UnsupportedKeyType { name }
+                PathExtractError::UnsupportedKeyType { name }
             }
             de::PathDeserializationError::UnsupportedValueType { name } => {
-                ExtractPathError::UnsupportedValueType { name }
+                PathExtractError::UnsupportedValueType { name }
             }
-            _ => ExtractPathError::ParseError(error.to_string()),
+            _ => PathExtractError::ParseError(error.to_string()),
         }
     }
 }

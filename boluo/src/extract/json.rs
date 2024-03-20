@@ -11,20 +11,20 @@ impl<T> FromRequest for Json<T>
 where
     T: DeserializeOwned,
 {
-    type Error = ExtractJsonError;
+    type Error = JsonExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         if !is_json_content_type(req.headers()) {
-            return Err(ExtractJsonError::UnsupportedContentType);
+            return Err(JsonExtractError::UnsupportedContentType);
         }
 
         let bytes = Bytes::from_request(req)
             .await
-            .map_err(|e| ExtractJsonError::FailedToReadBody(e.into()))?;
+            .map_err(|e| JsonExtractError::FailedToReadBody(e.into()))?;
 
         serde_json::from_slice::<T>(&bytes)
             .map(|value| Json(value))
-            .map_err(ExtractJsonError::FailedToDeserialize)
+            .map_err(JsonExtractError::FailedToDeserialize)
     }
 }
 
@@ -54,22 +54,22 @@ fn is_json_content_type(headers: &HeaderMap) -> bool {
 }
 
 #[derive(Debug)]
-pub enum ExtractJsonError {
+pub enum JsonExtractError {
     UnsupportedContentType,
     FailedToReadBody(BoxError),
     FailedToDeserialize(serde_json::Error),
 }
 
-impl std::fmt::Display for ExtractJsonError {
+impl std::fmt::Display for JsonExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExtractJsonError::UnsupportedContentType => f.write_str("unsupported content type"),
-            ExtractJsonError::FailedToReadBody(e) => write!(f, "failed to read body ({e})"),
-            ExtractJsonError::FailedToDeserialize(e) => {
+            JsonExtractError::UnsupportedContentType => f.write_str("unsupported content type"),
+            JsonExtractError::FailedToReadBody(e) => write!(f, "failed to read body ({e})"),
+            JsonExtractError::FailedToDeserialize(e) => {
                 write!(f, "failed to deserialize ({e})")
             }
         }
     }
 }
 
-impl std::error::Error for ExtractJsonError {}
+impl std::error::Error for JsonExtractError {}

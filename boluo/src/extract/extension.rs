@@ -7,23 +7,31 @@ impl<T> FromRequest for Extension<T>
 where
     T: Clone + Send + Sync + 'static,
 {
-    type Error = ExtractExtensionError;
+    type Error = ExtensionExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         req.extensions()
             .get::<T>()
             .map(|value| Extension(value.clone()))
-            .ok_or_else(|| ExtractExtensionError(std::any::type_name::<T>()))
+            .ok_or_else(|| ExtensionExtractError::MissingExtension {
+                name: std::any::type_name::<T>(),
+            })
     }
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct ExtractExtensionError(&'static str);
+pub enum ExtensionExtractError {
+    MissingExtension { name: &'static str },
+}
 
-impl std::fmt::Display for ExtractExtensionError {
+impl std::fmt::Display for ExtensionExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "extension does not exist (`{}`)", self.0)
+        match self {
+            ExtensionExtractError::MissingExtension { name } => {
+                write!(f, "missing request extension `{name}`")
+            }
+        }
     }
 }
 
-impl std::error::Error for ExtractExtensionError {}
+impl std::error::Error for ExtensionExtractError {}

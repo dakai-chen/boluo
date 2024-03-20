@@ -7,32 +7,32 @@ use serde::de::DeserializeOwned;
 
 pub use crate::data::Form;
 
-use super::{ExtractQueryError, Query};
+use super::{Query, QueryExtractError};
 
 impl<T> FromRequest for Form<T>
 where
     T: DeserializeOwned,
 {
-    type Error = ExtractFormError;
+    type Error = FormExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        if req.method() == Method::GET {
+        if req.method() == Method::GET || req.method() == Method::HEAD {
             Query::from_request(req)
                 .await
                 .map(|Query(value)| Form(value))
-                .map_err(ExtractFormError::from_extract_query_error)
+                .map_err(FormExtractError::from_extract_query_error)
         } else {
             if !has_content_type(req.headers(), &mime::APPLICATION_WWW_FORM_URLENCODED) {
-                return Err(ExtractFormError::UnsupportedContentType);
+                return Err(FormExtractError::UnsupportedContentType);
             }
 
             let bytes = Bytes::from_request(req)
                 .await
-                .map_err(|e| ExtractFormError::FailedToReadBody(e.into()))?;
+                .map_err(|e| FormExtractError::FailedToReadBody(e.into()))?;
 
             serde_urlencoded::from_bytes::<T>(&bytes)
                 .map(|value| Form(value))
-                .map_err(ExtractFormError::FailedToDeserialize)
+                .map_err(FormExtractError::FailedToDeserialize)
         }
     }
 }
@@ -54,30 +54,30 @@ fn has_content_type(headers: &HeaderMap, expected_content_type: &mime::Mime) -> 
 }
 
 #[derive(Debug)]
-pub enum ExtractFormError {
+pub enum FormExtractError {
     UnsupportedContentType,
     FailedToReadBody(BoxError),
     FailedToDeserialize(serde_urlencoded::de::Error),
 }
 
-impl ExtractFormError {
-    fn from_extract_query_error(error: ExtractQueryError) -> Self {
+impl FormExtractError {
+    fn from_extract_query_error(error: QueryExtractError) -> Self {
         match error {
-            ExtractQueryError::FailedToDeserialize(e) => ExtractFormError::FailedToDeserialize(e),
+            QueryExtractError::FailedToDeserialize(e) => FormExtractError::FailedToDeserialize(e),
         }
     }
 }
 
-impl std::fmt::Display for ExtractFormError {
+impl std::fmt::Display for FormExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ExtractFormError::UnsupportedContentType => f.write_str("unsupported content type"),
-            ExtractFormError::FailedToReadBody(e) => write!(f, "failed to read body ({e})"),
-            ExtractFormError::FailedToDeserialize(e) => {
+            FormExtractError::UnsupportedContentType => f.write_str("unsupported content type"),
+            FormExtractError::FailedToReadBody(e) => write!(f, "failed to read body ({e})"),
+            FormExtractError::FailedToDeserialize(e) => {
                 write!(f, "failed to deserialize ({e})")
             }
         }
     }
 }
 
-impl std::error::Error for ExtractFormError {}
+impl std::error::Error for FormExtractError {}
