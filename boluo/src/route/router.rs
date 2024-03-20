@@ -139,7 +139,7 @@ impl Router {
         <S::Service as Service<Request>>::Response: IntoResponse,
         <S::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        if !path.is_empty() && !path.starts_with('/') {
+        if !path.starts_with('/') {
             return Err(RouterError::InvalidPath {
                 path: path.to_owned(),
                 message: format!("path must start with a `/`"),
