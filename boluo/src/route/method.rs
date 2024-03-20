@@ -92,7 +92,7 @@ pub struct MethodRoute<S> {
 
 impl<S> MethodRoute<S> {
     #[inline]
-    pub fn any(service: S) -> Self {
+    fn any(service: S) -> Self {
         Self {
             methods: Methods::Any,
             service,
@@ -100,7 +100,7 @@ impl<S> MethodRoute<S> {
     }
 
     #[inline]
-    pub fn one(service: S, method: Method) -> Self {
+    fn one(service: S, method: Method) -> Self {
         Self {
             methods: Methods::One(method),
             service,
