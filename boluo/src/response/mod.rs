@@ -7,10 +7,10 @@ mod html;
 pub use html::Html;
 
 mod json;
-pub use json::{Json, ResponseJsonError};
+pub use json::{Json, JsonResponseError};
 
 mod form;
-pub use form::{Form, ResponseFormError};
+pub use form::{Form, FormResponseError};
 
 mod redirect;
 pub use redirect::{Redirect, RedirectUriError};

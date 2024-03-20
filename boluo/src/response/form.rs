@@ -9,7 +9,7 @@ impl<T> IntoResponse for Form<T>
 where
     T: Serialize,
 {
-    type Error = ResponseFormError;
+    type Error = FormResponseError;
 
     fn into_response(self) -> Result<Response, Self::Error> {
         let data = serde_urlencoded::to_string(&self.0)?;
@@ -23,17 +23,17 @@ where
 }
 
 #[derive(Debug)]
-pub struct ResponseFormError(pub serde_urlencoded::ser::Error);
+pub struct FormResponseError(pub serde_urlencoded::ser::Error);
 
-impl std::fmt::Display for ResponseFormError {
+impl std::fmt::Display for FormResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "error serializing to form ({})", self.0)
     }
 }
 
-impl std::error::Error for ResponseFormError {}
+impl std::error::Error for FormResponseError {}
 
-impl From<serde_urlencoded::ser::Error> for ResponseFormError {
+impl From<serde_urlencoded::ser::Error> for FormResponseError {
     fn from(error: serde_urlencoded::ser::Error) -> Self {
         Self(error)
     }

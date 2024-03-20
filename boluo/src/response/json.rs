@@ -9,7 +9,7 @@ impl<T> IntoResponse for Json<T>
 where
     T: Serialize,
 {
-    type Error = ResponseJsonError;
+    type Error = JsonResponseError;
 
     fn into_response(self) -> Result<Response, Self::Error> {
         let data = serde_json::to_vec(&self.0)?;
@@ -23,17 +23,17 @@ where
 }
 
 #[derive(Debug)]
-pub struct ResponseJsonError(pub serde_json::Error);
+pub struct JsonResponseError(pub serde_json::Error);
 
-impl std::fmt::Display for ResponseJsonError {
+impl std::fmt::Display for JsonResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "error serializing to json ({})", self.0)
     }
 }
 
-impl std::error::Error for ResponseJsonError {}
+impl std::error::Error for JsonResponseError {}
 
-impl From<serde_json::Error> for ResponseJsonError {
+impl From<serde_json::Error> for JsonResponseError {
     fn from(error: serde_json::Error) -> Self {
         Self(error)
     }
