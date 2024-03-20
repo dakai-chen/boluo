@@ -1,5 +1,8 @@
 pub use boluo_core::response::*;
 
+mod extension;
+pub use extension::Extension;
+
 mod html;
 pub use html::Html;
 
