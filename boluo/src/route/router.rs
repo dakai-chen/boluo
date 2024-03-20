@@ -181,7 +181,7 @@ impl Router {
         route
             .into()
             .with(middleware)
-            .mount_to(self)
+            .try_mount_to(self)
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
@@ -191,7 +191,7 @@ impl Router {
         S::Response: IntoResponse,
         S::Error: Into<BoxError>,
     {
-        route.into().mount_to(self)
+        route.into().try_mount_to(self)
     }
 
     pub fn try_mount_with<S, M>(
@@ -205,7 +205,7 @@ impl Router {
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        route.into().with(middleware).mount_to(self)
+        route.into().with(middleware).try_mount_to(self)
     }
 
     pub fn merge(self, other: Router) -> Self {
@@ -388,7 +388,7 @@ impl<S> Route<S> {
         }
     }
 
-    fn mount_to(self, router: Router) -> Result<Router, RouterError>
+    fn try_mount_to(self, router: Router) -> Result<Router, RouterError>
     where
         S: Service<Request> + 'static,
         S::Response: IntoResponse,
