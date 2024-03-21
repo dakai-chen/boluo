@@ -23,11 +23,17 @@ where
 }
 
 #[derive(Debug)]
-pub struct FormResponseError(pub serde_urlencoded::ser::Error);
+pub enum FormResponseError {
+    FailedToSerialize(serde_urlencoded::ser::Error),
+}
 
 impl std::fmt::Display for FormResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "error serializing to form ({})", self.0)
+        match self {
+            FormResponseError::FailedToSerialize(e) => {
+                write!(f, "failed to serialize form ({e})")
+            }
+        }
     }
 }
 
@@ -35,6 +41,6 @@ impl std::error::Error for FormResponseError {}
 
 impl From<serde_urlencoded::ser::Error> for FormResponseError {
     fn from(error: serde_urlencoded::ser::Error) -> Self {
-        Self(error)
+        FormResponseError::FailedToSerialize(error)
     }
 }

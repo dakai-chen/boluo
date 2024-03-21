@@ -23,11 +23,17 @@ where
 }
 
 #[derive(Debug)]
-pub struct JsonResponseError(pub serde_json::Error);
+pub enum JsonResponseError {
+    FailedToSerialize(serde_json::Error),
+}
 
 impl std::fmt::Display for JsonResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "error serializing to json ({})", self.0)
+        match self {
+            JsonResponseError::FailedToSerialize(e) => {
+                write!(f, "failed to serialize json ({e})")
+            }
+        }
     }
 }
 
@@ -35,6 +41,6 @@ impl std::error::Error for JsonResponseError {}
 
 impl From<serde_json::Error> for JsonResponseError {
     fn from(error: serde_json::Error) -> Self {
-        Self(error)
+        JsonResponseError::FailedToSerialize(error)
     }
 }
