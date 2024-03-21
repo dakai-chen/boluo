@@ -119,7 +119,9 @@ impl std::fmt::Display for PathExtractError {
             PathExtractError::UnsupportedValueType { name } => {
                 write!(f, "unsupported value type `{name}`")
             }
-            PathExtractError::ParseError(msg) => write!(f, "{msg}"),
+            PathExtractError::ParseError(msg) => {
+                write!(f, "failed to parse path arguments ({msg})")
+            }
         }
     }
 }

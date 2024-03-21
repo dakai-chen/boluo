@@ -28,7 +28,7 @@ where
 
             let bytes = Bytes::from_request(req)
                 .await
-                .map_err(|e| FormExtractError::FailedToReadBody(e.into()))?;
+                .map_err(|e| FormExtractError::FailedToBufferBody(e.into()))?;
 
             serde_urlencoded::from_bytes::<T>(&bytes)
                 .map(|value| Form(value))
@@ -56,7 +56,7 @@ fn has_content_type(headers: &HeaderMap, expected_content_type: &mime::Mime) -> 
 #[derive(Debug)]
 pub enum FormExtractError {
     UnsupportedContentType,
-    FailedToReadBody(BoxError),
+    FailedToBufferBody(BoxError),
     FailedToDeserialize(serde_urlencoded::de::Error),
 }
 
@@ -72,9 +72,9 @@ impl std::fmt::Display for FormExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             FormExtractError::UnsupportedContentType => f.write_str("unsupported content type"),
-            FormExtractError::FailedToReadBody(e) => write!(f, "failed to read body ({e})"),
+            FormExtractError::FailedToBufferBody(e) => write!(f, "failed to buffer body ({e})"),
             FormExtractError::FailedToDeserialize(e) => {
-                write!(f, "failed to deserialize ({e})")
+                write!(f, "failed to deserialize form ({e})")
             }
         }
     }

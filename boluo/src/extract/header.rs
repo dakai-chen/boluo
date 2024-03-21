@@ -108,7 +108,7 @@ where
         let value = find_header_by_name(req, name)?;
         let value = percent_encoding::percent_decode(value.as_bytes())
             .decode_utf8()
-            .map_err(|e| HeaderOfNameExtractError::InvalidHeaderValue {
+            .map_err(|e| HeaderOfNameExtractError::ParseError {
                 name,
                 source: e.into(),
             })?;
@@ -116,7 +116,7 @@ where
         value
             .parse::<T>()
             .map(|value| HeaderOfName(value, Default::default()))
-            .map_err(|e| HeaderOfNameExtractError::InvalidHeaderValue {
+            .map_err(|e| HeaderOfNameExtractError::ParseError {
                 name,
                 source: e.into(),
             })
@@ -262,7 +262,7 @@ pub enum HeaderOfNameExtractError {
     InvalidHeaderName {
         name: &'static str,
     },
-    InvalidHeaderValue {
+    ParseError {
         name: &'static str,
         source: BoxError,
     },
@@ -277,8 +277,8 @@ impl std::fmt::Display for HeaderOfNameExtractError {
             HeaderOfNameExtractError::InvalidHeaderName { name } => {
                 write!(f, "invalid request header name `{name}`")
             }
-            HeaderOfNameExtractError::InvalidHeaderValue { name, source } => {
-                write!(f, "invalid request header value `{name}` ({source})")
+            HeaderOfNameExtractError::ParseError { name, source } => {
+                write!(f, "failed to parse request header `{name}` ({source})")
             }
         }
     }
