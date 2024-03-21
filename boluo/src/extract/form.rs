@@ -53,10 +53,14 @@ fn has_content_type(headers: &HeaderMap, expected_content_type: &mime::Mime) -> 
     content_type.starts_with(expected_content_type.as_ref())
 }
 
+/// 表单提取错误。
 #[derive(Debug)]
 pub enum FormExtractError {
+    /// 不支持的内容类型。
     UnsupportedContentType,
+    /// 缓冲主体失败。
     FailedToBufferBody(BoxError),
+    /// 反序列化失败。
     FailedToDeserialize(serde_urlencoded::de::Error),
 }
 

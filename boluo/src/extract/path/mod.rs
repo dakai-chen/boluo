@@ -9,6 +9,20 @@ use serde::de::DeserializeOwned;
 
 use crate::route::PathParams;
 
+/// 获取原始路径参数的提取器，不对路径参数进行解析。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::RawPathParams;
+///
+/// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
+/// async fn handler(RawPathParams(params): RawPathParams) {
+///     for (k, v) in params {
+///         println!("{k}: {v}");
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct RawPathParams(pub Vec<(String, String)>);
 
@@ -29,6 +43,7 @@ impl DerefMut for RawPathParams {
 }
 
 impl RawPathParams {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> Vec<(String, String)> {
         this.0
@@ -48,6 +63,53 @@ impl FromRequest for RawPathParams {
     }
 }
 
+/// 用于获取路径参数的提取器。
+///
+/// `T`需要实现[`serde::de::DeserializeOwned`]。
+///
+/// # 例子
+///
+/// ```
+/// use std::collections::HashMap;
+///
+/// use boluo::extract::Path;
+///
+/// #[derive(serde::Deserialize)]
+/// struct Params {
+///     class_id: i32,
+///     stdnt_id: i32,
+/// }
+///
+/// // 使用结构体提取路径参数，结构体的字段名需要和路径参数名相同。
+/// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
+/// async fn using_struct(Path(Params { class_id, stdnt_id }): Path<Params>) {
+///     // ...
+/// }
+///
+/// // 可以使用`HashMap`提取所有路径参数。
+/// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
+/// async fn using_hashmap(Path(hashmap): Path<HashMap<String, String>>) {
+///     // ...
+/// }
+///
+/// // 使用元组提取路径参数，元组的大小和路径参数数量必须相同，路径参数将按照顺序解析到元组中。
+/// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
+/// async fn using_tuple(Path((class_id, stdnt_id)): Path<(i32, i32)>) {
+///     // ...
+/// }
+///
+/// // 可以使用`Vec`提取所有路径参数，路径参数将按照顺序解析到数组中。
+/// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
+/// async fn using_vec(Path(vec): Path<Vec<String>>) {
+///     // ...
+/// }
+///
+/// // 如果路径参数只有一个，使用元组提取时，可以省略元组。
+/// #[boluo::route("/classes/{class_id}", method = "GET")]
+/// async fn only_one(Path(class_id): Path<i32>) {
+///     // ...
+/// }
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Path<T>(pub T);
 
@@ -68,6 +130,7 @@ impl<T> DerefMut for Path<T> {
 }
 
 impl<T> Path<T> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> T {
         this.0
@@ -91,18 +154,27 @@ where
     }
 }
 
+/// 路径参数提取错误。
 #[derive(Debug)]
 pub enum PathExtractError {
-    /// 参数数量不正确
-    WrongNumberOfParameters { got: usize, expected: usize },
-
-    /// 尝试反序列化为不受支持的键类型
-    UnsupportedKeyType { name: &'static str },
-
-    /// 尝试反序列化为不受支持的值类型
-    UnsupportedValueType { name: &'static str },
-
-    /// 解析错误
+    /// 参数数量不正确。
+    WrongNumberOfParameters {
+        /// 实际的参数数量。
+        got: usize,
+        /// 预期的参数数量。
+        expected: usize,
+    },
+    /// 尝试反序列化为不受支持的键类型。
+    UnsupportedKeyType {
+        /// 键类型名。
+        name: &'static str,
+    },
+    /// 尝试反序列化为不受支持的值类型。
+    UnsupportedValueType {
+        /// 值类型名。
+        name: &'static str,
+    },
+    /// 解析错误。
     ParseError(String),
 }
 

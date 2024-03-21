@@ -22,8 +22,10 @@ where
     }
 }
 
+/// 表单响应错误。
 #[derive(Debug)]
 pub enum FormResponseError {
+    /// 序列化错误。
     FailedToSerialize(serde_urlencoded::ser::Error),
 }
 

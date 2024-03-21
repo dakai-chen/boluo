@@ -1,3 +1,5 @@
+//! HTTP服务器。
+
 mod compat;
 
 mod graceful_shutdown;
@@ -19,6 +21,7 @@ use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::listener::Listener;
 
+/// HTTP服务器。
 pub struct Server<L> {
     listener: L,
     builder: Builder<TokioExecutor>,
@@ -38,6 +41,7 @@ where
     L: Listener,
     L::IO: AsyncRead + AsyncWrite + Unpin + Send + 'static,
 {
+    /// 使用指定的监听器创建服务器。
     pub fn new(listener: L) -> Self {
         Self {
             listener,
@@ -277,6 +281,7 @@ where
         self
     }
 
+    /// 运行服务器。
     pub async fn run<S>(&mut self, service: S) -> Result<(), RunError<L::Error>>
     where
         S: Service<Request> + 'static,
@@ -287,6 +292,7 @@ where
             .await
     }
 
+    /// 运行服务器，并设置关机信号用于启动优雅关机。
     pub async fn run_with_graceful_shutdown<S, G>(
         &mut self,
         service: S,
@@ -370,9 +376,12 @@ where
     })
 }
 
+/// 服务器运行错误。
 #[derive(Debug)]
 pub enum RunError<E> {
+    /// 优雅关机超时。
     GracefulShutdownTimeout,
+    /// 监听器发生错误。
     Listener(E, GracefulShutdown),
 }
 

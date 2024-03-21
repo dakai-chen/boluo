@@ -1,5 +1,6 @@
 use std::{borrow::Cow, fmt, time::Duration};
 
+/// 服务器发送的事件。
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub struct Event {
     comment: Option<Cow<'static, str>>,
@@ -10,6 +11,24 @@ pub struct Event {
 }
 
 impl Event {
+    /// 创建新的构建器以构建事件。
+    ///
+    /// # 例子
+    ///
+    /// ```
+    /// use std::time::Duration;
+    ///
+    /// use boluo::response::sse::Event;
+    ///
+    /// let event = Event::builder()
+    ///     .data("hello world")
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// let event_string = format!("{event}");
+    ///
+    /// assert_eq!(event_string, "data: hello world\n\n");
+    /// ```
     pub fn builder() -> EventBuilder {
         EventBuilder::new()
     }
@@ -38,18 +57,42 @@ impl fmt::Display for Event {
     }
 }
 
+/// 事件的构建器。
 #[derive(Debug)]
 pub struct EventBuilder {
     inner: Result<Event, EventValueError>,
 }
 
 impl EventBuilder {
+    /// 创建构建器的默认实例以构建事件。
+    ///
+    /// # 例子
+    ///
+    /// ```
+    /// use std::time::Duration;
+    ///
+    /// use boluo::response::sse::EventBuilder;
+    ///
+    /// let event = EventBuilder::new()
+    ///     .data("hello world")
+    ///     .build()
+    ///     .unwrap();
+    ///
+    /// let event_string = format!("{event}");
+    ///
+    /// assert_eq!(event_string, "data: hello world\n\n");
+    /// ```
     pub fn new() -> Self {
         Self {
             inner: Ok(Event::default()),
         }
     }
 
+    /// 设置事件的注释字段。
+    ///
+    /// # 错误
+    ///
+    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
     pub fn comment(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -59,6 +102,7 @@ impl EventBuilder {
         })
     }
 
+    /// 设置事件的重试超时字段。
     pub fn retry(self, value: Duration) -> Self {
         Self {
             inner: self.inner.map(|mut event| {
@@ -68,6 +112,11 @@ impl EventBuilder {
         }
     }
 
+    /// 设置事件的标识符字段。
+    ///
+    /// # 错误
+    ///
+    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
     pub fn id(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -77,6 +126,11 @@ impl EventBuilder {
         })
     }
 
+    /// 设置事件的名称字段。
+    ///
+    /// # 错误
+    ///
+    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
     pub fn event(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -86,6 +140,11 @@ impl EventBuilder {
         })
     }
 
+    /// 设置事件的数据字段。
+    ///
+    /// # 错误
+    ///
+    /// 如果设置的值包含回车符，则调用[`EventBuilder::build`]将返回错误。
     pub fn data(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             let value: Cow<'static, str> = value.into();
@@ -96,6 +155,11 @@ impl EventBuilder {
         })
     }
 
+    /// 消耗构建器，构建事件。
+    ///
+    /// # 错误
+    ///
+    /// 如果之前配置的任意一个参数发生错误，则在调用此函数时将返回错误。
     pub fn build(self) -> Result<Event, EventValueError> {
         self.inner
     }
@@ -132,6 +196,7 @@ impl EventBuilder {
     }
 }
 
+/// 事件值包含回车符或回车符。
 #[derive(Debug, Clone, Copy)]
 pub struct EventValueError;
 

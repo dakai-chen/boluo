@@ -1,3 +1,5 @@
+//! 从请求中提取数据的类型和特征。
+
 use std::convert::Infallible;
 use std::future::Future;
 
@@ -8,9 +10,40 @@ use crate::body::{Body, Bytes};
 use crate::request::{Request, RequestParts};
 use crate::BoxError;
 
+/// 可以根据[`Request`]创建的类型，用于实现提取器。
+///
+/// # 例子
+///
+/// ```
+/// use std::convert::Infallible;
+///
+/// use boluo_core::extract::FromRequest;
+/// use boluo_core::http::{header, HeaderValue};
+/// use boluo_core::request::Request;
+///
+/// // 从请求头中提取HOST的提取器。
+/// struct Host(Option<HeaderValue>);
+///
+/// // 为提取器实现`FromRequest`特征。
+/// impl FromRequest for Host {
+///     type Error = Infallible;
+///
+///     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
+///         let value = req.headers().get(header::HOST).map(|v| v.to_owned());
+///         Ok(Host(value))
+///     }
+/// }
+///
+/// // 在处理程序中使用提取器从请求中提取数据。
+/// async fn using_extractor(Host(host): Host) {
+///     println!("{host:?}")
+/// }
+/// ```
 pub trait FromRequest: Sized {
+    /// 提取器的错误类型。
     type Error;
 
+    /// 根据[`Request`]创建提取器实例。
     fn from_request(req: &mut Request) -> impl Future<Output = Result<Self, Self::Error>> + Send;
 }
 
@@ -146,6 +179,29 @@ impl FromRequest for RequestParts {
     }
 }
 
+/// 用来表示一个常量字符串的特征。
+///
+/// 常量泛型目前还不支持使用常量字符串，所以无法直接使用常量字符串作为提取器的泛型参数。
+/// 通过该特征将常量字符串表示为类型，从而可以在提取器中使用常量字符串作为提取的索引。
+///
+/// 该特征将在常量泛型支持使用常量字符串时移除，并对涉及的提取器进行修改。
+///
+/// # 例子
+///
+/// ```
+/// use boluo_core::extract::Name;
+///
+/// struct ContentType;
+///
+/// impl Name for ContentType {
+///     fn name() -> &'static str {
+///         "content-type"
+///     }
+/// }
+///
+/// assert_eq!(ContentType::name(), "content-type");
+/// ```
 pub trait Name {
+    /// 获取常量字符串。
     fn name() -> &'static str;
 }

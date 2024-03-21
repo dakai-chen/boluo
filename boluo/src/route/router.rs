@@ -71,6 +71,38 @@ enum Endpoint<T> {
     Scope(T),
 }
 
+/// 路由器。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::handler::handler_fn;
+/// use boluo::route::Router;
+///
+/// #[boluo::route("/f", method = "GET")]
+/// async fn f() -> &'static str {
+///     "f"
+/// }
+///
+/// let ab = Router::new()
+///     .route("/a", handler_fn(|| async { "a" }))
+///     .route("/b", handler_fn(|| async { "b" }));
+///
+/// let cd = Router::new()
+///     .route("/c", handler_fn(|| async { "c" }))
+///     .route("/d", handler_fn(|| async { "d" }));
+///
+/// Router::new()
+///     // 路由。
+///     .route("/a", handler_fn(|| async { "a" }))
+///     .route("/b", handler_fn(|| async { "b" }))
+///     // 嵌套路由。
+///     .scope("/x", ab)
+///     // 将其他路由器的路由合并到当前路由器。
+///     .merge(cd)
+///     // 挂载宏定义路由。
+///     .mount(f);
+/// ```
 #[derive(Default, Clone)]
 pub struct Router {
     inner: RouterInner,
@@ -78,10 +110,18 @@ pub struct Router {
 }
 
 impl Router {
+    /// 创建一个空的路由器。
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// 将服务添加到指定路径。
+    ///
+    #[doc = include_str!("../../doc/route/route.md")]
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
     pub fn route<S>(self, path: &str, service: S) -> Self
     where
         S: IntoMethodRoute,
@@ -93,6 +133,13 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 尝试将服务添加到指定路径。
+    ///
+    #[doc = include_str!("../../doc/route/route.md")]
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
     pub fn try_route<S>(self, path: &str, service: S) -> Result<Self, RouterError>
     where
         S: IntoMethodRoute,
@@ -121,6 +168,13 @@ impl Router {
         )
     }
 
+    /// 将服务嵌套到指定路径并去掉前缀，新路径总是以`/`开头。
+    ///
+    #[doc = include_str!("../../doc/route/scope.md")]
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
     pub fn scope<S>(self, path: &str, service: S) -> Self
     where
         S: IntoMethodRoute,
@@ -132,6 +186,13 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 尝试将服务嵌套到指定路径并去掉前缀，新路径总是以`/`开头。
+    ///
+    #[doc = include_str!("../../doc/route/scope.md")]
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
     pub fn try_scope<S>(self, path: &str, service: S) -> Result<Self, RouterError>
     where
         S: IntoMethodRoute,
@@ -162,6 +223,13 @@ impl Router {
         }
     }
 
+    /// 将[`Route`](Route)对象注册到路由器，这通常和[`route`]宏配合使用。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
+    ///
+    /// [`route`]: macro@boluo_macros::route
     pub fn mount<S>(self, route: impl Into<Route<S>>) -> Self
     where
         S: Service<Request> + 'static,
@@ -171,6 +239,13 @@ impl Router {
         self.try_mount(route).unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 将[`Route`](Route)对象注册到路由器，并对服务应用中间件，这通常和[`route`]宏配合使用。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
+    ///
+    /// [`route`]: macro@boluo_macros::route
     pub fn mount_with<S, M>(self, route: impl Into<Route<S>>, middleware: M) -> Self
     where
         M: Middleware<S>,
@@ -185,6 +260,13 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 尝试将[`Route`](Route)对象注册到路由器，这通常和[`route`]宏配合使用。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
+    ///
+    /// [`route`]: macro@boluo_macros::route
     pub fn try_mount<S>(self, route: impl Into<Route<S>>) -> Result<Self, RouterError>
     where
         S: Service<Request> + 'static,
@@ -194,6 +276,13 @@ impl Router {
         route.into().try_mount_to(self)
     }
 
+    /// 尝试将[`Route`](Route)对象注册到路由器，并对服务应用中间件，这通常和[`route`]宏配合使用。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
+    ///
+    /// [`route`]: macro@boluo_macros::route
     pub fn try_mount_with<S, M>(
         self,
         route: impl Into<Route<S>>,
@@ -208,10 +297,20 @@ impl Router {
         route.into().with(middleware).try_mount_to(self)
     }
 
+    /// 将另一个路由器的所有路由合并到此路由器中。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
     pub fn merge(self, other: Router) -> Self {
         self.try_merge(other).unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 将另一个路由器的所有路由合并到此路由器中，并对合并的服务应用中间件。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
     pub fn merge_with<M>(self, other: Router, middleware: M) -> Self
     where
         M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
@@ -223,10 +322,20 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
+    /// 尝试将另一个路由器的所有路由合并到此路由器中。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
     pub fn try_merge(self, other: Router) -> Result<Self, RouterError> {
         self.try_merge_with(other, middleware_fn(|s| s))
     }
 
+    /// 尝试将另一个路由器的所有路由合并到此路由器中，并对合并的服务应用中间件。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
     pub fn try_merge_with<M>(mut self, other: Router, middleware: M) -> Result<Self, RouterError>
     where
         M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
@@ -349,6 +458,9 @@ impl Service<Request> for Router {
     }
 }
 
+/// 路由。
+///
+/// 用于向路由器注册服务的类型，描述访问服务的请求路径和方法。
 #[derive(Debug, Clone)]
 pub struct Route<S> {
     path: String,
@@ -356,6 +468,9 @@ pub struct Route<S> {
 }
 
 impl<S> Route<S> {
+    /// 创建路由，服务使用给定路径进行访问。
+    ///
+    #[doc = include_str!("../../doc/route/route.md")]
     pub fn new<T>(path: impl Into<String>, service: T) -> Self
     where
         T: IntoMethodRoute<Service = S>,
@@ -366,18 +481,22 @@ impl<S> Route<S> {
         }
     }
 
+    /// 获取服务的访问路径。
     pub fn path(&self) -> &str {
         &self.path
     }
 
+    /// 消耗路由，得到内部方法路由。
     pub fn into_method_route(self) -> MethodRoute<S> {
         self.service
     }
 
+    /// 消耗路由，得到内部服务。
     pub fn into_service(self) -> S {
         self.service.into_service()
     }
 
+    /// 对路由内部的服务应用中间件。
     pub fn with<T>(self, middleware: T) -> Route<T::Service>
     where
         T: Middleware<S>,

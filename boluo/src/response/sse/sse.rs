@@ -13,6 +13,7 @@ use super::{
     Event,
 };
 
+/// 服务器发送事件的响应。
 #[derive(Clone)]
 pub struct Sse<S> {
     stream: S,
@@ -20,6 +21,7 @@ pub struct Sse<S> {
 }
 
 impl<S> Sse<S> {
+    /// 创建一个新的[`Sse`]响应。
     pub fn new(stream: S) -> Self {
         Self {
             stream,
@@ -27,6 +29,7 @@ impl<S> Sse<S> {
         }
     }
 
+    /// 保持连接。
     pub fn keep_alive(mut self, keep_alive: KeepAlive) -> Self {
         self.keep_alive = Some(keep_alive);
         self

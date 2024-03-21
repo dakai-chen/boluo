@@ -1,6 +1,9 @@
 use boluo_core::http::{header, HeaderValue};
 use boluo_core::response::{IntoResponse, Response};
 
+/// HTML响应。
+///
+/// 设置响应标头`Content-Type: text/html; charset=utf-8`。
 #[derive(Debug, Clone, Copy)]
 pub struct Html<T>(pub T);
 

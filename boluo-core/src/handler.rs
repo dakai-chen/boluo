@@ -1,3 +1,5 @@
+//! 可用于处理请求并返回响应的异步函数。
+
 use std::future::Future;
 use std::marker::PhantomData;
 
@@ -7,6 +9,19 @@ use crate::response::{IntoResponse, Response};
 use crate::service::Service;
 use crate::BoxError;
 
+/// 将给定的处理程序转换为[`Service`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo_core::handler::handler_fn;
+///
+/// async fn hello() -> &'static str {
+///     "Hello, World!"
+/// }
+///
+/// let service = handler_fn(hello);
+/// ```
 pub fn handler_fn<F, T>(f: F) -> HandlerFn<F, T>
 where
     HandlerFn<F, T>: Service<Request>,
@@ -17,6 +32,7 @@ where
     }
 }
 
+/// 将给定的处理程序转换为[`Service`]。
 pub struct HandlerFn<F, T> {
     f: F,
     _marker: PhantomData<fn(T) -> T>,

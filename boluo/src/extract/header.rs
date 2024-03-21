@@ -6,6 +6,25 @@ use boluo_core::http::{HeaderName, HeaderValue};
 use boluo_core::request::Request;
 use boluo_core::BoxError;
 
+/// 根据标头名获取原始标头值的提取器，不对标头值进行解析。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::RawHeaderOfName;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn handler(RawHeaderOfName(host, _): RawHeaderOfName<name::host>) {
+///     // ...
+/// }
+///
+/// mod name {
+///     #![allow(non_camel_case_types)]
+///     boluo::name! {
+///         pub host = "host";
+///     }
+/// }
+/// ```
 pub struct RawHeaderOfName<N>(pub HeaderValue, pub PhantomData<fn(N) -> N>);
 
 impl<N> std::ops::Deref for RawHeaderOfName<N> {
@@ -25,6 +44,7 @@ impl<N> std::ops::DerefMut for RawHeaderOfName<N> {
 }
 
 impl<N> RawHeaderOfName<N> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> HeaderValue {
         this.0
@@ -55,6 +75,27 @@ where
     }
 }
 
+/// 根据标头名获取标头值的提取器。
+///
+/// `T`需要实现[`FromStr`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::HeaderOfName;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn handler(HeaderOfName(host, _): HeaderOfName<name::host, String>) {
+///     // ...
+/// }
+///
+/// mod name {
+///     #![allow(non_camel_case_types)]
+///     boluo::name! {
+///         pub host = "host";
+///     }
+/// }
+/// ```
 pub struct HeaderOfName<N, T>(pub T, pub PhantomData<fn(N) -> N>);
 
 impl<N, T> std::ops::Deref for HeaderOfName<N, T> {
@@ -74,6 +115,7 @@ impl<N, T> std::ops::DerefMut for HeaderOfName<N, T> {
 }
 
 impl<N, T> HeaderOfName<N, T> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> T {
         this.0
@@ -123,6 +165,29 @@ where
     }
 }
 
+/// 根据标头名获取原始标头值的提取器，不对标头值进行解析。
+///
+/// 若标头不存在，则得到[`None`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::OptionalRawHeaderOfName;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn handler(OptionalRawHeaderOfName(host, _): OptionalRawHeaderOfName<name::host>) {
+///     if let Some(host) = host {
+///         // ...
+///     }
+/// }
+///
+/// mod name {
+///     #![allow(non_camel_case_types)]
+///     boluo::name! {
+///         pub host = "host";
+///     }
+/// }
+/// ```
 pub struct OptionalRawHeaderOfName<N>(pub Option<HeaderValue>, pub PhantomData<fn(N) -> N>);
 
 impl<N> std::ops::Deref for OptionalRawHeaderOfName<N> {
@@ -142,6 +207,7 @@ impl<N> std::ops::DerefMut for OptionalRawHeaderOfName<N> {
 }
 
 impl<N> OptionalRawHeaderOfName<N> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> Option<HeaderValue> {
         this.0
@@ -181,6 +247,29 @@ where
     }
 }
 
+/// 根据标头名获取标头值的提取器。
+///
+/// `T`需要实现[`FromStr`]。若标头不存在，则得到[`None`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::OptionalHeaderOfName;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn handler(OptionalHeaderOfName(host, _): OptionalHeaderOfName<name::host, String>) {
+///     if let Some(host) = host {
+///         // ...
+///     }
+/// }
+///
+/// mod name {
+///     #![allow(non_camel_case_types)]
+///     boluo::name! {
+///         pub host = "host";
+///     }
+/// }
+/// ```
 pub struct OptionalHeaderOfName<N, T>(pub Option<T>, pub PhantomData<fn(N) -> N>);
 
 impl<N, T> std::ops::Deref for OptionalHeaderOfName<N, T> {
@@ -200,6 +289,7 @@ impl<N, T> std::ops::DerefMut for OptionalHeaderOfName<N, T> {
 }
 
 impl<N, T> OptionalHeaderOfName<N, T> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> Option<T> {
         this.0
@@ -254,16 +344,24 @@ fn find_header_by_name<'a>(
     Ok(header_value)
 }
 
+/// 标头提取错误。
 #[derive(Debug)]
 pub enum HeaderOfNameExtractError {
+    /// 标头不存在。
     MissingHeader {
+        /// 标头名。
         name: &'static str,
     },
+    /// 无效的标头名。
     InvalidHeaderName {
+        /// 标头名。
         name: &'static str,
     },
+    /// 解析错误。
     ParseError {
+        /// 标头名。
         name: &'static str,
+        /// 错误源。
         source: BoxError,
     },
 }

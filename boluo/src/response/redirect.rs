@@ -4,6 +4,7 @@ use boluo_core::body::Body;
 use boluo_core::http::{header::LOCATION, HeaderValue, StatusCode};
 use boluo_core::response::{IntoResponse, Response};
 
+/// 将请求重定向到另一个位置的响应。
 #[derive(Debug, Clone)]
 pub struct Redirect {
     status_code: StatusCode,
@@ -82,6 +83,7 @@ impl IntoResponse for Redirect {
     }
 }
 
+/// 重定向的URI不是有效的标头值。
 #[derive(Debug, Clone)]
 pub struct RedirectUriError(pub String);
 

@@ -5,6 +5,26 @@ use boluo_core::extract::FromRequest;
 use boluo_core::request::Request;
 use serde::de::DeserializeOwned;
 
+/// 将查询字符串反序列化为某种类型的提取器。
+///
+/// `T`需要实现[`serde::de::DeserializeOwned`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::Query;
+///
+/// #[derive(serde::Deserialize)]
+/// struct Pagination {
+///     page: usize,
+///     per_page: usize,
+/// }
+///
+/// #[boluo::route("/list_things", method = "GET")]
+/// async fn list_things(Query(pagination): Query<Pagination>) {
+///     // ...
+/// }
+/// ```
 #[derive(Debug, Clone, Copy)]
 pub struct Query<T>(pub T);
 
@@ -25,6 +45,7 @@ impl<T> DerefMut for Query<T> {
 }
 
 impl<T> Query<T> {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> T {
         this.0
@@ -45,6 +66,18 @@ where
     }
 }
 
+/// 获取原始查询字符串的提取器，不对查询字符串进行解析。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::extract::RawQuery;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn handler(RawQuery(query): RawQuery) {
+///     // ...
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct RawQuery(pub String);
 
@@ -65,6 +98,7 @@ impl DerefMut for RawQuery {
 }
 
 impl RawQuery {
+    /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> String {
         this.0
@@ -79,8 +113,10 @@ impl FromRequest for RawQuery {
     }
 }
 
+/// 查询字符串提取错误。
 #[derive(Debug)]
 pub enum QueryExtractError {
+    /// 反序列化错误。
     FailedToDeserialize(serde_urlencoded::de::Error),
 }
 

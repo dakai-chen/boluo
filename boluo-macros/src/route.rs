@@ -4,7 +4,7 @@ use quote::{quote, ToTokens, TokenStreamExt};
 use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Error, Ident, ItemFn, LitStr, Token, Visibility};
 
-pub fn route(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub(crate) fn route(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr = syn::parse_macro_input!(attr as RouteAttr);
 
     let item_fn = match syn::parse::<ItemFn>(item.clone()) {

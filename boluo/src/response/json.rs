@@ -22,8 +22,10 @@ where
     }
 }
 
+/// JSON响应错误。
 #[derive(Debug)]
 pub enum JsonResponseError {
+    /// 序列化错误。
     FailedToSerialize(serde_json::Error),
 }
 

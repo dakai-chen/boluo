@@ -1,3 +1,5 @@
+//! HTTP响应。
+
 pub use boluo_core::response::*;
 
 mod extension;

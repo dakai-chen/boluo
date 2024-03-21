@@ -7,15 +7,52 @@ use crate::body::{Body, Bytes, HttpBody};
 use crate::response::{Response, ResponseParts};
 use crate::BoxError;
 
+/// 用于生成[`Response`]的特征。
+///
+/// # 例子
+///
+/// ```
+/// use boluo_core::http::{header, HeaderValue};
+/// use boluo_core::response::{IntoResponse, Response};
+///
+/// #[derive(Debug, Clone, Copy)]
+/// pub struct Html<T>(pub T);
+///
+/// impl<T> IntoResponse for Html<T>
+/// where
+///     T: IntoResponse,
+/// {
+///     type Error = T::Error;
+///
+///     fn into_response(self) -> Result<Response, Self::Error> {
+///         let mut res = self.0.into_response()?;
+///         res.headers_mut().insert(
+///             header::CONTENT_TYPE,
+///             HeaderValue::from_static(mime::TEXT_HTML_UTF_8.as_ref()),
+///         );
+///         Ok(res)
+///     }
+/// }
+///
+/// // 在处理程序中使用`Html`响应页面。
+/// async fn response_html() -> impl IntoResponse {
+///     Html("<html><body>Hello, World!</body></html>")
+/// }
+/// ```
 pub trait IntoResponse {
+    /// 发生错误时返回的类型。
     type Error: Into<BoxError>;
 
+    /// 得到一个[`Response`]实例。
     fn into_response(self) -> Result<Response, Self::Error>;
 }
 
+/// 用于向响应添加头部组件的特征。
 pub trait IntoResponseParts {
+    /// 发生错误时返回的类型。
     type Error: Into<BoxError>;
 
+    /// 向响应添加头部组件。
     fn into_response_parts(self, parts: ResponseParts) -> Result<ResponseParts, Self::Error>;
 }
 
@@ -348,9 +385,12 @@ where
     }
 }
 
+/// 无法从其他类型转换为标头。
 #[derive(Debug)]
 pub enum IntoHeaderError {
+    /// 无效的标头名。
     InvalidName(String),
+    /// 无效的标头值。
     InvalidValue(String),
 }
 

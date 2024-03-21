@@ -2,6 +2,9 @@ use std::future::Future;
 
 use super::Service;
 
+/// [`then`]返回的服务。
+///
+/// [`then`]: crate::service::ServiceExt::then
 #[derive(Clone, Copy)]
 pub struct Then<S, F> {
     service: S,
@@ -9,6 +12,7 @@ pub struct Then<S, F> {
 }
 
 impl<S, F> Then<S, F> {
+    /// 创建一个新的[`Then`]服务。
     pub fn new(service: S, f: F) -> Self {
         Self { service, f }
     }

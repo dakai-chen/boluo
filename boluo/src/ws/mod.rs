@@ -1,3 +1,5 @@
+//! 处理WebSocket连接。
+
 mod util;
 
 mod message;
@@ -20,6 +22,25 @@ use hyper_util::rt::TokioIo;
 use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
 use tokio_tungstenite::WebSocketStream;
 
+/// 用于建立WebSocket连接的提取器。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::response::IntoResponse;
+/// use boluo::ws::WebSocketUpgrade;
+///
+/// #[boluo::route("/", method = "GET")]
+/// async fn echo(upgrade: WebSocketUpgrade) -> impl IntoResponse {
+///     upgrade.on_upgrade(|mut socket| async move {
+///         while let Some(Ok(message)) = socket.recv().await {
+///             if let Err(e) = socket.send(message).await {
+///                 eprintln!("{e}");
+///             }
+///         }
+///     })
+/// }
+/// ```
 pub struct WebSocketUpgrade {
     config: Option<WebSocketConfig>,
     sec_websocket_key: HeaderValue,
@@ -27,6 +48,14 @@ pub struct WebSocketUpgrade {
 }
 
 impl WebSocketUpgrade {
+    /// The target minimum size of the write buffer to reach before writing the data
+    /// to the underlying stream.
+    /// The default value is 128 KiB.
+    ///
+    /// If set to `0` each message will be eagerly written to the underlying stream.
+    /// It is often more optimal to allow them to buffer a little, hence the default value.
+    ///
+    /// Note: [`flush`](SinkExt::flush) will always fully write the buffer regardless.
     pub fn write_buffer_size(mut self, max: usize) -> Self {
         self.config
             .get_or_insert_with(WebSocketConfig::default)
@@ -34,6 +63,16 @@ impl WebSocketUpgrade {
         self
     }
 
+    /// The max size of the write buffer in bytes. Setting this can provide backpressure
+    /// in the case the write buffer is filling up due to write errors.
+    /// The default value is unlimited.
+    ///
+    /// Note: The write buffer only builds up past [`write_buffer_size`](Self::write_buffer_size)
+    /// when writes to the underlying stream are failing. So the **write buffer can not
+    /// fill up if you are not observing write errors even if not flushing**.
+    ///
+    /// Note: Should always be at least [`write_buffer_size + 1 message`](Self::write_buffer_size)
+    /// and probably a little more depending on error handling strategy.
     pub fn max_write_buffer_size(mut self, max: usize) -> Self {
         self.config
             .get_or_insert_with(WebSocketConfig::default)
@@ -41,6 +80,9 @@ impl WebSocketUpgrade {
         self
     }
 
+    /// The maximum size of an incoming message. `None` means no size limit. The default value is 64 MiB
+    /// which should be reasonably big for all normal use-cases but small enough to prevent
+    /// memory eating by a malicious user.
     pub fn max_message_size(mut self, max: usize) -> Self {
         self.config
             .get_or_insert_with(WebSocketConfig::default)
@@ -48,6 +90,10 @@ impl WebSocketUpgrade {
         self
     }
 
+    /// The maximum size of a single incoming message frame. `None` means no size limit. The limit is for
+    /// frame payload NOT including the frame header. The default value is 16 MiB which should
+    /// be reasonably big for all normal use-cases but small enough to prevent memory eating
+    /// by a malicious user.
     pub fn max_frame_size(mut self, max: usize) -> Self {
         self.config
             .get_or_insert_with(WebSocketConfig::default)
@@ -55,6 +101,11 @@ impl WebSocketUpgrade {
         self
     }
 
+    /// When set to `true`, the server will accept and handle unmasked frames
+    /// from the client. According to the RFC 6455, the server must close the
+    /// connection to the client in such cases, however it seems like there are
+    /// some popular libraries that are sending unmasked frames, ignoring the RFC.
+    /// By default this option is set to `false`, i.e. according to RFC 6455.
     pub fn accept_unmasked_frames(mut self, accept: bool) -> Self {
         self.config
             .get_or_insert_with(WebSocketConfig::default)
@@ -62,6 +113,7 @@ impl WebSocketUpgrade {
         self
     }
 
+    /// 完成连接升级并调用提供异步函数。
     pub fn on_upgrade<F, Fut>(self, callback: F) -> Result<impl IntoResponse, BoxError>
     where
         F: FnOnce(WebSocket) -> Fut + Send + 'static,
@@ -135,6 +187,7 @@ impl FromRequest for WebSocketUpgrade {
     }
 }
 
+/// WebSocket消息流。
 pub struct WebSocket {
     inner: WebSocketStream<TokioIo<Upgraded>>,
 }
@@ -150,10 +203,12 @@ impl WebSocket {
             .await
     }
 
+    /// 接收一条消息。
     pub async fn recv(&mut self) -> Option<Result<Message, BoxError>> {
         self.next().await
     }
 
+    /// 发送一条消息。
     pub async fn send(&mut self, msg: Message) -> Result<(), BoxError> {
         self.inner
             .send(msg.into_tungstenite())
@@ -161,6 +216,7 @@ impl WebSocket {
             .map_err(From::from)
     }
 
+    /// 关闭WebSocket消息流。
     pub async fn close(mut self) -> Result<(), BoxError> {
         poll_fn(|cx| Pin::new(&mut self).poll_close(cx)).await
     }
@@ -206,12 +262,18 @@ impl std::fmt::Debug for WebSocket {
     }
 }
 
+/// WebSocket连接升级失败。
 #[derive(Debug, Clone, Copy)]
 pub enum WebSocketUpgradeError {
+    /// 无效的请求头`connection`。
     InvalidConnectionHeader,
+    /// 无效的请求头`upgrade`。
     InvalidUpgradeHeader,
+    /// 无效的请求头`sec-websocket-version`。
     InvalidSecWebSocketVersionHeader,
+    /// 缺少请求头`sec-websocket-key`。
     MissingSecWebSocketKeyHeader,
+    /// 连接不可升级。
     ConnectionNotUpgradable,
 }
 

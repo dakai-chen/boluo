@@ -579,39 +579,39 @@ enum KeyOrIdx<'de> {
 
 #[derive(Debug)]
 pub(super) enum PathDeserializationError {
-    /// 参数数量不正确
+    /// 参数数量不正确。
     WrongNumberOfParameters { got: usize, expected: usize },
 
-    /// 尝试反序列化为不受支持的键类型
+    /// 尝试反序列化为不受支持的键类型。
     UnsupportedKeyType { name: &'static str },
 
-    /// 尝试反序列化为不受支持的值类型
+    /// 尝试反序列化为不受支持的值类型。
     UnsupportedValueType { name: &'static str },
 
-    /// 无法将特定键处的值解析为所需类型
+    /// 无法将特定键处的值解析为所需类型。
     ParseErrorAtKey {
         key: String,
         value: String,
         expected_type: &'static str,
     },
 
-    /// 无法将特定索引处的值解析为所需的类型
+    /// 无法将特定索引处的值解析为所需的类型。
     ParseErrorAtIndex {
         index: usize,
         value: String,
         expected_type: &'static str,
     },
 
-    /// 无法将值解析为所需的类型
+    /// 无法将值解析为所需的类型。
     ParseError {
         value: String,
         expected_type: &'static str,
     },
 
-    /// 无法将值解析为有效的UTF-8字符串
+    /// 无法将值解析为有效的UTF-8字符串。
     InvalidUtf8 { value: String },
 
-    /// 捕获所有不适合任何其他变体的错误变体
+    /// 捕获所有不适合任何其他变体的错误变体。
     Message(String),
 }
 

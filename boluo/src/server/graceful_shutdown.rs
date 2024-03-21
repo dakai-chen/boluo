@@ -4,6 +4,7 @@ use std::{future::Future, time::Duration};
 use tokio::sync::mpsc::{self, Receiver, Sender};
 use tokio_util::sync::CancellationToken;
 
+/// 优雅关机，用于等待服务器完成剩余请求。
 #[derive(Debug)]
 pub struct GracefulShutdown {
     tx: Sender<()>,
@@ -52,6 +53,10 @@ impl GracefulShutdown {
         }
     }
 
+    /// 发出关机信号，在指定时间内等待服务器完成剩余请求。若剩余请求在指定时间内完成，则提前返回，
+    /// 返回值为`true`，超时则返回`false`。
+    ///
+    /// 未设置指定时间将一直等待，直到服务器完成所有请求。
     pub async fn shutdown(self, timeout: Option<Duration>) -> bool {
         let GracefulShutdown {
             tx,

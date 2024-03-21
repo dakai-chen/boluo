@@ -1,3 +1,5 @@
+//! 用于解析文件上传中常用的`multipart/form-data`格式数据。
+
 use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -10,6 +12,23 @@ use boluo_core::request::Request;
 use boluo_core::BoxError;
 use futures_util::Stream;
 
+/// 解析`multipart/form-data`请求的提取器。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::multipart::Multipart;
+///
+/// #[boluo::route("/upload", method = "POST")]
+/// async fn upload(mut multipart: Multipart) {
+///     while let Ok(Some(field)) = multipart.next_field().await {
+///         let name = field.name().unwrap_or_default().to_owned();
+///         let data = field.bytes().await.unwrap();
+///
+///         println!("Length of `{}` is {} bytes", name, data.len());
+///     }
+/// }
+/// ```
 #[derive(Debug)]
 pub struct Multipart {
     inner: multer::Multipart<'static>,
@@ -26,6 +45,7 @@ impl Multipart {
 }
 
 impl Multipart {
+    /// 生成下一个[`Field`]。
     pub async fn next_field(&mut self) -> Result<Option<Field>, MultipartError> {
         let field = self
             .inner
@@ -62,28 +82,34 @@ impl FromRequest for Multipart {
     }
 }
 
+/// 多部分流中的单个字段。
 #[derive(Debug)]
 pub struct Field {
     inner: multer::Field<'static>,
 }
 
 impl Field {
+    /// 在`Content-Disposition`标头中找到的字段名。
     pub fn name(&self) -> Option<&str> {
         self.inner.name()
     }
 
+    /// 在`Content-Disposition`标头中找到的文件名。
     pub fn file_name(&self) -> Option<&str> {
         self.inner.file_name()
     }
 
+    /// 获取字段的内容类型。
     pub fn content_type(&self) -> Option<&str> {
         self.inner.content_type().map(|m| m.as_ref())
     }
 
+    /// 获取字段的标头集。
     pub fn headers(&self) -> &HeaderMap {
         self.inner.headers()
     }
 
+    /// 以二进制的形式获取字段的完整数据。
     pub async fn bytes(self) -> Result<Bytes, MultipartError> {
         self.inner
             .bytes()
@@ -91,10 +117,12 @@ impl Field {
             .map_err(MultipartError::from_multer)
     }
 
+    /// 以文本的形式获取完整的字段数据。
     pub async fn text(self) -> Result<String, MultipartError> {
         self.inner.text().await.map_err(MultipartError::from_multer)
     }
 
+    /// 流式获取字段的数据块。
     pub async fn chunk(&mut self) -> Result<Option<Bytes>, MultipartError> {
         self.inner
             .chunk()
@@ -113,9 +141,12 @@ impl Stream for Field {
     }
 }
 
+/// `multipart/form-data`解析错误。
 #[derive(Debug)]
 pub enum MultipartError {
+    /// 不支持的内容类型。
     UnsupportedContentType,
+    /// 其他错误。
     Other(BoxError),
 }
 

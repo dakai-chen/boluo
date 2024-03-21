@@ -1,3 +1,5 @@
+//! 服务器发送事件（SSE）。
+
 mod event;
 mod keep_alive;
 mod sse;

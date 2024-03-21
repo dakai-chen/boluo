@@ -19,9 +19,14 @@ where
     }
 }
 
+/// 扩展提取错误。
 #[derive(Debug, Clone, Copy)]
 pub enum ExtensionExtractError {
-    MissingExtension { name: &'static str },
+    /// 缺少请求扩展。
+    MissingExtension {
+        /// 扩展类型名。
+        name: &'static str,
+    },
 }
 
 impl std::fmt::Display for ExtensionExtractError {

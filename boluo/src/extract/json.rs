@@ -53,10 +53,14 @@ fn is_json_content_type(headers: &HeaderMap) -> bool {
     is_json_content_type
 }
 
+/// JSON提取错误。
 #[derive(Debug)]
 pub enum JsonExtractError {
+    /// 不支持的内容类型。
     UnsupportedContentType,
+    /// 缓冲主体失败。
     FailedToBufferBody(BoxError),
+    /// 反序列化失败。
     FailedToDeserialize(serde_json::Error),
 }
 

@@ -84,6 +84,9 @@ impl Methods {
     }
 }
 
+/// 方法路由。
+///
+/// 用于向路由器注册服务的类型，描述访问服务的请求方法。
 #[derive(Debug, Clone)]
 pub struct MethodRoute<S> {
     methods: Methods,
@@ -91,6 +94,7 @@ pub struct MethodRoute<S> {
 }
 
 impl<S> MethodRoute<S> {
+    /// 创建方法路由，服务接收任意方法的请求。
     #[inline]
     fn any(service: S) -> Self {
         Self {
@@ -99,6 +103,7 @@ impl<S> MethodRoute<S> {
         }
     }
 
+    /// 创建方法路由，服务接收给定方法的请求。
     #[inline]
     fn one(service: S, method: Method) -> Self {
         Self {
@@ -107,15 +112,20 @@ impl<S> MethodRoute<S> {
         }
     }
 
+    /// 增加访问服务的请求方法。
+    ///
+    /// 使用[`any`]创建的方法路由调用此函数后，服务不再接收任意方法的请求。
     pub fn add(mut self, method: Method) -> Self {
         self.methods = self.methods.add(method);
         self
     }
 
+    /// 消耗方法路由，得到内部服务。
     pub fn into_service(self) -> S {
         self.service
     }
 
+    /// 对方法路由内部的服务应用中间件。
     pub fn with<T>(self, middleware: T) -> MethodRoute<T::Service>
     where
         T: Middleware<S>,
@@ -132,6 +142,7 @@ fn method<S>(service: S, method: Method) -> MethodRoute<S> {
     MethodRoute::one(service, method)
 }
 
+/// 创建[`MethodRoute`]，服务接收任意方法的请求。
 #[inline]
 pub fn any<S>(service: S) -> MethodRoute<S> {
     MethodRoute::any(service)
@@ -139,6 +150,7 @@ pub fn any<S>(service: S) -> MethodRoute<S> {
 
 macro_rules! impl_method_fn {
     ($name:ident, $method:expr) => {
+        #[doc = concat!("创建[`MethodRoute`]，服务接收[`", stringify!($method), "`]请求。")]
         #[inline]
         pub fn $name<S>(service: S) -> MethodRoute<S> {
             method(service, $method)
@@ -165,9 +177,12 @@ mod private {
     impl<S> Sealed for MethodRoute<S> {}
 }
 
+/// 用于生成[`MethodRoute`]的特征。
 pub trait IntoMethodRoute: private::Sealed {
+    /// 返回的[`MethodRoute`]内部的服务类型。
     type Service;
 
+    /// 得到一个[`MethodRoute`]实例。
     fn into_method_route(self) -> MethodRoute<Self::Service>;
 }
 

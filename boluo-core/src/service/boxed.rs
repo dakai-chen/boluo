@@ -4,13 +4,22 @@ use std::sync::Arc;
 
 use super::Service;
 
+/// 装箱的[`Future`]特征对象。
+///
+/// 此类型别名表示一个装箱的[`Future`]，可以跨线程移动。
 type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 
+/// 装箱的[`Service`]特征对象。
+///
+/// [`BoxService`]将服务转换为特征对象并装箱，允许服务的[`Future`]是动态的。
+///
+/// 如果需要一个实现[`Clone`]的装箱服务，考虑使用[`BoxCloneService`]或[`ArcService`]。
 pub struct BoxService<Req, Res, Err> {
     service: Box<dyn AnyService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> BoxService<Req, Res, Err> {
+    /// 将服务转换为[`Service`]特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + 'static,
@@ -39,11 +48,18 @@ impl<Req, Res, Err> std::fmt::Debug for BoxService<Req, Res, Err> {
     }
 }
 
+/// 装箱的[`Service`]特征对象。
+///
+/// [`ArcService`]将服务转换为特征对象并装箱，允许服务的[`Future`]是动态的，
+/// 并允许共享服务。
+///
+/// 这与[`BoxService`]类似，只是[`ArcService`]实现了[`Clone`]。
 pub struct ArcService<Req, Res, Err> {
     service: Arc<dyn AnyService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> ArcService<Req, Res, Err> {
+    /// 将服务转换为[`Service`]特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + 'static,
@@ -80,11 +96,18 @@ impl<Req, Res, Err> std::fmt::Debug for ArcService<Req, Res, Err> {
     }
 }
 
+/// 装箱的[`Service`]特征对象。
+///
+/// [`BoxCloneService`]将服务转换为特征对象并装箱，允许服务的[`Future`]是动态的，
+/// 并允许克隆服务。
+///
+/// 这与[`BoxService`]类似，只是[`BoxCloneService`]实现了[`Clone`]。
 pub struct BoxCloneService<Req, Res, Err> {
     service: Box<dyn CloneService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> BoxCloneService<Req, Res, Err> {
+    /// 将服务转换为[`Service`]特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + Clone + 'static,

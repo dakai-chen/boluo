@@ -9,6 +9,7 @@ use tokio::time::{Instant, Sleep};
 
 use super::{Event, EventValueError};
 
+/// 用于配置保持连接的消息间隔和消息文本。
 #[derive(Debug, Clone)]
 pub struct KeepAlive {
     event: Event,
@@ -16,10 +17,14 @@ pub struct KeepAlive {
 }
 
 impl KeepAlive {
+    /// 创建一个新的[`KeepAlive`]。
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// 自定义保持连接的消息文本。
+    ///
+    /// 默认为空注释。
     pub fn text(mut self, text: impl Into<Cow<'static, str>>) -> Result<Self, EventValueError> {
         Event::builder().comment(text).build().map(|event| {
             self.event = event;
@@ -27,6 +32,9 @@ impl KeepAlive {
         })
     }
 
+    /// 自定义保持连接的消息间隔。
+    ///
+    /// 默认值为15秒。
     pub fn interval(mut self, time: Duration) -> Self {
         self.interval = time;
         self

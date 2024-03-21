@@ -1,8 +1,16 @@
+//! `boluo`的宏。
+
+#![forbid(unsafe_code)]
+#![deny(unreachable_pub)]
+#![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
+#![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
+
 mod route;
 
 use proc_macro::TokenStream;
 
-/// 为处理程序添加请求路径和请求方法
+/// 为处理程序添加请求路径和方法。
 ///
 /// # 例子
 ///

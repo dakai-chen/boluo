@@ -1,3 +1,5 @@
+//! 静态文件服务。
+
 use std::fs::Metadata;
 use std::io::{self, SeekFrom};
 use std::ops::Bound;
@@ -21,12 +23,23 @@ use tokio::fs::File as TkFile;
 use tokio::io::AsyncSeekExt;
 use tokio_util::io::poll_read_buf;
 
+/// 提供文件的服务。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::fs::ServeFile;
+/// use boluo::route::Router;
+///
+/// Router::new().route("/favicon.ico", ServeFile::new("favicon.ico"));
+/// ```
 #[derive(Debug, Clone)]
 pub struct ServeFile {
     path: PathBuf,
 }
 
 impl ServeFile {
+    /// 使用指定路径创建一个新的[`ServeFile`]。
     pub fn new(path: impl Into<PathBuf>) -> Self {
         Self { path: path.into() }
     }
@@ -44,12 +57,23 @@ where
     }
 }
 
+/// 提供目录的服务。
+///
+/// # 例子
+///
+/// ```
+/// use boluo::fs::ServeDir;
+/// use boluo::route::Router;
+///
+/// Router::new().scope("/static/", ServeDir::new("static"));
+/// ```
 #[derive(Debug, Clone)]
 pub struct ServeDir {
     root: PathBuf,
 }
 
 impl ServeDir {
+    /// 使用指定路径创建一个新的[`ServeDir`]。
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self { root: root.into() }
     }
@@ -347,10 +371,14 @@ fn get_block_size(_metadata: &Metadata) -> usize {
     DEFAULT_READ_BUF_SIZE
 }
 
+/// 文件错误。
 #[derive(Debug)]
 pub enum FileError {
+    /// 文件不存在。
     NotFound,
+    /// 文件打开失败。
     OpenFailed(io::Error),
+    /// 操作文件缺乏所需的权限。
     PermissionDenied(io::Error),
 }
 

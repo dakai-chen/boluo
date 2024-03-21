@@ -1,3 +1,19 @@
+/// 将常量字符串声明为类型的宏，该类型实现特征[`Name`]。
+///
+/// # 例子
+///
+/// ```
+/// use boluo_core::extract::Name;
+///
+/// boluo_core::name! {
+///     #[allow(non_camel_case_types)]
+///     pub content_type = "content-type";
+/// }
+///
+/// assert_eq!(content_type::name(), "content-type");
+/// ```
+///
+/// [`Name`]: crate::extract::Name
 #[macro_export]
 macro_rules! name {
     () => {};

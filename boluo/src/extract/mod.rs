@@ -1,3 +1,5 @@
+//! 从请求中提取数据的类型和特征。
+
 pub use boluo_core::extract::*;
 
 mod extension;

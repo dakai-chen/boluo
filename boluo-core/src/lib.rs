@@ -1,6 +1,9 @@
+//! `boluo`的核心类型和特征。
+
 #![forbid(unsafe_code)]
 #![deny(unreachable_pub)]
 #![warn(missing_debug_implementations)]
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
 #[macro_use]
@@ -18,6 +21,8 @@ pub mod response;
 pub mod service;
 
 pub mod http {
+    //! [`http`]库的重新导出。
+
     pub use http::header::{self, HeaderMap, HeaderName, HeaderValue};
     pub use http::method::{self, Method};
     pub use http::status::{self, StatusCode};

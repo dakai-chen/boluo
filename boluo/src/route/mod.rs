@@ -1,3 +1,5 @@
+//! 将请求转发到服务的类型和特征。
+
 mod error;
 pub use error::{RouteError, RouteErrorKind, RouterError};
 
