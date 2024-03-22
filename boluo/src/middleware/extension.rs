@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use boluo_core::middleware::Middleware;
 use boluo_core::request::Request;
 use boluo_core::service::Service;
@@ -24,15 +26,17 @@ pub struct ExtensionService<S, T> {
 
 impl<B, S, T> Service<Request<B>> for ExtensionService<S, T>
 where
-    B: Send,
     S: Service<Request<B>>,
     T: Clone + Send + Sync + 'static,
 {
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, mut req: Request<B>) -> Result<Self::Response, Self::Error> {
+    fn call(
+        &self,
+        mut req: Request<B>,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
         req.extensions_mut().insert(self.value.clone());
-        self.service.call(req).await
+        self.service.call(req)
     }
 }
