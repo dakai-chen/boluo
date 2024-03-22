@@ -9,7 +9,6 @@ use boluo_core::extract::FromRequest;
 use boluo_core::http::header::CONTENT_TYPE;
 use boluo_core::http::HeaderMap;
 use boluo_core::request::Request;
-use boluo_core::BoxError;
 use futures_util::Stream;
 
 /// 解析`multipart/form-data`请求的提取器。
@@ -71,8 +70,9 @@ impl FromRequest for Multipart {
     type Error = MultipartError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let boundary =
-            Self::parse_boundary(req.headers()).ok_or(MultipartError::UnsupportedContentType)?;
+        let Some(boundary) = Self::parse_boundary(req.headers()) else {
+            return Err(MultipartError::UnsupportedContentType);
+        };
 
         let stream = std::mem::take(req.body_mut()).into_data_stream();
 
@@ -146,13 +146,13 @@ impl Stream for Field {
 pub enum MultipartError {
     /// 不支持的内容类型。
     UnsupportedContentType,
-    /// 其他错误。
-    Other(BoxError),
+    /// 解析错误。
+    ParseError(String),
 }
 
 impl MultipartError {
     fn from_multer(error: multer::Error) -> Self {
-        MultipartError::Other(error.into())
+        MultipartError::ParseError(error.to_string())
     }
 }
 
@@ -160,8 +160,8 @@ impl std::fmt::Display for MultipartError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             MultipartError::UnsupportedContentType => f.write_str("unsupported content type"),
-            MultipartError::Other(e) => {
-                write!(f, "error parsing `multipart/form-data` request ({e})")
+            MultipartError::ParseError(e) => {
+                write!(f, "failed to parse `multipart/form-data` request ({e})")
             }
         }
     }
