@@ -25,10 +25,19 @@ where
     S::Error: Into<BoxError>,
 {
     __try_downcast(service).unwrap_or_else(|service| {
-        let service = service.map_result(|res: Result<S::Response, S::Error>| {
-            res.map_err(Into::into)
+        let service = service.map_result(|result| {
+            result
+                .map_err(Into::into)
                 .and_then(|r| r.into_response().map_err(Into::into))
         });
         service.boxed_arc()
     })
+}
+
+/// 断言`S`是一个[`Service`]。
+pub(crate) fn assert_service<S, R>(service: S) -> S
+where
+    S: Service<R>,
+{
+    service
 }

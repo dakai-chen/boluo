@@ -21,17 +21,18 @@ impl<S, F> AndThen<S, F> {
 impl<S, F, Fut, Req, Res> Service<Req> for AndThen<S, F>
 where
     S: Service<Req>,
-    S::Response: Send,
     F: Fn(S::Response) -> Fut + Send + Sync,
     Fut: Future<Output = Result<Res, S::Error>> + Send,
-    Req: Send,
 {
     type Response = Res;
     type Error = S::Error;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        let response = self.service.call(req).await?;
-        (self.f)(response).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let fut = self.service.call(req);
+        async move {
+            let response = fut.await?;
+            (self.f)(response).await
+        }
     }
 }
 

@@ -21,20 +21,21 @@ impl<S, F> OrElse<S, F> {
 impl<S, F, Fut, Req, Err> Service<Req> for OrElse<S, F>
 where
     S: Service<Req>,
-    S::Error: Send,
     F: Fn(S::Error) -> Fut + Send + Sync,
     Fut: Future<Output = Result<S::Response, Err>> + Send,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = Err;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        let err = match self.service.call(req).await {
-            Ok(res) => return Ok(res),
-            Err(err) => err,
-        };
-        (self.f)(err).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let fut = self.service.call(req);
+        async move {
+            let err = match fut.await {
+                Ok(res) => return Ok(res),
+                Err(err) => err,
+            };
+            (self.f)(err).await
+        }
     }
 }
 

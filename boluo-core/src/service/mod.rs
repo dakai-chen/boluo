@@ -70,51 +70,47 @@ pub trait Service<Req>: Send + Sync {
 impl<S, Req> Service<Req> for &mut S
 where
     S: Service<Req> + ?Sized,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        S::call(self, req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, req)
     }
 }
 
 impl<S, Req> Service<Req> for &S
 where
     S: Service<Req> + ?Sized,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        S::call(self, req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, req)
     }
 }
 
 impl<S, Req> Service<Req> for Box<S>
 where
     S: Service<Req> + ?Sized,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        S::call(self, req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, req)
     }
 }
 
 impl<S, Req> Service<Req> for Arc<S>
 where
     S: Service<Req> + ?Sized,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        S::call(self, req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, req)
     }
 }

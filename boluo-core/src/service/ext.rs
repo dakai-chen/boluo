@@ -1,4 +1,7 @@
+use std::future::Future;
+
 use crate::middleware::Middleware;
+use crate::util::assert_service;
 
 use super::{
     AndThen, ArcService, BoxCloneService, BoxService, MapErr, MapRequest, MapResponse, MapResult,
@@ -69,11 +72,13 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     result
     /// });
     /// ```
-    fn then<F>(self, f: F) -> Then<Self, F>
+    fn then<F, Fut, Res, Err>(self, f: F) -> Then<Self, F>
     where
         Self: Sized,
+        F: Fn(Result<Self::Response, Self::Error>) -> Fut + Send + Sync,
+        Fut: Future<Output = Result<Res, Err>> + Send,
     {
-        Then::new(self, f)
+        assert_service(Then::new(self, f))
     }
 
     /// 在此服务执行成功后执行给定的异步函数。
@@ -97,11 +102,13 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     Ok::<_, BoxError>(response.map(|_| Body::empty()))
     /// });
     /// ```
-    fn and_then<F>(self, f: F) -> AndThen<Self, F>
+    fn and_then<F, Fut, Res>(self, f: F) -> AndThen<Self, F>
     where
         Self: Sized,
+        F: Fn(Self::Response) -> Fut + Send + Sync,
+        Fut: Future<Output = Result<Res, Self::Error>> + Send,
     {
-        AndThen::new(self, f)
+        assert_service(AndThen::new(self, f))
     }
 
     /// 在此服务执行失败后执行给定的异步函数。
@@ -140,11 +147,13 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     Err(err)
     /// });
     /// ```
-    fn or_else<F>(self, f: F) -> OrElse<Self, F>
+    fn or_else<F, Fut, Err>(self, f: F) -> OrElse<Self, F>
     where
         Self: Sized,
+        F: Fn(Self::Error) -> Fut + Send + Sync,
+        Fut: Future<Output = Result<Self::Response, Err>> + Send,
     {
-        OrElse::new(self, f)
+        assert_service(OrElse::new(self, f))
     }
 
     /// 将此服务返回的结果映射为其他值。
@@ -181,11 +190,12 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     },
     /// );
     /// ```
-    fn map_result<F>(self, f: F) -> MapResult<Self, F>
+    fn map_result<F, Res, Err>(self, f: F) -> MapResult<Self, F>
     where
         Self: Sized,
+        F: Fn(Result<Self::Response, Self::Error>) -> Result<Res, Err> + Send + Sync,
     {
-        MapResult::new(self, f)
+        assert_service(MapResult::new(self, f))
     }
 
     /// 将此服务返回的响应映射为其他值。
@@ -205,11 +215,12 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// let service = service_fn(hello);
     /// let service = service.map_response(|text: &'static str| Body::from(text));
     /// ```
-    fn map_response<F>(self, f: F) -> MapResponse<Self, F>
+    fn map_response<F, Res>(self, f: F) -> MapResponse<Self, F>
     where
         Self: Sized,
+        F: Fn(Self::Response) -> Res + Send + Sync,
     {
-        MapResponse::new(self, f)
+        assert_service(MapResponse::new(self, f))
     }
 
     /// 将此服务返回的错误映射为其他值。
@@ -238,11 +249,12 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// let service = service_fn(throw_error);
     /// let service = service.map_err(|err: MyError| BoxError::from(err));
     /// ```
-    fn map_err<F>(self, f: F) -> MapErr<Self, F>
+    fn map_err<F, Err>(self, f: F) -> MapErr<Self, F>
     where
         Self: Sized,
+        F: Fn(Self::Error) -> Err + Send + Sync,
     {
-        MapErr::new(self, f)
+        assert_service(MapErr::new(self, f))
     }
 
     /// 将发送给此服务的请求映射为其他值。
@@ -266,11 +278,12 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///
     /// let fut = service.call(b"Hello, World");
     /// ```
-    fn map_request<F>(self, f: F) -> MapRequest<Self, F>
+    fn map_request<F, R>(self, f: F) -> MapRequest<Self, F>
     where
         Self: Sized,
+        F: Fn(R) -> Req + Send + Sync,
     {
-        MapRequest::new(self, f)
+        assert_service(MapRequest::new(self, f))
     }
 
     /// 将此服务转换为[`Service`]特征对象并装箱。
@@ -278,9 +291,9 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// 更多详细信息，请参阅[`BoxService`]。
     fn boxed(self) -> BoxService<Req, Self::Response, Self::Error>
     where
-        Self: Sized + Send + Sync + 'static,
+        Self: Sized + 'static,
     {
-        BoxService::new(self)
+        assert_service(BoxService::new(self))
     }
 
     /// 将此服务转换为[`Service`]特征对象并装箱。
@@ -288,9 +301,9 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// 更多详细信息，请参阅[`BoxCloneService`]。
     fn boxed_clone(self) -> BoxCloneService<Req, Self::Response, Self::Error>
     where
-        Self: Sized + Clone + Send + Sync + 'static,
+        Self: Sized + Clone + 'static,
     {
-        BoxCloneService::new(self)
+        assert_service(BoxCloneService::new(self))
     }
 
     /// 将此服务转换为[`Service`]特征对象并装箱。
@@ -298,10 +311,10 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// 更多详细信息，请参阅[`ArcService`]。
     fn boxed_arc(self) -> ArcService<Req, Self::Response, Self::Error>
     where
-        Self: Sized + Send + Sync + 'static,
+        Self: Sized + 'static,
     {
-        ArcService::new(self)
+        assert_service(ArcService::new(self))
     }
 }
 
-impl<S, Req> ServiceExt<Req> for S where S: Service<Req> {}
+impl<S: ?Sized, Req> ServiceExt<Req> for S where S: Service<Req> {}

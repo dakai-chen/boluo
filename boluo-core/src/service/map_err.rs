@@ -1,3 +1,5 @@
+use std::future::Future;
+
 use super::Service;
 
 /// [`map_err`]返回的服务。
@@ -20,16 +22,13 @@ impl<S, F, Req, Err> Service<Req> for MapErr<S, F>
 where
     S: Service<Req>,
     F: Fn(S::Error) -> Err + Send + Sync,
-    Req: Send,
 {
     type Response = S::Response;
     type Error = Err;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        match self.service.call(req).await {
-            Ok(res) => Ok(res),
-            Err(err) => Err((self.f)(err)),
-        }
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let fut = self.service.call(req);
+        async move { fut.await.map_err(|err| (self.f)(err)) }
     }
 }
 

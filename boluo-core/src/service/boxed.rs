@@ -30,15 +30,12 @@ impl<Req, Res, Err> BoxService<Req, Res, Err> {
     }
 }
 
-impl<Req, Res, Err> Service<Req> for BoxService<Req, Res, Err>
-where
-    Req: Send,
-{
+impl<Req, Res, Err> Service<Req> for BoxService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        self.service.call(req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(req)
     }
 }
 
@@ -70,15 +67,12 @@ impl<Req, Res, Err> ArcService<Req, Res, Err> {
     }
 }
 
-impl<Req, Res, Err> Service<Req> for ArcService<Req, Res, Err>
-where
-    Req: Send,
-{
+impl<Req, Res, Err> Service<Req> for ArcService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        self.service.call(req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(req)
     }
 }
 
@@ -118,15 +112,12 @@ impl<Req, Res, Err> BoxCloneService<Req, Res, Err> {
     }
 }
 
-impl<Req, Res, Err> Service<Req> for BoxCloneService<Req, Res, Err>
-where
-    Req: Send,
-{
+impl<Req, Res, Err> Service<Req> for BoxCloneService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    async fn call(&self, req: Req) -> Result<Self::Response, Self::Error> {
-        self.service.call(req).await
+    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(req)
     }
 }
 
