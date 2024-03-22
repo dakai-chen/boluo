@@ -20,10 +20,6 @@ impl Redirect {
     /// body (if non-empty). If you want to preserve the request method and body,
     /// [`Redirect::temporary`] should be used instead.
     ///
-    /// # Panics
-    ///
-    /// If `uri` isn't a valid [`HeaderValue`].
-    ///
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/303
     pub fn to(uri: &str) -> Result<Self, RedirectUriError> {
         Self::with_status_code(StatusCode::SEE_OTHER, uri)
@@ -34,20 +30,12 @@ impl Redirect {
     /// This has the same behavior as [`Redirect::to`], except it will preserve the original HTTP
     /// method and body.
     ///
-    /// # Panics
-    ///
-    /// If `uri` isn't a valid [`HeaderValue`].
-    ///
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/307
     pub fn temporary(uri: &str) -> Result<Self, RedirectUriError> {
         Self::with_status_code(StatusCode::TEMPORARY_REDIRECT, uri)
     }
 
     /// Create a new [`Redirect`] that uses a [`308 Permanent Redirect`][mdn] status code.
-    ///
-    /// # Panics
-    ///
-    /// If `uri` isn't a valid [`HeaderValue`].
     ///
     /// [mdn]: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/308
     pub fn permanent(uri: &str) -> Result<Self, RedirectUriError> {
@@ -63,7 +51,7 @@ impl Redirect {
         );
 
         HeaderValue::try_from(uri)
-            .map_err(|_| RedirectUriError(uri.to_owned()))
+            .map_err(|_| RedirectUriError { _priv: () })
             .map(|location| Self {
                 status_code,
                 location,
@@ -85,11 +73,13 @@ impl IntoResponse for Redirect {
 
 /// 重定向的URI不是有效的标头值。
 #[derive(Debug, Clone)]
-pub struct RedirectUriError(pub String);
+pub struct RedirectUriError {
+    _priv: (),
+}
 
 impl std::fmt::Display for RedirectUriError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "redirect uri isn't a valid header value ({})", self.0)
+        write!(f, "redirect uri isn't a valid header value")
     }
 }
 
