@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, time::Duration};
+use std::{borrow::Cow, time::Duration};
 
 /// 服务器发送的事件。
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -34,8 +34,8 @@ impl Event {
     }
 }
 
-impl fmt::Display for Event {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl std::fmt::Display for Event {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(comment) = &self.comment {
             writeln!(f, ": {comment}")?;
         }
@@ -202,13 +202,13 @@ pub struct EventValueError {
 }
 
 impl std::fmt::Debug for EventValueError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("EventValueError").finish()
     }
 }
 
 impl std::fmt::Display for EventValueError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "SSE event value cannot contain newlines or carriage returns"

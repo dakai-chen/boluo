@@ -1,4 +1,4 @@
-use std::{fmt, future::Future};
+use std::future::Future;
 
 use super::Service;
 
@@ -41,8 +41,8 @@ where
     }
 }
 
-impl<F> fmt::Debug for ServiceFn<F> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+impl<F> std::fmt::Debug for ServiceFn<F> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ServiceFn")
             .field("f", &std::any::type_name::<F>())
             .finish()
