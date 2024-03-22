@@ -398,10 +398,10 @@ impl std::fmt::Display for HeaderResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             HeaderResponseError::InvalidHeaderName(e) => {
-                write!(f, "invalid header name ({e})")
+                write!(f, "invalid response header name ({e})")
             }
             HeaderResponseError::InvalidHeaderValue(e) => {
-                write!(f, "invalid header value ({e})")
+                write!(f, "invalid response header value ({e})")
             }
         }
     }
