@@ -72,9 +72,14 @@ impl IntoResponse for Redirect {
 }
 
 /// 重定向的URI不是有效的标头值。
-#[derive(Debug, Clone)]
 pub struct RedirectUriError {
     _priv: (),
+}
+
+impl std::fmt::Debug for RedirectUriError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("RedirectUriError").finish()
+    }
 }
 
 impl std::fmt::Display for RedirectUriError {

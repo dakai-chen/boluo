@@ -180,7 +180,7 @@ impl EventBuilder {
         if memchr::memchr2(b'\r', b'\n', value.as_bytes()).is_none() {
             Ok(value)
         } else {
-            Err(EventValueError)
+            Err(EventValueError { _priv: () })
         }
     }
 
@@ -191,14 +191,21 @@ impl EventBuilder {
         if memchr::memchr(b'\r', value.as_bytes()).is_none() {
             Ok(value)
         } else {
-            Err(EventValueError)
+            Err(EventValueError { _priv: () })
         }
     }
 }
 
-/// 事件值包含回车符或回车符。
-#[derive(Debug, Clone, Copy)]
-pub struct EventValueError;
+/// SSE事件值不能包含换行或回车。
+pub struct EventValueError {
+    _priv: (),
+}
+
+impl std::fmt::Debug for EventValueError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("EventValueError").finish()
+    }
+}
 
 impl std::fmt::Display for EventValueError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {

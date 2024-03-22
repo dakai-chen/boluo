@@ -346,16 +346,16 @@ where
     V: TryInto<HeaderValue>,
     V::Error: std::fmt::Display,
 {
-    type Error = IntoHeaderError;
+    type Error = HeaderResponseError;
 
     fn into_response_parts(self, mut parts: ResponseParts) -> Result<ResponseParts, Self::Error> {
         for (k, v) in self {
             let k = k
                 .try_into()
-                .map_err(|e| IntoHeaderError::InvalidName(e.to_string()))?;
+                .map_err(|e| HeaderResponseError::InvalidHeaderName(e.to_string()))?;
             let v = v
                 .try_into()
-                .map_err(|e| IntoHeaderError::InvalidValue(e.to_string()))?;
+                .map_err(|e| HeaderResponseError::InvalidHeaderValue(e.to_string()))?;
             parts.headers.insert(k, v);
         }
         Ok(parts)
@@ -369,42 +369,42 @@ where
     V: TryInto<HeaderValue>,
     V::Error: std::fmt::Display,
 {
-    type Error = IntoHeaderError;
+    type Error = HeaderResponseError;
 
     fn into_response_parts(self, mut parts: ResponseParts) -> Result<ResponseParts, Self::Error> {
         for (k, v) in self {
             let k = k
                 .try_into()
-                .map_err(|e| IntoHeaderError::InvalidName(e.to_string()))?;
+                .map_err(|e| HeaderResponseError::InvalidHeaderName(e.to_string()))?;
             let v = v
                 .try_into()
-                .map_err(|e| IntoHeaderError::InvalidValue(e.to_string()))?;
+                .map_err(|e| HeaderResponseError::InvalidHeaderValue(e.to_string()))?;
             parts.headers.insert(k, v);
         }
         Ok(parts)
     }
 }
 
-/// 无法从其他类型转换为标头。
-#[derive(Debug)]
-pub enum IntoHeaderError {
+/// 标头响应错误。
+#[derive(Debug, Clone)]
+pub enum HeaderResponseError {
     /// 无效的标头名。
-    InvalidName(String),
+    InvalidHeaderName(String),
     /// 无效的标头值。
-    InvalidValue(String),
+    InvalidHeaderValue(String),
 }
 
-impl std::fmt::Display for IntoHeaderError {
+impl std::fmt::Display for HeaderResponseError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            IntoHeaderError::InvalidName(e) => {
+            HeaderResponseError::InvalidHeaderName(e) => {
                 write!(f, "invalid header name ({e})")
             }
-            IntoHeaderError::InvalidValue(e) => {
+            HeaderResponseError::InvalidHeaderValue(e) => {
                 write!(f, "invalid header value ({e})")
             }
         }
     }
 }
 
-impl std::error::Error for IntoHeaderError {}
+impl std::error::Error for HeaderResponseError {}

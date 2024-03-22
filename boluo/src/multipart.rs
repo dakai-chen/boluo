@@ -142,7 +142,7 @@ impl Stream for Field {
 }
 
 /// `multipart/form-data`解析错误。
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum MultipartError {
     /// 不支持的内容类型。
     UnsupportedContentType,

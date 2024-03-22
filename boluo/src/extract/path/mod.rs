@@ -155,7 +155,7 @@ where
 }
 
 /// 路径参数提取错误。
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum PathExtractError {
     /// 参数数量不正确。
     WrongNumberOfParameters {
