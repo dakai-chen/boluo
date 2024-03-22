@@ -12,7 +12,10 @@ where
     type Error = FormResponseError;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let data = serde_urlencoded::to_string(&self.0)?;
+        let data = match serde_urlencoded::to_string(&self.0) {
+            Ok(data) => data,
+            Err(e) => return Err(FormResponseError::FailedToSerialize(e)),
+        };
         let mut res = Response::new(Body::from(data));
         res.headers_mut().insert(
             header::CONTENT_TYPE,
@@ -40,9 +43,3 @@ impl std::fmt::Display for FormResponseError {
 }
 
 impl std::error::Error for FormResponseError {}
-
-impl From<serde_urlencoded::ser::Error> for FormResponseError {
-    fn from(error: serde_urlencoded::ser::Error) -> Self {
-        FormResponseError::FailedToSerialize(error)
-    }
-}

@@ -12,7 +12,10 @@ where
     type Error = JsonResponseError;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let data = serde_json::to_vec(&self.0)?;
+        let data = match serde_json::to_vec(&self.0) {
+            Ok(data) => data,
+            Err(e) => return Err(JsonResponseError::FailedToSerialize(e)),
+        };
         let mut res = Response::new(Body::from(data));
         res.headers_mut().insert(
             header::CONTENT_TYPE,
@@ -40,9 +43,3 @@ impl std::fmt::Display for JsonResponseError {
 }
 
 impl std::error::Error for JsonResponseError {}
-
-impl From<serde_json::Error> for JsonResponseError {
-    fn from(error: serde_json::Error) -> Self {
-        JsonResponseError::FailedToSerialize(error)
-    }
-}
