@@ -363,7 +363,7 @@ where
     S::Error: Into<BoxError>,
 {
     boluo_core::util::__try_downcast(service).unwrap_or_else(|service| {
-        let service = service.map_result(|res: Result<S::Response, S::Error>| {
+        let service = service.map_result(|res| {
             res.map_err(Into::into)
                 .and_then(|r| r.into_response().map_err(Into::into))
                 .or_else(|e| {
