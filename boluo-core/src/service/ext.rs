@@ -64,7 +64,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = service_fn(throw_error);
-    /// let service = service.then(|result: Result<(), MyError>| async move {
+    /// let service = service.then(|result| async move {
     ///     if let Err(err) = &result {
     ///         // 打印错误信息。
     ///         println!("{err}");
@@ -88,7 +88,6 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// ```
     /// use boluo_core::body::Body;
     /// use boluo_core::handler::handler_fn;
-    /// use boluo_core::response::Response;
     /// use boluo_core::service::ServiceExt;
     /// use boluo_core::BoxError;
     ///
@@ -97,7 +96,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = handler_fn(hello);
-    /// let service = service.and_then(|response: Response| async move {
+    /// let service = service.and_then(|response| async move {
     ///     // 清空响应主体。
     ///     Ok::<_, BoxError>(response.map(|_| Body::empty()))
     /// });
@@ -120,7 +119,6 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// use boluo_core::http::StatusCode;
     /// use boluo_core::response::IntoResponse;
     /// use boluo_core::service::ServiceExt;
-    /// use boluo_core::BoxError;
     ///
     /// #[derive(Debug)]
     /// struct MyError;
@@ -138,7 +136,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = handler_fn(throw_error);
-    /// let service = service.or_else(|err: BoxError| async move {
+    /// let service = service.or_else(|err| async move {
     ///     // 捕获错误并转换为响应。
     ///     if let Some(e) = err.downcast_ref::<MyError>() {
     ///         let status = StatusCode::INTERNAL_SERVER_ERROR;
@@ -163,6 +161,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// ```
     /// use std::convert::Infallible;
     ///
+    /// use boluo_core::response::{IntoResponse, Response};
     /// use boluo_core::service::{service_fn, ServiceExt};
     ///
     /// #[derive(Debug)]
@@ -181,14 +180,12 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = service_fn(throw_error);
-    /// let service = service.map_result(
-    ///     |result: Result<(), MyError>| -> Result<String, Infallible> {
-    ///         match result {
-    ///             Ok(_) => Ok(format!("")),
-    ///             Err(e) => Ok(format!("{e}")),
-    ///         }
-    ///     },
-    /// );
+    /// let service = service.map_result(|result| -> Result<Response, Infallible> {
+    ///     match result {
+    ///         Ok(r) => r.into_response(),
+    ///         Err(e) => format!("{e}").into_response(),
+    ///     }
+    /// });
     /// ```
     fn map_result<F, Res, Err>(self, f: F) -> MapResult<Self, F>
     where
@@ -213,7 +210,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = service_fn(hello);
-    /// let service = service.map_response(|text: &'static str| Body::from(text));
+    /// let service = service.map_response(|text| Body::from(text));
     /// ```
     fn map_response<F, Res>(self, f: F) -> MapResponse<Self, F>
     where
@@ -247,7 +244,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = service_fn(throw_error);
-    /// let service = service.map_err(|err: MyError| BoxError::from(err));
+    /// let service = service.map_err(|err| BoxError::from(err));
     /// ```
     fn map_err<F, Err>(self, f: F) -> MapErr<Self, F>
     where
@@ -271,9 +268,9 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = service_fn(echo);
-    /// let service = service.map_request(|req: &[u8]| {
+    /// let service = service.map_request(|slice: &[u8]| {
     ///     // 将字节片转换为包含无效字符的字符串。
-    ///     String::from_utf8_lossy(&req).into_owned()
+    ///     String::from_utf8_lossy(slice).into_owned()
     /// });
     ///
     /// let fut = service.call(b"Hello, World");
