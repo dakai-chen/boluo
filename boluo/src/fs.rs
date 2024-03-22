@@ -1,6 +1,7 @@
 //! 静态文件服务。
 
 use std::fs::Metadata;
+use std::future::Future;
 use std::io::{self, SeekFrom};
 use std::ops::Bound;
 use std::path::{Path, PathBuf};
@@ -9,7 +10,7 @@ use std::task::Poll;
 
 use boluo_core::body::Body;
 use boluo_core::http::StatusCode;
-use boluo_core::request::Request;
+use boluo_core::request::{Request, RequestParts};
 use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::Service;
 use bytes::{Bytes, BytesMut};
@@ -45,15 +46,15 @@ impl ServeFile {
     }
 }
 
-impl<B> Service<Request<B>> for ServeFile
-where
-    B: Send,
-{
+impl<B> Service<Request<B>> for ServeFile {
     type Response = Response;
-    type Error = FileError;
+    type Error = ServeFileError;
 
-    async fn call(&self, req: Request<B>) -> Result<Self::Response, Self::Error> {
-        response_file(req, &self.path).await
+    fn call(
+        &self,
+        req: Request<B>,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        serve_file(req.into_parts(), &self.path)
     }
 }
 
@@ -79,34 +80,30 @@ impl ServeDir {
     }
 }
 
-impl<B> Service<Request<B>> for ServeDir
-where
-    B: Send,
-{
+impl<B> Service<Request<B>> for ServeDir {
     type Response = Response;
-    type Error = FileError;
+    type Error = ServeFileError;
 
-    async fn call(&self, req: Request<B>) -> Result<Self::Response, Self::Error> {
-        let Some(path) = sanitize_path(&self.root, req.uri().path()) else {
-            return Err(FileError::NotFound);
-        };
-        response_file(req, &path).await
+    fn call(
+        &self,
+        req: Request<B>,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let parts = req.into_parts();
+        let path = sanitize_path(&self.root, parts.uri.path());
+        async move {
+            if let Some(path) = path {
+                serve_file(parts, &path).await
+            } else {
+                Err(ServeFileError::NotFound)
+            }
+        }
     }
 }
 
-async fn response_file<B: Send>(req: Request<B>, path: &Path) -> Result<Response, FileError> {
-    let conditionals = Conditionals::from(req.headers());
-    match TkFile::open(path).await {
-        Ok(f) => read_file(f, path, conditionals).await,
-        Err(e) => {
-            let err = match e.kind() {
-                io::ErrorKind::NotFound => FileError::NotFound,
-                io::ErrorKind::PermissionDenied => FileError::PermissionDenied(e),
-                _ => FileError::OpenFailed(e),
-            };
-            Err(err)
-        }
-    }
+async fn serve_file(parts: RequestParts, path: &Path) -> Result<Response, ServeFileError> {
+    let conditionals = Conditionals::from(&parts.headers);
+    let file = TkFile::open(path).await.map_err(ServeFileError::from_io)?;
+    read_file(file, path, conditionals).await
 }
 
 fn sanitize_path(base: impl AsRef<Path>, tail: &str) -> Option<PathBuf> {
@@ -183,23 +180,17 @@ impl From<&HeaderMap> for Conditionals {
     }
 }
 
-async fn metadata(f: TkFile) -> Result<(TkFile, Metadata), FileError> {
-    match f.metadata().await {
-        Ok(meta) => Ok((f, meta)),
-        Err(err) => Err(match err.kind() {
-            io::ErrorKind::NotFound => FileError::NotFound,
-            io::ErrorKind::PermissionDenied => FileError::PermissionDenied(err),
-            _ => FileError::OpenFailed(err),
-        }),
-    }
+async fn metadata(file: TkFile) -> Result<(TkFile, Metadata), ServeFileError> {
+    let meta = file.metadata().await.map_err(ServeFileError::from_io)?;
+    Ok((file, meta))
 }
 
 async fn read_file(
-    f: TkFile,
+    file: TkFile,
     path: &Path,
     conditionals: Conditionals,
-) -> Result<Response, FileError> {
-    let (file, meta) = metadata(f).await?;
+) -> Result<Response, ServeFileError> {
+    let (file, meta) = metadata(file).await?;
 
     let mut len = meta.len();
     let modified = meta.modified().ok().map(LastModified::from);
@@ -346,52 +337,41 @@ fn reserve_at_least(buf: &mut BytesMut, cap: usize) {
     }
 }
 
-const DEFAULT_READ_BUF_SIZE: usize = 8_192;
-
 fn optimal_buf_size(metadata: &Metadata) -> usize {
-    let block_size = get_block_size(metadata);
+    const DEFAULT_READ_BUF_SIZE: u64 = 8_192;
 
     // If file length is smaller than block size, don't waste space
     // reserving a bigger-than-needed buffer.
-    std::cmp::min(block_size as u64, metadata.len()) as usize
+    let size = std::cmp::min(DEFAULT_READ_BUF_SIZE, metadata.len());
+
+    usize::try_from(size).unwrap_or(usize::MAX)
 }
 
-#[cfg(unix)]
-fn get_block_size(metadata: &Metadata) -> usize {
-    use std::os::unix::fs::MetadataExt;
-    //TODO: blksize() returns u64, should handle bad cast...
-    //(really, a block size bigger than 4gb?)
-
-    // Use device blocksize unless it's really small.
-    std::cmp::max(metadata.blksize() as usize, DEFAULT_READ_BUF_SIZE)
-}
-
-#[cfg(not(unix))]
-fn get_block_size(_metadata: &Metadata) -> usize {
-    DEFAULT_READ_BUF_SIZE
-}
-
-/// 文件错误。
+/// 提供文件错误。
 #[derive(Debug)]
-pub enum FileError {
+pub enum ServeFileError {
     /// 文件不存在。
     NotFound,
-    /// 文件打开失败。
-    OpenFailed(io::Error),
-    /// 操作文件缺乏所需的权限。
-    PermissionDenied(io::Error),
+    /// IO错误。
+    IO(io::Error),
 }
 
-impl std::fmt::Display for FileError {
+impl std::fmt::Display for ServeFileError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            FileError::NotFound => f.write_str("file not found"),
-            FileError::OpenFailed(e) => write!(f, "file open failed: ({})", e),
-            FileError::PermissionDenied(e) => {
-                write!(f, "file permission denied: ({})", e)
-            }
+            ServeFileError::NotFound => f.write_str("not found"),
+            ServeFileError::IO(e) => write!(f, "io: {e}"),
         }
     }
 }
 
-impl std::error::Error for FileError {}
+impl std::error::Error for ServeFileError {}
+
+impl ServeFileError {
+    fn from_io(error: io::Error) -> Self {
+        match error.kind() {
+            io::ErrorKind::NotFound => ServeFileError::NotFound,
+            _ => ServeFileError::IO(error),
+        }
+    }
+}
