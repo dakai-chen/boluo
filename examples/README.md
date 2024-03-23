@@ -16,4 +16,6 @@ cargo run --bin [crate] # [crate]替换为具体的示例项目
 | [graceful_shutdown](./graceful_shutdown/) | 优雅关机                                   |
 | [sse](./sse/)                             | 服务器发送事件                             |
 | [ws](./ws/)                               | 网络套接字                                 |
+| [log](./log/)                             | 记录请求日志                               |
+| [static_file](./static_file/)             | 静态文件服务                               |
 | [compat_tower](./compat_tower/)           | 使用`tower`的服务和中间件                  |
