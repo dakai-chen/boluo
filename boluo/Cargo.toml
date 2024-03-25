@@ -54,7 +54,6 @@ server = [
     "hyper/server",
     "hyper-util/tokio",
     "hyper-util/server",
-    "hyper-util/server-auto",
     "tokio/rt",
     "tokio/macros",
     "tokio-util",
