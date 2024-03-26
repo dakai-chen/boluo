@@ -196,6 +196,12 @@ impl EventBuilder {
     }
 }
 
+impl Default for EventBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// SSE事件值不能包含换行或回车。
 pub struct EventValueError {
     _priv: (),
