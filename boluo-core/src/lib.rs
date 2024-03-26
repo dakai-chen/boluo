@@ -1,9 +1,12 @@
 //! `boluo`的核心类型和特征。
 
 #![forbid(unsafe_code)]
-#![deny(unreachable_pub)]
-#![warn(missing_debug_implementations)]
-#![warn(missing_docs)]
+#![warn(
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    unreachable_pub
+)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
 #[macro_use]

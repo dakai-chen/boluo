@@ -58,7 +58,7 @@ macro_rules! parse_value {
 
             let v = value.parse().map_err(|_| match self.key {
                 KeyOrIdx::Key(key) => PathDeserializationError::ParseErrorAtKey {
-                    key: key.to_string(),
+                    key: key.to_owned(),
                     value: value.into_owned(),
                     expected_type: $ty,
                 },
@@ -179,7 +179,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        if self.path_params.len() != 0 {
+        if !self.path_params.is_empty() {
             return Err(PathDeserializationError::WrongNumberOfParameters {
                 got: self.path_params.len(),
                 expected: 0,

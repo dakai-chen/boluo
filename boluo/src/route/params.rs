@@ -24,7 +24,7 @@ impl PathParams {
     }
 }
 
-pub(super) fn prase_path_params(params: Params) -> (PathParams, Option<String>) {
+pub(super) fn prase_path_params(params: Params<'_, '_>) -> (PathParams, Option<String>) {
     let mut path_params = PathParams::with_capacity(params.len());
     let mut tail_params = None;
 

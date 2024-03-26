@@ -20,7 +20,7 @@ where
 
         let bytes = Bytes::from_request(req)
             .await
-            .map_err(|e| JsonExtractError::FailedToBufferBody(e.into()))?;
+            .map_err(JsonExtractError::FailedToBufferBody)?;
 
         serde_json::from_slice::<T>(&bytes)
             .map(|value| Json(value))

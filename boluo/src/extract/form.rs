@@ -28,7 +28,7 @@ where
 
             let bytes = Bytes::from_request(req)
                 .await
-                .map_err(|e| FormExtractError::FailedToBufferBody(e.into()))?;
+                .map_err(FormExtractError::FailedToBufferBody)?;
 
             serde_urlencoded::from_bytes::<T>(&bytes)
                 .map(|value| Form(value))

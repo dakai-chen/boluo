@@ -21,7 +21,7 @@ pub(crate) fn route(attr: TokenStream, item: TokenStream) -> TokenStream {
 struct PathAttr(String);
 
 impl Parse for PathAttr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         input.parse::<LitStr>().map(|s| s.value()).map(Self)
     }
 }
@@ -36,7 +36,7 @@ impl ToTokens for PathAttr {
 struct MethodAttr(String);
 
 impl MethodAttr {
-    fn parse_array(input: ParseStream) -> syn::Result<Vec<Self>> {
+    fn parse_array(input: ParseStream<'_>) -> syn::Result<Vec<Self>> {
         let content;
         let _bracket_token = syn::bracketed!(content in input);
 
@@ -44,17 +44,17 @@ impl MethodAttr {
         Ok(methods.into_iter().collect())
     }
 
-    fn parse_str(input: ParseStream) -> syn::Result<Self> {
+    fn parse_str(input: ParseStream<'_>) -> syn::Result<Self> {
         input.parse::<LitStr>().and_then(MethodAttr::try_from)
     }
 
-    fn parse(input: ParseStream) -> syn::Result<Vec<Self>> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Vec<Self>> {
         let name = input.parse::<Ident>()?;
 
         if name != "method" {
             return Err(Error::new_spanned(
                 &name,
-                &format!("illegal attribute `{}`", name),
+                format!("illegal attribute `{name}`"),
             ));
         }
 
@@ -79,7 +79,7 @@ impl TryFrom<LitStr> for MethodAttr {
 
     fn try_from(value: LitStr) -> Result<Self, Self::Error> {
         let method = value.value();
-        if method.len() == 0 {
+        if method.is_empty() {
             Err(Error::new_spanned(value, "invalid HTTP method"))
         } else {
             Ok(Self(method))
@@ -93,11 +93,11 @@ struct RouteAttr {
 }
 
 impl Parse for RouteAttr {
-    fn parse(input: ParseStream) -> syn::Result<Self> {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
         let path = PathAttr::parse(input).map_err(|_| {
             Error::new(
                 Span::call_site(),
-                format!(r#"invalid route definition, expected #[route("<path>")]"#),
+                r#"invalid route definition, expected #[route("<path>")]"#,
             )
         })?;
 

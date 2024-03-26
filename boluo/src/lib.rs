@@ -257,9 +257,12 @@
 //! [`ServiceExt::with`]: crate::service::ServiceExt::with
 
 #![forbid(unsafe_code)]
-#![deny(unreachable_pub)]
-#![warn(missing_debug_implementations)]
-#![warn(missing_docs)]
+#![warn(
+    missing_debug_implementations,
+    missing_docs,
+    rust_2018_idioms,
+    unreachable_pub
+)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
 pub use boluo_core::name;

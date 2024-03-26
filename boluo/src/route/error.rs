@@ -100,7 +100,7 @@ impl RouterError {
         match error {
             matchit::InsertError::Conflict { .. } => RouterError::PathConflict {
                 path,
-                message: format!("conflict with previously registered path"),
+                message: "conflict with previously registered path".to_owned(),
             },
             _ => RouterError::InvalidPath {
                 path,

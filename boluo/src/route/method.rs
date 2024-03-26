@@ -115,6 +115,7 @@ impl<S> MethodRoute<S> {
     /// 增加访问服务的请求方法。
     ///
     /// 使用[`any`]创建的方法路由调用此函数后，服务不再接收任意方法的请求。
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, method: Method) -> Self {
         self.methods = self.methods.add(method);
         self
@@ -291,7 +292,7 @@ impl MergeToMethodRouter for MethodRoute<ArcService<Request, Response, BoxError>
             }
             Methods::Set(methods) => {
                 for method in methods.iter() {
-                    if router.contains(&method) {
+                    if router.contains(method) {
                         return Err(Some(method.clone()));
                     }
                 }

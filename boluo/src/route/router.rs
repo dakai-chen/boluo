@@ -12,7 +12,7 @@ use matchit::{Match, MatchError};
 use super::method::{MergeToMethodRouter, MethodRouter};
 use super::{IntoMethodRoute, MethodRoute, RouteError, RouterError};
 
-pub(super) const PRIVATE_TAIL_PARAM: &'static str = "__private__tail_param";
+pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__tail_param";
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 struct RouteId(u32);
@@ -51,7 +51,7 @@ impl RouterInner {
     }
 
     fn add(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = self.next().ok_or_else(|| RouterError::TooManyPath)?;
+        let id = self.next().ok_or(RouterError::TooManyPath)?;
 
         if let Err(e) = self.inner.insert(path, id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
@@ -150,7 +150,7 @@ impl Router {
         if !path.starts_with('/') {
             return Err(RouterError::InvalidPath {
                 path: path.to_owned(),
-                message: format!("path must start with a `/`"),
+                message: "path must start with a `/`".to_owned(),
             });
         }
         let path = if let Some((path, "")) = path.rsplit_once("{*}") {
@@ -203,7 +203,7 @@ impl Router {
         if !path.starts_with('/') {
             return Err(RouterError::InvalidPath {
                 path: path.to_owned(),
-                message: format!("path must start with a `/`"),
+                message: "path must start with a `/`".to_owned(),
             });
         }
         let ep = Endpoint::Scope(
@@ -215,11 +215,11 @@ impl Router {
             self.add_route(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep)
         } else if path.ends_with('/') {
             self.add_route(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
-                .add_route(format!("{path}"), ep)
+                .add_route(path.to_owned(), ep)
         } else {
             self.add_route(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
                 .add_route(format!("{path}/"), ep.clone())?
-                .add_route(format!("{path}"), ep)
+                .add_route(path.to_owned(), ep)
         }
     }
 
@@ -384,7 +384,7 @@ impl Router {
                 else {
                     return Err(RouterError::PathConflict {
                         path,
-                        message: format!("conflict with previously registered path"),
+                        message: "conflict with previously registered path".to_owned(),
                     });
                 };
                 service.merge_to_with(router, middleware)
@@ -397,7 +397,7 @@ impl Router {
                 else {
                     return Err(RouterError::PathConflict {
                         path,
-                        message: format!("conflict with previously registered path"),
+                        message: "conflict with previously registered path".to_owned(),
                     });
                 };
                 service.merge_to_with(router, middleware)
@@ -409,7 +409,7 @@ impl Router {
                 Some(method) => {
                     format!("conflict with previously registered `{method}` HTTP method")
                 }
-                None => format!("conflict with previously registered any HTTP method"),
+                None => "conflict with previously registered any HTTP method".to_owned(),
             };
             return Err(RouterError::PathConflict { path, message });
         }
@@ -520,8 +520,8 @@ impl<S> Route<S> {
 fn replace_request_path(req: &mut Request, path: &str) {
     let uri = req.uri_mut();
 
-    let path = if path.starts_with('/') {
-        path[1..].as_ref()
+    let path = if let Some(path) = path.strip_prefix('/') {
+        path
     } else {
         path
     };

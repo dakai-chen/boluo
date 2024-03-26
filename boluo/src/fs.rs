@@ -112,15 +112,10 @@ fn sanitize_path(base: impl AsRef<Path>, tail: &str) -> Option<PathBuf> {
         return None;
     };
     for seg in tail.split('/') {
-        if seg.starts_with("..") {
+        if seg.starts_with("..") || seg.contains('\\') || (cfg!(windows) && seg.contains(':')) {
             return None;
-        } else if seg.contains('\\') {
-            return None;
-        } else if cfg!(windows) && seg.contains(':') {
-            return None;
-        } else {
-            buf.push(seg);
         }
+        buf.push(seg);
     }
     Some(buf)
 }
@@ -224,7 +219,7 @@ async fn read_file(
         len = sub_len;
     }
 
-    let mime = mime_guess::from_path(&path).first_or_octet_stream();
+    let mime = mime_guess::from_path(path).first_or_octet_stream();
 
     resp.headers_mut().typed_insert(ContentLength(len));
     resp.headers_mut().typed_insert(ContentType::from(mime));
