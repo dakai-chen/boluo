@@ -106,6 +106,26 @@ macro_rules! handler_tuples {
                 (self.f)($($ty,)*).await.into_response().map_err(Into::into)
             }
         }
+
+        #[allow(non_snake_case)]
+        impl<F, Fut, $($ty,)*> Service<Request> for HandlerFn<F, ($($ty,)* Request)>
+        where
+            F: Fn($($ty,)* Request) -> Fut + Send + Sync,
+            Fut: Future + Send,
+            Fut::Output: IntoResponse,
+            $($ty: FromRequest + Send,)*
+            $(<$ty as FromRequest>::Error: Into<BoxError>,)*
+        {
+            type Response = Response;
+            type Error = BoxError;
+
+            async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
+                $(
+                    let $ty = $ty::from_request(&mut req).await.map_err(Into::into)?;
+                )*
+                (self.f)($($ty,)* req).await.into_response().map_err(Into::into)
+            }
+        }
     };
 }
 
