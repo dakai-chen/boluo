@@ -31,7 +31,7 @@ cargo new demo && cd demo
 
 ```toml
 [dependencies]
-boluo = "0.3"
+boluo = "0.4"
 tokio = { version = "1", features = ["full"] }
 ```
 
