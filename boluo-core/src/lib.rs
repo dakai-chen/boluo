@@ -9,9 +9,6 @@
 )]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
-#[macro_use]
-mod macros;
-
 #[doc(hidden)]
 pub mod util;
 

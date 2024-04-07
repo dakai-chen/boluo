@@ -35,6 +35,7 @@ where
 }
 
 /// 断言`S`是一个[`Service`]。
+#[inline]
 pub(crate) fn assert_service<S, R>(service: S) -> S
 where
     S: Service<R>,

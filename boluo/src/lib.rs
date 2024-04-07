@@ -265,7 +265,6 @@
 )]
 #![cfg_attr(docsrs, feature(doc_auto_cfg, doc_cfg))]
 
-pub use boluo_core::name;
 pub use boluo_core::BoxError;
 pub use boluo_core::{body, handler, http, request, service};
 
