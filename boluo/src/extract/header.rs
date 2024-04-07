@@ -1,104 +1,29 @@
-use std::marker::PhantomData;
-use std::str::FromStr;
+use std::ops::{Deref, DerefMut};
 
-use boluo_core::extract::{FromRequest, Name};
-use boluo_core::http::{HeaderName, HeaderValue};
+use boluo_core::extract::FromRequest;
+use boluo_core::http::HeaderName;
 use boluo_core::request::Request;
-use boluo_core::BoxError;
+use headers::{Header, HeaderMapExt};
 
-/// 根据标头名获取原始标头值的提取器，不对标头值进行解析。
+/// 获取请求标头值的提取器。
+///
+/// `T`需要实现[`Header`]。
 ///
 /// # 例子
 ///
 /// ```
-/// use boluo::extract::RawHeaderOfName;
+/// use boluo::extract::TypedHeader;
+/// use boluo::headers::Host;
 ///
 /// #[boluo::route("/", method = "GET")]
-/// async fn handler(RawHeaderOfName(host, _): RawHeaderOfName<name::host>) {
+/// async fn handler(TypedHeader(host): TypedHeader<Host>) {
 ///     // ...
 /// }
-///
-/// mod name {
-///     #![allow(non_camel_case_types)]
-///     boluo::name! {
-///         pub host = "host";
-///     }
-/// }
 /// ```
-pub struct RawHeaderOfName<N>(pub HeaderValue, pub PhantomData<fn(N) -> N>);
+#[derive(Debug, Clone, Copy)]
+pub struct TypedHeader<T>(pub T);
 
-impl<N> std::ops::Deref for RawHeaderOfName<N> {
-    type Target = HeaderValue;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<N> std::ops::DerefMut for RawHeaderOfName<N> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<N> RawHeaderOfName<N> {
-    /// 得到内部的值。
-    #[inline]
-    pub fn into_inner(this: Self) -> HeaderValue {
-        this.0
-    }
-}
-
-impl<N> Clone for RawHeaderOfName<N> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), Default::default())
-    }
-}
-
-impl<N> std::fmt::Debug for RawHeaderOfName<N> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("RawHeaderOfName").field(&self.0).finish()
-    }
-}
-
-impl<N> FromRequest for RawHeaderOfName<N>
-where
-    N: Name,
-{
-    type Error = HeaderOfNameExtractError;
-
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        find_header_by_name(req, N::name())
-            .map(|value| RawHeaderOfName(value.to_owned(), Default::default()))
-    }
-}
-
-/// 根据标头名获取标头值的提取器。
-///
-/// `T`需要实现[`FromStr`]。
-///
-/// # 例子
-///
-/// ```
-/// use boluo::extract::HeaderOfName;
-///
-/// #[boluo::route("/", method = "GET")]
-/// async fn handler(HeaderOfName(host, _): HeaderOfName<name::host, String>) {
-///     // ...
-/// }
-///
-/// mod name {
-///     #![allow(non_camel_case_types)]
-///     boluo::name! {
-///         pub host = "host";
-///     }
-/// }
-/// ```
-pub struct HeaderOfName<N, T>(pub T, pub PhantomData<fn(N) -> N>);
-
-impl<N, T> std::ops::Deref for HeaderOfName<N, T> {
+impl<T> Deref for TypedHeader<T> {
     type Target = T;
 
     #[inline]
@@ -107,14 +32,14 @@ impl<N, T> std::ops::Deref for HeaderOfName<N, T> {
     }
 }
 
-impl<N, T> std::ops::DerefMut for HeaderOfName<N, T> {
+impl<T> DerefMut for TypedHeader<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<N, T> HeaderOfName<N, T> {
+impl<T> TypedHeader<T> {
     /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> T {
@@ -122,157 +47,41 @@ impl<N, T> HeaderOfName<N, T> {
     }
 }
 
-impl<N, T: Clone> Clone for HeaderOfName<N, T> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), Default::default())
-    }
-}
-
-impl<N, T: Copy> Copy for HeaderOfName<N, T> {}
-
-impl<N, T: std::fmt::Debug> std::fmt::Debug for HeaderOfName<N, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("HeaderOfName").field(&self.0).finish()
-    }
-}
-
-impl<N, T> FromRequest for HeaderOfName<N, T>
+impl<T> FromRequest for TypedHeader<T>
 where
-    N: Name,
-    T: FromStr,
-    T::Err: Into<BoxError>,
+    T: Header,
 {
-    type Error = HeaderOfNameExtractError;
+    type Error = TypedHeaderExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let name = N::name();
-
-        let value = find_header_by_name(req, name)?;
-        let value = percent_encoding::percent_decode(value.as_bytes())
-            .decode_utf8()
-            .map_err(|e| HeaderOfNameExtractError::ParseError {
-                name,
-                source: e.into(),
-            })?;
-
-        value
-            .parse::<T>()
-            .map(|value| HeaderOfName(value, Default::default()))
-            .map_err(|e| HeaderOfNameExtractError::ParseError {
-                name,
-                source: e.into(),
-            })
+        let OptionalTypedHeader(value) = OptionalTypedHeader::from_request(req).await?;
+        Ok(TypedHeader(value.ok_or_else(|| {
+            TypedHeaderExtractError::MissingHeader { name: T::name() }
+        })?))
     }
 }
 
-/// 根据标头名获取原始标头值的提取器，不对标头值进行解析。
+/// 获取请求标头值的提取器。
 ///
-/// 若标头不存在，则得到[`None`]。
+/// `T`需要实现[`Header`]。若标头不存在，则得到[`None`]。
 ///
 /// # 例子
 ///
 /// ```
-/// use boluo::extract::OptionalRawHeaderOfName;
+/// use boluo::extract::OptionalTypedHeader;
+/// use boluo::headers::Host;
 ///
 /// #[boluo::route("/", method = "GET")]
-/// async fn handler(OptionalRawHeaderOfName(host, _): OptionalRawHeaderOfName<name::host>) {
+/// async fn handler(OptionalTypedHeader(host): OptionalTypedHeader<Host>) {
 ///     if let Some(host) = host {
 ///         // ...
 ///     }
 /// }
-///
-/// mod name {
-///     #![allow(non_camel_case_types)]
-///     boluo::name! {
-///         pub host = "host";
-///     }
-/// }
 /// ```
-pub struct OptionalRawHeaderOfName<N>(pub Option<HeaderValue>, pub PhantomData<fn(N) -> N>);
+#[derive(Debug, Clone, Copy)]
+pub struct OptionalTypedHeader<T>(pub Option<T>);
 
-impl<N> std::ops::Deref for OptionalRawHeaderOfName<N> {
-    type Target = Option<HeaderValue>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<N> std::ops::DerefMut for OptionalRawHeaderOfName<N> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<N> OptionalRawHeaderOfName<N> {
-    /// 得到内部的值。
-    #[inline]
-    pub fn into_inner(this: Self) -> Option<HeaderValue> {
-        this.0
-    }
-}
-
-impl<N> Clone for OptionalRawHeaderOfName<N> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), Default::default())
-    }
-}
-
-impl<N> std::fmt::Debug for OptionalRawHeaderOfName<N> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("OptionalRawHeaderOfName")
-            .field(&self.0)
-            .finish()
-    }
-}
-
-impl<N> FromRequest for OptionalRawHeaderOfName<N>
-where
-    N: Name,
-{
-    type Error = HeaderOfNameExtractError;
-
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        match RawHeaderOfName::<N>::from_request(req).await {
-            Ok(RawHeaderOfName(value, _)) => {
-                Ok(OptionalRawHeaderOfName(Some(value), Default::default()))
-            }
-            Err(HeaderOfNameExtractError::MissingHeader { .. }) => {
-                Ok(OptionalRawHeaderOfName(None, Default::default()))
-            }
-            Err(e) => Err(e),
-        }
-    }
-}
-
-/// 根据标头名获取标头值的提取器。
-///
-/// `T`需要实现[`FromStr`]。若标头不存在，则得到[`None`]。
-///
-/// # 例子
-///
-/// ```
-/// use boluo::extract::OptionalHeaderOfName;
-///
-/// #[boluo::route("/", method = "GET")]
-/// async fn handler(OptionalHeaderOfName(host, _): OptionalHeaderOfName<name::host, String>) {
-///     if let Some(host) = host {
-///         // ...
-///     }
-/// }
-///
-/// mod name {
-///     #![allow(non_camel_case_types)]
-///     boluo::name! {
-///         pub host = "host";
-///     }
-/// }
-/// ```
-pub struct OptionalHeaderOfName<N, T>(pub Option<T>, pub PhantomData<fn(N) -> N>);
-
-impl<N, T> std::ops::Deref for OptionalHeaderOfName<N, T> {
+impl<T> Deref for OptionalTypedHeader<T> {
     type Target = Option<T>;
 
     #[inline]
@@ -281,14 +90,14 @@ impl<N, T> std::ops::Deref for OptionalHeaderOfName<N, T> {
     }
 }
 
-impl<N, T> std::ops::DerefMut for OptionalHeaderOfName<N, T> {
+impl<T> DerefMut for OptionalTypedHeader<T> {
     #[inline]
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<N, T> OptionalHeaderOfName<N, T> {
+impl<T> OptionalTypedHeader<T> {
     /// 得到内部的值。
     #[inline]
     pub fn into_inner(this: Self) -> Option<T> {
@@ -296,90 +105,51 @@ impl<N, T> OptionalHeaderOfName<N, T> {
     }
 }
 
-impl<N, T: Clone> Clone for OptionalHeaderOfName<N, T> {
-    fn clone(&self) -> Self {
-        Self(self.0.clone(), Default::default())
-    }
-}
-
-impl<N, T: Copy> Copy for OptionalHeaderOfName<N, T> {}
-
-impl<N, T: std::fmt::Debug> std::fmt::Debug for OptionalHeaderOfName<N, T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("OptionalHeaderOfName")
-            .field(&self.0)
-            .finish()
-    }
-}
-
-impl<N, T> FromRequest for OptionalHeaderOfName<N, T>
+impl<T> FromRequest for OptionalTypedHeader<T>
 where
-    N: Name,
-    T: FromStr,
-    T::Err: Into<BoxError>,
+    T: Header,
 {
-    type Error = HeaderOfNameExtractError;
+    type Error = TypedHeaderExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        match HeaderOfName::<N, T>::from_request(req).await {
-            Ok(HeaderOfName(value, _)) => Ok(OptionalHeaderOfName(Some(value), Default::default())),
-            Err(HeaderOfNameExtractError::MissingHeader { .. }) => {
-                Ok(OptionalHeaderOfName(None, Default::default()))
-            }
-            Err(e) => Err(e),
-        }
+        req.headers()
+            .typed_try_get()
+            .map(OptionalTypedHeader)
+            .map_err(|source| TypedHeaderExtractError::ParseError {
+                name: T::name(),
+                source,
+            })
     }
 }
 
-fn find_header_by_name<'a>(
-    req: &'a mut Request,
-    name: &'static str,
-) -> Result<&'a HeaderValue, HeaderOfNameExtractError> {
-    let Ok(header_name) = HeaderName::from_str(name) else {
-        return Err(HeaderOfNameExtractError::InvalidHeaderName { name });
-    };
-    let Some(header_value) = req.headers().get(header_name) else {
-        return Err(HeaderOfNameExtractError::MissingHeader { name });
-    };
-    Ok(header_value)
-}
-
-/// 标头提取错误。
+/// 获取请求标头值错误。
 #[derive(Debug)]
-pub enum HeaderOfNameExtractError {
+pub enum TypedHeaderExtractError {
     /// 标头不存在。
     MissingHeader {
         /// 标头名。
-        name: &'static str,
-    },
-    /// 无效的标头名。
-    InvalidHeaderName {
-        /// 标头名。
-        name: &'static str,
+        name: &'static HeaderName,
     },
     /// 解析错误。
     ParseError {
         /// 标头名。
-        name: &'static str,
+        name: &'static HeaderName,
         /// 错误源。
-        source: BoxError,
+        source: headers::Error,
     },
 }
 
-impl std::fmt::Display for HeaderOfNameExtractError {
+impl std::fmt::Display for TypedHeaderExtractError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            HeaderOfNameExtractError::MissingHeader { name } => {
+            TypedHeaderExtractError::MissingHeader { name } => {
                 write!(f, "missing request header `{name}`")
             }
-            HeaderOfNameExtractError::InvalidHeaderName { name } => {
-                write!(f, "invalid request header name `{name}`")
-            }
-            HeaderOfNameExtractError::ParseError { name, source } => {
+            TypedHeaderExtractError::ParseError { name, source } => {
                 write!(f, "failed to parse request header `{name}` ({source})")
             }
         }
     }
 }
 
-impl std::error::Error for HeaderOfNameExtractError {}
+impl std::error::Error for TypedHeaderExtractError {}

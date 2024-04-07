@@ -277,6 +277,8 @@ pub mod middleware;
 pub mod response;
 pub mod route;
 
+pub use headers;
+
 #[cfg(all(feature = "server", any(feature = "http1", feature = "http2")))]
 pub mod server;
 

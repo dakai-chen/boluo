@@ -29,6 +29,7 @@ pin-project-lite = "0.2"
 mime = "0.3"
 bytes = "1"
 percent-encoding = "2"
+headers = "0.4"
 
 multer = { version = "3", optional = true }
 hyper = { version = "1", optional = true }
@@ -38,7 +39,6 @@ tokio-util = { version = "0.7", optional = true }
 tokio-tungstenite = { version = "0.21", optional = true }
 sha1 = { version = "0.10", optional = true }
 base64 = { version = "0.22", optional = true }
-headers = { version = "0.4", optional = true }
 mime_guess = { version = "2", optional = true }
 memchr = { version = "2", optional = true }
 
@@ -70,7 +70,7 @@ ws = [
     "sha1",
     "base64",
 ]
-fs = ["tokio/fs", "tokio/io-util", "tokio-util/io", "headers", "mime_guess"]
+fs = ["tokio/fs", "tokio/io-util", "tokio-util/io", "mime_guess"]
 
 [package.metadata.docs.rs]
 all-features = true
