@@ -1,7 +1,6 @@
 //! 静态文件服务。
 
 use std::fs::Metadata;
-use std::future::Future;
 use std::io::{self, SeekFrom};
 use std::ops::Bound;
 use std::path::{Path, PathBuf};
@@ -46,15 +45,12 @@ impl ServeFile {
     }
 }
 
-impl<B> Service<Request<B>> for ServeFile {
+impl Service<Request> for ServeFile {
     type Response = Response;
     type Error = ServeFileError;
 
-    fn call(
-        &self,
-        req: Request<B>,
-    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        serve_file(req.into_parts(), &self.path)
+    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
+        serve_file(req.into_parts(), &self.path).await
     }
 }
 
@@ -80,22 +76,15 @@ impl ServeDir {
     }
 }
 
-impl<B> Service<Request<B>> for ServeDir {
+impl Service<Request> for ServeDir {
     type Response = Response;
     type Error = ServeFileError;
 
-    fn call(
-        &self,
-        req: Request<B>,
-    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        let parts = req.into_parts();
-        let path = sanitize_path(&self.root, parts.uri.path());
-        async move {
-            if let Some(path) = path {
-                serve_file(parts, &path).await
-            } else {
-                Err(ServeFileError::NotFound)
-            }
+    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
+        if let Some(path) = sanitize_path(&self.root, req.uri().path()) {
+            serve_file(req.into_parts(), &path).await
+        } else {
+            Err(ServeFileError::NotFound)
         }
     }
 }
