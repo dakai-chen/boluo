@@ -220,3 +220,6 @@ impl FromRequest for RequestParts {
         Ok(req.parts().clone())
     }
 }
+
+/// 简化[`Result`]提取器的书写。
+pub type ExtractResult<T> = std::result::Result<T, <T as FromRequest>::Error>;
