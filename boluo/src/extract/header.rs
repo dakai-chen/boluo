@@ -1,6 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use boluo_core::extract::FromRequest;
+use boluo_core::extract::{FromRequest, OptionalFromRequest};
 use boluo_core::http::HeaderName;
 use boluo_core::request::Request;
 use headers::{Header, HeaderMapExt};
@@ -54,67 +54,22 @@ where
     type Error = TypedHeaderExtractError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let OptionalTypedHeader(value) = OptionalTypedHeader::from_request(req).await?;
-        Ok(TypedHeader(value.ok_or_else(|| {
-            TypedHeaderExtractError::MissingHeader { name: T::name() }
-        })?))
+        Option::<TypedHeader<T>>::from_request(req)
+            .await?
+            .ok_or_else(|| TypedHeaderExtractError::MissingHeader { name: T::name() })
     }
 }
 
-/// 获取请求标头值的提取器。
-///
-/// `T`需要实现[`Header`]。若标头不存在，则得到[`None`]。
-///
-/// # 例子
-///
-/// ```
-/// use boluo::extract::OptionalTypedHeader;
-/// use boluo::headers::Host;
-///
-/// #[boluo::route("/", method = "GET")]
-/// async fn handler(OptionalTypedHeader(host): OptionalTypedHeader<Host>) {
-///     if let Some(host) = host {
-///         // ...
-///     }
-/// }
-/// ```
-#[derive(Debug, Clone, Copy)]
-pub struct OptionalTypedHeader<T>(pub Option<T>);
-
-impl<T> Deref for OptionalTypedHeader<T> {
-    type Target = Option<T>;
-
-    #[inline]
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for OptionalTypedHeader<T> {
-    #[inline]
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> OptionalTypedHeader<T> {
-    /// 得到内部的值。
-    #[inline]
-    pub fn into_inner(this: Self) -> Option<T> {
-        this.0
-    }
-}
-
-impl<T> FromRequest for OptionalTypedHeader<T>
+impl<T> OptionalFromRequest for TypedHeader<T>
 where
     T: Header,
 {
     type Error = TypedHeaderExtractError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
+    async fn from_request(req: &mut Request) -> Result<Option<Self>, Self::Error> {
         req.headers()
             .typed_try_get()
-            .map(OptionalTypedHeader)
+            .map(|v| v.map(TypedHeader))
             .map_err(|source| TypedHeaderExtractError::ParseError {
                 name: T::name(),
                 source,

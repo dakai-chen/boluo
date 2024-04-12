@@ -18,4 +18,4 @@ mod path;
 pub use path::{Path, PathExtractError, RawPathParams};
 
 mod header;
-pub use header::{OptionalTypedHeader, TypedHeader, TypedHeaderExtractError};
+pub use header::{TypedHeader, TypedHeaderExtractError};
