@@ -209,6 +209,7 @@ impl<S> IntoMethodRoute for MethodRoute<S> {
 }
 
 pub(super) trait MergeToMethodRouter: Sized {
+    #[allow(dead_code)]
     fn merge_to(self, router: &mut MethodRouter) -> Result<(), Option<Method>> {
         self.merge_to_with(router, middleware_fn(|s| s))
     }
