@@ -28,17 +28,17 @@ use tokio_tungstenite::WebSocketStream;
 ///
 /// ```
 /// use boluo::response::IntoResponse;
-/// use boluo::ws::WebSocketUpgrade;
+/// use boluo::ws::{WebSocket, WebSocketUpgrade};
 ///
 /// #[boluo::route("/", method = "GET")]
-/// async fn echo(upgrade: WebSocketUpgrade) -> impl IntoResponse {
-///     upgrade.on_upgrade(|mut socket| async move {
-///         while let Some(Ok(message)) = socket.recv().await {
-///             if let Err(e) = socket.send(message).await {
-///                 eprintln!("{e}");
-///             }
-///         }
-///     })
+/// async fn echo(upgrade: WebSocketUpgrade, /* WebSocket 协议升级对象 */) -> impl IntoResponse {
+///     upgrade.on_upgrade(handle) // 尝试将 HTTP 协议升级为 WebSocket 协议
+/// }
+///
+/// async fn handle(mut socket: WebSocket) {
+///     while let Some(Ok(message)) = socket.recv().await {
+///         socket.send(message).await.ok();
+///     }
 /// }
 /// ```
 pub struct WebSocketUpgrade {
@@ -113,7 +113,25 @@ impl WebSocketUpgrade {
         self
     }
 
-    /// 完成连接升级并调用提供异步函数。
+    /// 尝试将HTTP协议升级为WebSocket协议，升级成功将调用提供的异步函数。
+    ///
+    /// # 例子
+    ///
+    /// ```
+    /// use boluo::response::IntoResponse;
+    /// use boluo::ws::{WebSocket, WebSocketUpgrade};
+    ///
+    /// #[boluo::route("/", method = "GET")]
+    /// async fn echo(upgrade: WebSocketUpgrade, /* WebSocket 协议升级对象 */) -> impl IntoResponse {
+    ///     upgrade.on_upgrade(handle) // 尝试将 HTTP 协议升级为 WebSocket 协议
+    /// }
+    ///
+    /// async fn handle(mut socket: WebSocket) {
+    ///     while let Some(Ok(message)) = socket.recv().await {
+    ///         socket.send(message).await.ok();
+    ///     }
+    /// }
+    /// ```
     pub fn on_upgrade<F, Fut>(self, callback: F) -> Result<impl IntoResponse, BoxError>
     where
         F: FnOnce(WebSocket) -> Fut + Send + 'static,
