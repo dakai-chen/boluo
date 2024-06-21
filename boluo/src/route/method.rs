@@ -22,7 +22,7 @@ impl MethodRouter {
     }
 
     #[inline]
-    fn any(&mut self, service: ArcService<Request, Response, BoxError>) {
+    fn add_any(&mut self, service: ArcService<Request, Response, BoxError>) {
         self.any = Some(service);
     }
 
@@ -247,7 +247,7 @@ impl MergeToMethodRouter for MethodRouter {
             if router.contains_any() {
                 return Err(None);
             }
-            router.any(boluo_core::util::__into_arc_service(
+            router.add_any(boluo_core::util::__into_arc_service(
                 middleware.clone().transform(service),
             ));
         }
@@ -278,7 +278,7 @@ impl MergeToMethodRouter for MethodRoute<ArcService<Request, Response, BoxError>
                 if router.contains_any() {
                     return Err(None);
                 }
-                router.any(boluo_core::util::__into_arc_service(
+                router.add_any(boluo_core::util::__into_arc_service(
                     middleware.transform(self.service),
                 ));
             }

@@ -39,19 +39,12 @@ impl RouterInner {
         self.inner.at(path)
     }
 
-    fn find(&self, path: &str) -> Option<RouteId> {
+    fn get(&self, path: &str) -> Option<RouteId> {
         self.path_to_id.get(path).copied()
     }
 
-    fn next(&mut self) -> Option<RouteId> {
-        self.id.next().map(|id| {
-            self.id = id;
-            id
-        })
-    }
-
     fn add(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = self.next().ok_or(RouterError::TooManyPath)?;
+        let id = self.next_id().ok_or(RouterError::TooManyPath)?;
 
         if let Err(e) = self.inner.insert(path, id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
@@ -62,6 +55,13 @@ impl RouterInner {
         self.path_to_id.insert(path, id);
 
         Ok(id)
+    }
+
+    fn next_id(&mut self) -> Option<RouteId> {
+        self.id.next().map(|id| {
+            self.id = id;
+            id
+        })
     }
 }
 
@@ -153,19 +153,17 @@ impl Router {
                 message: "path must start with a `/`".to_owned(),
             });
         }
-        let path = if let Some((path, "")) = path.rsplit_once("{*}") {
+        let path = if let Some(path) = path.strip_suffix("{*}") {
             format!("{path}{{*{PRIVATE_TAIL_PARAM}}}")
         } else {
-            path.into()
+            path.to_owned()
         };
-        self.add_route(
-            path,
-            Endpoint::Route(
-                service
-                    .into_method_route()
-                    .with(middleware_fn(boluo_core::util::__into_arc_service)),
-            ),
-        )
+        let ep = Endpoint::Route(
+            service
+                .into_method_route()
+                .with(middleware_fn(boluo_core::util::__into_arc_service)),
+        );
+        self.add_endpoint(path, ep)
     }
 
     /// 将服务嵌套到指定路径并去掉前缀，新路径总是以`/`开头。
@@ -211,15 +209,15 @@ impl Router {
                 .into_method_route()
                 .with(middleware_fn(boluo_core::util::__into_arc_service)),
         );
-        if let Some((path, "")) = path.rsplit_once("/{*}") {
-            self.add_route(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep)
+        if let Some(path) = path.strip_suffix("{*}") {
+            self.add_endpoint(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep)
         } else if path.ends_with('/') {
-            self.add_route(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
-                .add_route(path.to_owned(), ep)
+            self.add_endpoint(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
+                .add_endpoint(path.to_owned(), ep)
         } else {
-            self.add_route(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
-                .add_route(format!("{path}/"), ep.clone())?
-                .add_route(path.to_owned(), ep)
+            self.add_endpoint(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
+                .add_endpoint(format!("{path}/"), ep.clone())?
+                .add_endpoint(path.to_owned(), ep)
         }
     }
 
@@ -344,7 +342,7 @@ impl Router {
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
         for (id, endpoint) in other.table {
-            self = self.add_route_with(
+            self = self.add_endpoint_with(
                 other.inner.id_to_path[&id].as_ref().to_owned(),
                 endpoint,
                 middleware.clone(),
@@ -353,15 +351,15 @@ impl Router {
         Ok(self)
     }
 
-    fn add_route<T: MergeToMethodRouter>(
+    fn add_endpoint<T: MergeToMethodRouter>(
         self,
         path: String,
         endpoint: Endpoint<T>,
     ) -> Result<Self, RouterError> {
-        self.add_route_with(path, endpoint, middleware_fn(|s| s))
+        self.add_endpoint_with(path, endpoint, middleware_fn(|s| s))
     }
 
-    fn add_route_with<T: MergeToMethodRouter, M>(
+    fn add_endpoint_with<T: MergeToMethodRouter, M>(
         mut self,
         path: String,
         endpoint: Endpoint<T>,
@@ -377,11 +375,7 @@ impl Router {
 
         let result = match endpoint {
             Endpoint::Route(service) => {
-                let Endpoint::Route(router) = self
-                    .table
-                    .entry(id)
-                    .or_insert_with(|| Endpoint::Route(Default::default()))
-                else {
+                let Some(router) = self.get_or_add_route(id) else {
                     return Err(RouterError::PathConflict {
                         path,
                         message: "conflict with previously registered path".to_owned(),
@@ -390,11 +384,7 @@ impl Router {
                 service.merge_to_with(router, middleware)
             }
             Endpoint::Scope(service) => {
-                let Endpoint::Scope(router) = self
-                    .table
-                    .entry(id)
-                    .or_insert_with(|| Endpoint::Scope(Default::default()))
-                else {
+                let Some(router) = self.get_or_add_scope(id) else {
                     return Err(RouterError::PathConflict {
                         path,
                         message: "conflict with previously registered path".to_owned(),
@@ -418,12 +408,36 @@ impl Router {
     }
 
     fn add_path(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = if let Some(id) = self.inner.find(path) {
+        let id = if let Some(id) = self.inner.get(path) {
             id
         } else {
             self.inner.add(path)?
         };
         Ok(id)
+    }
+
+    fn get_or_add_route(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
+        if let Endpoint::Route(router) = self
+            .table
+            .entry(id)
+            .or_insert_with(|| Endpoint::Route(Default::default()))
+        {
+            Some(router)
+        } else {
+            None
+        }
+    }
+
+    fn get_or_add_scope(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
+        if let Endpoint::Scope(router) = self
+            .table
+            .entry(id)
+            .or_insert_with(|| Endpoint::Scope(Default::default()))
+        {
+            Some(router)
+        } else {
+            None
+        }
     }
 }
 
