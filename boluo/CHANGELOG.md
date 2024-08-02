@@ -1,10 +1,10 @@
 # 未发布
 
-- 变化：`tokio-tungstenite = "0.21"` => `"0.23"`。
+- 变化：tokio-tungstenite = "0.23"。
 
 # 0.5.0
 
-- 破坏：`boluo-core = "0.3"` => `"0.4"`。
+- 破坏：boluo-core = "0.4"。
 - 破坏：修改`ServeFile`和`ServeDir`的`Service`实现。
 - 破坏：修改`ExtensionService`的`Service`实现。
 - 破坏：删除`OptionalTypedHeader`。
@@ -13,7 +13,7 @@
 
 # 0.4.0
 
-- 破坏：`boluo-core = "0.2"` => `"0.3"`。
+- 破坏：boluo-core = "0.3"。
 - 破坏：重构模块`boluo::extract::header`。
 - 新增：导出`headers`库。
 
@@ -27,18 +27,12 @@
 
 # 0.3.0
 
-- 破坏：`boluo-core = "0.1"` => `"0.2"`。
+- 破坏：boluo-core = "0.2"。
 - 破坏：移除`FormResponseError`的`From<serde_urlencoded::ser::Error>`实现。
 - 破坏：移除`JsonResponseError`的`From<serde_json::Error>`实现。
-- 破坏：重构错误类型：
-  - `MultipartError`
-  - `RedirectUriError`
-  - `EventValueError`
+- 破坏：重构错误类型：`MultipartError`，`RedirectUriError`，`EventValueError`。
 - 新增：为`PathExtractError`实现`Clone`。
-- 变化：移除`Service`实现的多余约束：
-  - `ServeFile`
-  - `ServeDir`
-  - `ExtensionService`
+- 变化：移除实现`Service`的多余约束：`ServeFile`，`ServeDir`，`ExtensionService`。
 
 # 0.2.0
 

@@ -21,18 +21,7 @@
 
 - 破坏：重命名`IntoHeaderError`为`HeaderResponseError`，并重构其实现。
 - 破坏：修改`ServiceExt`特征，对除了`with`以外的函数添加更多约束，保证函数返回的对象是`Service`。
-- 变化：移除`Service`实现的多余约束：
-  - `Then`
-  - `AndThen`
-  - `OrElse`
-  - `MapResult`
-  - `MapResponse`
-  - `MapErr`
-  - `MapRequest`
-  - `ServiceFn`
-  - `BoxService`
-  - `BoxCloneService`
-  - `ArcService`
+- 变化：移除实现`Service`的多余约束：`Then`，`AndThen`，`OrElse`，`MapResult`，`MapResponse`，`MapErr`，`MapRequest`，`ServiceFn`，`BoxService`，`BoxCloneService`，`ArcService`。
 
 # 0.1.1
 
