@@ -1,6 +1,6 @@
 # unreleased
 
-- 变化：tokio-tungstenite = "0.23"。
+- 变化：tokio-tungstenite = "0.24"。
 - 新增：`Server`新增函数：`http1_max_headers`，`http2_max_pending_accept_reset_streams`。
 
 # 0.5.0

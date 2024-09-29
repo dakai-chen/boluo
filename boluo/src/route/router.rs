@@ -417,27 +417,25 @@ impl Router {
     }
 
     fn get_or_add_route(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
-        if let Endpoint::Route(router) = self
+        let Endpoint::Route(router) = self
             .table
             .entry(id)
             .or_insert_with(|| Endpoint::Route(Default::default()))
-        {
-            Some(router)
-        } else {
-            None
-        }
+        else {
+            return None;
+        };
+        Some(router)
     }
 
     fn get_or_add_scope(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
-        if let Endpoint::Scope(router) = self
+        let Endpoint::Scope(router) = self
             .table
             .entry(id)
             .or_insert_with(|| Endpoint::Scope(Default::default()))
-        {
-            Some(router)
-        } else {
-            None
-        }
+        else {
+            return None;
+        };
+        Some(router)
     }
 }
 

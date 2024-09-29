@@ -143,7 +143,7 @@ trait CloneService<Req>: AnyService<Req> {
 
 impl<S, Req> CloneService<Req> for S
 where
-    S: Service<Req> + ?Sized + Clone + 'static,
+    S: Service<Req> + Clone + 'static,
 {
     fn clone_box(
         &self,
