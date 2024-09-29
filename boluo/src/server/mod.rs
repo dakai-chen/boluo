@@ -49,131 +49,111 @@ where
         }
     }
 
-    /// Set whether HTTP/1 connections should support half-closures.
+    /// See [`Http1Builder::half_close`]。
     ///
-    /// Clients can chose to shutdown their write-side while waiting
-    /// for the server to respond. Setting this to `true` will
-    /// prevent closing the connection immediately if `read`
-    /// detects an EOF in the middle of a request.
-    ///
-    /// Default is `false`.
+    /// [`Http1Builder::half_close`]: hyper_util::server::conn::auto::Http1Builder::half_close
     #[cfg(feature = "http1")]
     pub fn http1_half_close(&mut self, val: bool) -> &mut Self {
         self.builder.http1().half_close(val);
         self
     }
 
-    /// Enables or disables HTTP/1 keep-alive.
+    /// See [`Http1Builder::keep_alive`]。
     ///
-    /// Default is true.
+    /// [`Http1Builder::keep_alive`]: hyper_util::server::conn::auto::Http1Builder::keep_alive
     #[cfg(feature = "http1")]
     pub fn http1_keep_alive(&mut self, val: bool) -> &mut Self {
         self.builder.http1().keep_alive(val);
         self
     }
 
-    /// Set whether HTTP/1 connections will write header names as title case at
-    /// the socket level.
+    /// See [`Http1Builder::title_case_headers`]。
     ///
-    /// Note that this setting does not affect HTTP/2.
-    ///
-    /// Default is false.
+    /// [`Http1Builder::title_case_headers`]: hyper_util::server::conn::auto::Http1Builder::title_case_headers
     #[cfg(feature = "http1")]
     pub fn http1_title_case_headers(&mut self, enabled: bool) -> &mut Self {
         self.builder.http1().title_case_headers(enabled);
         self
     }
 
-    /// Set whether to support preserving original header cases.
+    /// See [`Http1Builder::preserve_header_case`]。
     ///
-    /// Currently, this will record the original cases received, and store them
-    /// in a private extension on the `Request`. It will also look for and use
-    /// such an extension in any provided `Response`.
-    ///
-    /// Since the relevant extension is still private, there is no way to
-    /// interact with the original cases. The only effect this can have now is
-    /// to forward the cases in a proxy-like fashion.
-    ///
-    /// Note that this setting does not affect HTTP/2.
-    ///
-    /// Default is false.
+    /// [`Http1Builder::preserve_header_case`]: hyper_util::server::conn::auto::Http1Builder::preserve_header_case
     #[cfg(feature = "http1")]
     pub fn http1_preserve_header_case(&mut self, enabled: bool) -> &mut Self {
         self.builder.http1().preserve_header_case(enabled);
         self
     }
 
-    /// Set a timeout for reading client request headers. If a client does not
-    /// transmit the entire header within this time, the connection is closed.
+    /// See [`Http1Builder::max_headers`]。
     ///
-    /// Default is None.
+    /// [`Http1Builder::max_headers`]: hyper_util::server::conn::auto::Http1Builder::max_headers
+    #[cfg(feature = "http1")]
+    pub fn http1_max_headers(&mut self, val: usize) -> &mut Self {
+        self.builder.http1().max_headers(val);
+        self
+    }
+
+    /// See [`Http1Builder::header_read_timeout`]。
+    ///
+    /// [`Http1Builder::header_read_timeout`]: hyper_util::server::conn::auto::Http1Builder::header_read_timeout
     #[cfg(feature = "http1")]
     pub fn http1_header_read_timeout(&mut self, read_timeout: Duration) -> &mut Self {
         self.builder.http1().header_read_timeout(read_timeout);
         self
     }
 
-    /// Set whether HTTP/1 connections should try to use vectored writes,
-    /// or always flatten into a single buffer.
+    /// See [`Http1Builder::writev`]。
     ///
-    /// Note that setting this to false may mean more copies of body data,
-    /// but may also improve performance when an IO transport doesn't
-    /// support vectored writes well, such as most TLS implementations.
-    ///
-    /// Setting this to true will force hyper to use queued strategy
-    /// which may eliminate unnecessary cloning on some TLS backends
-    ///
-    /// Default is `auto`. In this mode hyper will try to guess which
-    /// mode to use
+    /// [`Http1Builder::writev`]: hyper_util::server::conn::auto::Http1Builder::writev
     #[cfg(feature = "http1")]
     pub fn http1_writev(&mut self, val: bool) -> &mut Self {
         self.builder.http1().writev(val);
         self
     }
 
-    /// Set the maximum buffer size for the connection.
+    /// See [`Http1Builder::max_buf_size`]。
     ///
-    /// Default is ~400kb.
-    ///
-    /// # Panics
-    ///
-    /// The minimum value allowed is 8192. This method panics if the passed `max` is less than the minimum.
+    /// [`Http1Builder::max_buf_size`]: hyper_util::server::conn::auto::Http1Builder::max_buf_size
     #[cfg(feature = "http1")]
     pub fn http1_max_buf_size(&mut self, max: usize) -> &mut Self {
         self.builder.http1().max_buf_size(max);
         self
     }
 
-    /// Aggregates flushes to better support pipelined responses.
+    /// See [`Http1Builder::pipeline_flush`]。
     ///
-    /// Experimental, may have bugs.
-    ///
-    /// Default is false.
+    /// [`Http1Builder::pipeline_flush`]: hyper_util::server::conn::auto::Http1Builder::pipeline_flush
     #[cfg(feature = "http1")]
     pub fn http1_pipeline_flush(&mut self, enabled: bool) -> &mut Self {
         self.builder.http1().pipeline_flush(enabled);
         self
     }
 
-    /// Sets the [`SETTINGS_INITIAL_WINDOW_SIZE`][spec] option for HTTP2
-    /// stream-level flow control.
+    /// See [`Http2Builder::max_pending_accept_reset_streams`]。
     ///
-    /// Passing `None` will do nothing.
+    /// [`Http2Builder::max_pending_accept_reset_streams`]: hyper_util::server::conn::auto::Http2Builder::max_pending_accept_reset_streams
+    #[cfg(feature = "http2")]
+    pub fn http2_max_pending_accept_reset_streams(
+        &mut self,
+        max: impl Into<Option<usize>>,
+    ) -> &mut Self {
+        self.builder.http2().max_pending_accept_reset_streams(max);
+        self
+    }
+
+    /// See [`Http2Builder::initial_stream_window_size`]。
     ///
-    /// If not set, hyper will use a default.
-    ///
-    /// [spec]: https://http2.github.io/http2-spec/#SETTINGS_INITIAL_WINDOW_SIZE
+    /// [`Http2Builder::initial_stream_window_size`]: hyper_util::server::conn::auto::Http2Builder::initial_stream_window_size
     #[cfg(feature = "http2")]
     pub fn http2_initial_stream_window_size(&mut self, sz: impl Into<Option<u32>>) -> &mut Self {
         self.builder.http2().initial_stream_window_size(sz);
         self
     }
 
-    /// Sets the max connection-level flow control for HTTP2.
+    /// See [`Http2Builder::initial_connection_window_size`]。
     ///
-    /// Passing `None` will do nothing.
-    ///
-    /// If not set, hyper will use a default.
+    /// [`Http2Builder::initial_connection_window_size`]: hyper_util::server::conn::auto::Http2Builder::initial_connection_window_size
     #[cfg(feature = "http2")]
     pub fn http2_initial_connection_window_size(
         &mut self,
@@ -183,49 +163,36 @@ where
         self
     }
 
-    /// Sets whether to use an adaptive flow control.
+    /// See [`Http2Builder::adaptive_window`]。
     ///
-    /// Enabling this will override the limits set in
-    /// `http2_initial_stream_window_size` and
-    /// `http2_initial_connection_window_size`.
+    /// [`Http2Builder::adaptive_window`]: hyper_util::server::conn::auto::Http2Builder::adaptive_window
     #[cfg(feature = "http2")]
     pub fn http2_adaptive_window(&mut self, enabled: bool) -> &mut Self {
         self.builder.http2().adaptive_window(enabled);
         self
     }
 
-    /// Sets the maximum frame size to use for HTTP2.
+    /// See [`Http2Builder::max_frame_size`]。
     ///
-    /// Passing `None` will do nothing.
-    ///
-    /// If not set, hyper will use a default.
+    /// [`Http2Builder::max_frame_size`]: hyper_util::server::conn::auto::Http2Builder::max_frame_size
     #[cfg(feature = "http2")]
     pub fn http2_max_frame_size(&mut self, sz: impl Into<Option<u32>>) -> &mut Self {
         self.builder.http2().max_frame_size(sz);
         self
     }
 
-    /// Sets the [`SETTINGS_MAX_CONCURRENT_STREAMS`][spec] option for HTTP2
-    /// connections.
+    /// See [`Http2Builder::max_concurrent_streams`]。
     ///
-    /// Default is 200. Passing `None` will remove any limit.
-    ///
-    /// [spec]: https://http2.github.io/http2-spec/#SETTINGS_MAX_CONCURRENT_STREAMS
+    /// [`Http2Builder::max_concurrent_streams`]: hyper_util::server::conn::auto::Http2Builder::max_concurrent_streams
     #[cfg(feature = "http2")]
     pub fn http2_max_concurrent_streams(&mut self, max: impl Into<Option<u32>>) -> &mut Self {
         self.builder.http2().max_concurrent_streams(max);
         self
     }
 
-    /// Sets an interval for HTTP2 Ping frames should be sent to keep a
-    /// connection alive.
+    /// See [`Http2Builder::keep_alive_interval`]。
     ///
-    /// Pass `None` to disable HTTP2 keep-alive.
-    ///
-    /// Default is currently disabled.
-    ///
-    /// # Cargo Feature
-    ///
+    /// [`Http2Builder::keep_alive_interval`]: hyper_util::server::conn::auto::Http2Builder::keep_alive_interval
     #[cfg(feature = "http2")]
     pub fn http2_keep_alive_interval(
         &mut self,
@@ -235,46 +202,36 @@ where
         self
     }
 
-    /// Sets a timeout for receiving an acknowledgement of the keep-alive ping.
+    /// See [`Http2Builder::keep_alive_timeout`]。
     ///
-    /// If the ping is not acknowledged within the timeout, the connection will
-    /// be closed. Does nothing if `http2_keep_alive_interval` is disabled.
-    ///
-    /// Default is 20 seconds.
-    ///
-    /// # Cargo Feature
-    ///
+    /// [`Http2Builder::keep_alive_timeout`]: hyper_util::server::conn::auto::Http2Builder::keep_alive_timeout
     #[cfg(feature = "http2")]
     pub fn http2_keep_alive_timeout(&mut self, timeout: Duration) -> &mut Self {
         self.builder.http2().keep_alive_timeout(timeout);
         self
     }
 
-    /// Set the maximum write buffer size for each HTTP/2 stream.
+    /// See [`Http2Builder::max_send_buf_size`]。
     ///
-    /// Default is currently ~400KB, but may change.
-    ///
-    /// # Panics
-    ///
-    /// The value must be no larger than `u32::MAX`.
+    /// [`Http2Builder::max_send_buf_size`]: hyper_util::server::conn::auto::Http2Builder::max_send_buf_size
     #[cfg(feature = "http2")]
     pub fn http2_max_send_buf_size(&mut self, max: usize) -> &mut Self {
         self.builder.http2().max_send_buf_size(max);
         self
     }
 
-    /// Enables the [extended CONNECT protocol].
+    /// See [`Http2Builder::enable_connect_protocol`]。
     ///
-    /// [extended CONNECT protocol]: https://datatracker.ietf.org/doc/html/rfc8441#section-4
+    /// [`Http2Builder::enable_connect_protocol`]: hyper_util::server::conn::auto::Http2Builder::enable_connect_protocol
     #[cfg(feature = "http2")]
     pub fn http2_enable_connect_protocol(&mut self) -> &mut Self {
         self.builder.http2().enable_connect_protocol();
         self
     }
 
-    /// Sets the max size of received header frames.
+    /// See [`Http2Builder::max_header_list_size`]。
     ///
-    /// Default is currently ~16MB, but may change.
+    /// [`Http2Builder::max_header_list_size`]: hyper_util::server::conn::auto::Http2Builder::max_header_list_size
     #[cfg(feature = "http2")]
     pub fn http2_max_header_list_size(&mut self, max: u32) -> &mut Self {
         self.builder.http2().max_header_list_size(max);
