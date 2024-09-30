@@ -15,7 +15,7 @@ use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service, ServiceExt};
 use boluo_core::BoxError;
 use hyper::service::Service as _;
-use hyper_util::rt::{TokioExecutor, TokioIo};
+use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
 use hyper_util::server::conn::auto::Builder;
 use tokio::io::{AsyncRead, AsyncWrite};
 
@@ -43,10 +43,16 @@ where
 {
     /// 使用指定的监听器创建服务器。
     pub fn new(listener: L) -> Self {
-        Self {
-            listener,
-            builder: Builder::new(TokioExecutor::new()),
+        let mut builder = Builder::new(TokioExecutor::new());
+        #[cfg(feature = "http1")]
+        {
+            builder.http1().timer(TokioTimer::default());
         }
+        #[cfg(feature = "http2")]
+        {
+            builder.http2().timer(TokioTimer::default());
+        }
+        Self { listener, builder }
     }
 
     /// See [`Http1Builder::half_close`]。

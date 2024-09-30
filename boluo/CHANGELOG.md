@@ -1,5 +1,7 @@
 # unreleased
 
+- 修复：`Server`内部未配置`Timer`导致的`http1_header_read_timeout`等函数配置后服务器无法处理请求。
+
 # 0.5.1
 
 - 变化：tokio-tungstenite = "0.24"。
