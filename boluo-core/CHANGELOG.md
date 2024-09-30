@@ -1,5 +1,7 @@
 # unreleased
 
+# 0.4.1
+
 - 新增：添加`simple_middleware_fn`和`simple_middleware_fn_with_state`函数。
 
 # 0.4.0
