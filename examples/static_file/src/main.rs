@@ -8,7 +8,7 @@ use boluo::server::Server;
 use boluo::BoxError;
 use tokio::net::TcpListener;
 
-const ASSETS_DIR: &'static str = "./static_file/assets";
+const ASSETS_DIR: &str = "./static_file/assets";
 
 #[tokio::main]
 async fn main() {

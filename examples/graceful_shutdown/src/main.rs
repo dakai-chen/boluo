@@ -12,7 +12,7 @@ async fn main() {
     let app = Router::new().mount(hello);
 
     let shutdown = async {
-        let _ = tokio::signal::ctrl_c().await; // 等待 ctrl + c 信号
+        tokio::signal::ctrl_c().await.ok(); // 等待 ctrl + c 信号
         Some(Duration::from_secs(60))
     };
 

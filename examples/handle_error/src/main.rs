@@ -50,9 +50,8 @@ enum BasicArithmetic {
 async fn handle_error(error: BoxError) -> Result<Response, BoxError> {
     // 捕获除零错误，将错误转换为用户友好的响应消息
     if let Some(e) = error.downcast_ref::<DivisionByZeroError>() {
-        return Ok((StatusCode::BAD_REQUEST, e.to_string()).into_response()?);
+        return (StatusCode::BAD_REQUEST, e.to_string()).into_response();
     }
-
     Err(error)
 }
 
