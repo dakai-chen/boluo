@@ -104,7 +104,10 @@ where
     ///
     /// [`Http1Builder::header_read_timeout`]: hyper_util::server::conn::auto::Http1Builder::header_read_timeout
     #[cfg(feature = "http1")]
-    pub fn http1_header_read_timeout(&mut self, read_timeout: Duration) -> &mut Self {
+    pub fn http1_header_read_timeout(
+        &mut self,
+        read_timeout: impl Into<Option<Duration>>,
+    ) -> &mut Self {
         self.builder.http1().header_read_timeout(read_timeout);
         self
     }
