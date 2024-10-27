@@ -1,5 +1,7 @@
 # unreleased
 
+# 0.5.3
+
 - 变化：重构`GracefulShutdown`的实现。
 
 # 0.5.2
