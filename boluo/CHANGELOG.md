@@ -1,5 +1,7 @@
 # unreleased
 
+- 变化：重构`GracefulShutdown`的实现。
+
 # 0.5.2
 
 - 修复：`Server`内部未配置`Timer`导致的`http1_header_read_timeout`等函数配置后服务器无法处理请求。
