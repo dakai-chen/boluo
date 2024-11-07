@@ -450,22 +450,23 @@ impl Service<Request> for Router {
     type Error = BoxError;
 
     async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
-        let path = req.uri().path();
+        let Ok(Match { value: id, params }) = self.inner.at(req.uri().path()) else {
+            return Err(RouteError::not_found(req).into());
+        };
 
-        match self.inner.at(path) {
-            Ok(Match { value, params }) => {
-                let (params, tail) = super::params::prase_path_params(params);
-                super::params::insert_path_params(req.extensions_mut(), params);
-                match self.table.get(value) {
-                    Some(Endpoint::Route(service)) => service.call(req).await,
-                    Some(Endpoint::Scope(service)) => {
-                        replace_request_path(&mut req, tail.as_deref().unwrap_or_default());
-                        service.call(req).await
-                    }
-                    None => Err(RouteError::not_found(req).into()),
-                }
+        let Some(endpoint) = self.table.get(id) else {
+            return Err(RouteError::not_found(req).into());
+        };
+
+        let (params, tail) = super::params::prase_path_params(params);
+        super::params::insert_path_params(req.extensions_mut(), params);
+
+        match endpoint {
+            Endpoint::Route(service) => service.call(req).await,
+            Endpoint::Scope(service) => {
+                replace_request_path(&mut req, tail.as_deref().unwrap_or_default());
+                service.call(req).await
             }
-            Err(_) => Err(RouteError::not_found(req).into()),
         }
     }
 }

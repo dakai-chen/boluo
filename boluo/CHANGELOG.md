@@ -1,6 +1,7 @@
 # unreleased
 
 - 新增：公开`PathParams`。
+- 修复：修复少部分情况下`Router`在未找到处理程序时提取路径参数。
 
 # 0.5.3
 
