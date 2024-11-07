@@ -11,4 +11,4 @@ mod router;
 pub use router::{Route, Router};
 
 mod params;
-pub(crate) use params::PathParams;
+pub use params::PathParams;

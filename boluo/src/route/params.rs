@@ -1,31 +1,32 @@
+use std::ops::{Deref, DerefMut};
+
 use boluo_core::http::Extensions;
 use matchit::Params;
 
 use super::router::PRIVATE_TAIL_PARAM;
 
 /// 路由器提取的路径参数。
-#[derive(Debug, Clone)]
-pub(crate) struct PathParams(pub(crate) Vec<(String, String)>);
+#[derive(Default, Debug, Clone)]
+pub struct PathParams(pub Vec<(String, String)>);
 
-impl PathParams {
+impl Deref for PathParams {
+    type Target = Vec<(String, String)>;
+
     #[inline]
-    fn with_capacity(capacity: usize) -> Self {
-        Self(Vec::with_capacity(capacity))
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
+}
 
+impl DerefMut for PathParams {
     #[inline]
-    fn push(&mut self, param: (String, String)) {
-        self.0.push(param)
-    }
-
-    #[inline]
-    fn extend(&mut self, other: Self) {
-        self.0.extend(other.0)
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
 pub(super) fn prase_path_params(params: Params<'_, '_>) -> (PathParams, Option<String>) {
-    let mut path_params = PathParams::with_capacity(params.len());
+    let mut path_params = PathParams(Vec::with_capacity(params.len()));
     let mut tail_params = None;
 
     for (name, value) in params.iter() {
@@ -45,7 +46,7 @@ pub(super) fn prase_path_params(params: Params<'_, '_>) -> (PathParams, Option<S
 
 pub(super) fn insert_path_params(extensions: &mut Extensions, params: PathParams) {
     if let Some(path_params) = extensions.get_mut::<PathParams>() {
-        path_params.extend(params);
+        path_params.extend(params.0);
     } else {
         extensions.insert(params);
     }
