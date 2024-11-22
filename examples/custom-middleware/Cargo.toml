@@ -1,0 +1,8 @@
+[package]
+name = "custom-middleware"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+boluo = { path = "../../boluo" }
+tokio = { version = "1", features = ["full"] }
