@@ -1,14 +1,14 @@
 // TODO 对该框架的基准测试还没有完成，以下是一个简单的例子。
 
+use boluo::BoxError;
 use boluo::body::Body;
 use boluo::handler::handler_fn;
 use boluo::http::Method;
 use boluo::request::Request;
 use boluo::response::IntoResponse;
-use boluo::route::{get, patch, post, put, Router};
+use boluo::route::{Router, get, patch, post, put};
 use boluo::service::Service;
-use boluo::BoxError;
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use tokio::runtime::Builder;
 
 fn router() -> impl Service<Request, Response = impl IntoResponse, Error = impl Into<BoxError>> {

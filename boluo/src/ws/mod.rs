@@ -5,22 +5,22 @@ mod util;
 mod message;
 pub use message::{CloseCode, CloseFrame, Message};
 
-use std::future::{poll_fn, Future};
+use std::future::{Future, poll_fn};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
+use boluo_core::BoxError;
 use boluo_core::body::Body;
 use boluo_core::extract::FromRequest;
-use boluo_core::http::header::{self, HeaderValue};
 use boluo_core::http::StatusCode;
+use boluo_core::http::header::{self, HeaderValue};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
-use boluo_core::BoxError;
-use futures_util::{ready, FutureExt, Sink, SinkExt, Stream, StreamExt};
+use futures_util::{FutureExt, Sink, SinkExt, Stream, StreamExt, ready};
 use hyper::upgrade::{OnUpgrade, Upgraded};
 use hyper_util::rt::TokioIo;
-use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
 use tokio_tungstenite::WebSocketStream;
+use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
 
 /// 用于建立WebSocket连接的提取器。
 ///

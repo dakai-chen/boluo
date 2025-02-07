@@ -14,7 +14,7 @@ use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::Service;
 use bytes::{Bytes, BytesMut};
 use futures_util::future::{self, Either};
-use futures_util::{ready, stream, FutureExt, Stream, StreamExt};
+use futures_util::{FutureExt, Stream, StreamExt, ready, stream};
 use headers::{
     AcceptRanges, ContentLength, ContentRange, ContentType, HeaderMap, HeaderMapExt,
     IfModifiedSince, IfRange, IfUnmodifiedSince, LastModified, Range,
@@ -241,11 +241,7 @@ fn bytes_range(range: Option<Range>, max_len: u64) -> Option<(u64, u64)> {
                 Bound::Unbounded => max_len,
                 Bound::Included(s) => {
                     // For the special case where s == the file size
-                    if s == max_len {
-                        s
-                    } else {
-                        s + 1
-                    }
+                    if s == max_len { s } else { s + 1 }
                 }
                 Bound::Excluded(s) => s,
             };

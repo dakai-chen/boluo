@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use boluo_core::BoxError;
 use tokio_tungstenite::tungstenite as ts;
 
-pub use tokio_tungstenite::tungstenite::protocol::{frame::coding::CloseCode, CloseFrame};
+pub use tokio_tungstenite::tungstenite::protocol::{CloseFrame, frame::coding::CloseCode};
 
 /// An enum representing the various forms of a WebSocket message.
 #[derive(Debug, Clone, Eq, PartialEq)]

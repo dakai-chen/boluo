@@ -1,5 +1,5 @@
 use boluo_core::body::Body;
-use boluo_core::http::{header, HeaderValue};
+use boluo_core::http::{HeaderValue, header};
 use boluo_core::response::{IntoResponse, Response};
 use serde::Serialize;
 

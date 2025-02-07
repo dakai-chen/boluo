@@ -1,12 +1,12 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
+use boluo_core::BoxError;
 use boluo_core::http::uri::{Parts, Uri};
-use boluo_core::middleware::{middleware_fn, Middleware};
+use boluo_core::middleware::{Middleware, middleware_fn};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service};
-use boluo_core::BoxError;
 use matchit::{Match, MatchError};
 
 use super::method::{MergeToMethodRouter, MethodRouter};
@@ -58,9 +58,8 @@ impl RouterInner {
     }
 
     fn next_id(&mut self) -> Option<RouteId> {
-        self.id.next().map(|id| {
+        self.id.next().inspect(|&id| {
             self.id = id;
-            id
         })
     }
 }

@@ -25,7 +25,7 @@ mod or_else;
 pub use or_else::OrElse;
 
 mod service_fn;
-pub use service_fn::{service_fn, ServiceFn};
+pub use service_fn::{ServiceFn, service_fn};
 
 mod then;
 pub use then::Then;

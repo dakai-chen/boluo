@@ -1,11 +1,11 @@
 use std::collections::{HashMap, HashSet};
 
+use boluo_core::BoxError;
 use boluo_core::http::Method;
-use boluo_core::middleware::{middleware_fn, Middleware};
+use boluo_core::middleware::{Middleware, middleware_fn};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service};
-use boluo_core::BoxError;
 
 use super::RouteError;
 

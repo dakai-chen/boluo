@@ -80,4 +80,4 @@ cargo run --bin hello
 
 ## 支持的最低Rust版本（MSRV）
 
-支持的最低Rust版本为`1.75.0`。
+支持的最低Rust版本为`1.85.0`。

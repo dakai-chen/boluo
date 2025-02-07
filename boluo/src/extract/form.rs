@@ -1,8 +1,8 @@
+use boluo_core::BoxError;
 use boluo_core::body::Bytes;
 use boluo_core::extract::FromRequest;
-use boluo_core::http::{header, HeaderMap, Method};
+use boluo_core::http::{HeaderMap, Method, header};
 use boluo_core::request::Request;
-use boluo_core::BoxError;
 use serde::de::DeserializeOwned;
 
 pub use crate::data::Form;
@@ -38,15 +38,10 @@ where
 }
 
 fn has_content_type(headers: &HeaderMap, expected_content_type: &mime::Mime) -> bool {
-    let content_type = if let Some(content_type) = headers.get(header::CONTENT_TYPE) {
-        content_type
-    } else {
+    let Some(content_type) = headers.get(header::CONTENT_TYPE) else {
         return false;
     };
-
-    let content_type = if let Ok(content_type) = content_type.to_str() {
-        content_type
-    } else {
+    let Ok(content_type) = content_type.to_str() else {
         return false;
     };
 

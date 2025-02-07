@@ -1,11 +1,11 @@
 use std::borrow::Cow;
 use std::convert::Infallible;
 
-use http::{header, Extensions, HeaderMap, HeaderName, HeaderValue, StatusCode, Version};
+use http::{Extensions, HeaderMap, HeaderName, HeaderValue, StatusCode, Version, header};
 
+use crate::BoxError;
 use crate::body::{Body, Bytes, HttpBody};
 use crate::response::{Response, ResponseParts};
-use crate::BoxError;
 
 /// 用于生成[`Response`]的特征。
 ///

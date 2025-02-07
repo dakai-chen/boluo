@@ -9,11 +9,11 @@ use std::convert::Infallible;
 use std::future::Future;
 use std::time::Duration;
 
+use boluo_core::BoxError;
 use boluo_core::http::StatusCode;
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service, ServiceExt};
-use boluo_core::BoxError;
 use hyper::service::Service as _;
 use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
 use hyper_util::server::conn::auto::Builder;

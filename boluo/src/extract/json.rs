@@ -1,8 +1,8 @@
+use boluo_core::BoxError;
 use boluo_core::body::Bytes;
 use boluo_core::extract::FromRequest;
-use boluo_core::http::{header, HeaderMap};
+use boluo_core::http::{HeaderMap, header};
 use boluo_core::request::Request;
-use boluo_core::BoxError;
 use serde::de::DeserializeOwned;
 
 pub use crate::data::Json;
@@ -29,21 +29,14 @@ where
 }
 
 fn is_json_content_type(headers: &HeaderMap) -> bool {
-    let content_type = if let Some(content_type) = headers.get(header::CONTENT_TYPE) {
-        content_type
-    } else {
+    let Some(content_type) = headers.get(header::CONTENT_TYPE) else {
+        return false;
+    };
+    let Ok(content_type) = content_type.to_str() else {
         return false;
     };
 
-    let content_type = if let Ok(content_type) = content_type.to_str() {
-        content_type
-    } else {
-        return false;
-    };
-
-    let mime = if let Ok(mime) = content_type.parse::<mime::Mime>() {
-        mime
-    } else {
+    let Ok(mime) = content_type.parse::<mime::Mime>() else {
         return false;
     };
 

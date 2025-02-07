@@ -1,10 +1,10 @@
 [workspace]
-resolver = "2"
+resolver = "3"
 members = ["boluo", "boluo-*"]
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
 license = "MIT"
 homepage = "https://github.com/dakai-chen/boluo"
 repository = "https://github.com/dakai-chen/boluo"
-rust-version = "1.75"
+rust-version = "1.85"

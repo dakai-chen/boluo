@@ -6,8 +6,8 @@ use std::task::{Context, Poll};
 
 use boluo_core::body::Bytes;
 use boluo_core::extract::FromRequest;
-use boluo_core::http::header::CONTENT_TYPE;
 use boluo_core::http::HeaderMap;
+use boluo_core::http::header::CONTENT_TYPE;
 use boluo_core::request::Request;
 use futures_util::Stream;
 

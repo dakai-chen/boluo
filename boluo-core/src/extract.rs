@@ -6,9 +6,9 @@ use std::future::Future;
 use http::{Extensions, HeaderMap, Method, Uri, Version};
 use http_body_util::BodyExt;
 
+use crate::BoxError;
 use crate::body::{Body, Bytes};
 use crate::request::{Request, RequestParts};
-use crate::BoxError;
 
 /// 可以根据[`Request`]创建的类型，用于实现提取器。
 ///
@@ -145,8 +145,12 @@ from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
 from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
 from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13);
 from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14);
-from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15);
-from_request_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16);
+from_request_tuples!(
+    T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15
+);
+from_request_tuples!(
+    T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
+);
 
 impl FromRequest for Body {
     type Error = Infallible;

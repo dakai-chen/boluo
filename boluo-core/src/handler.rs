@@ -3,11 +3,11 @@
 use std::future::Future;
 use std::marker::PhantomData;
 
+use crate::BoxError;
 use crate::extract::FromRequest;
 use crate::request::Request;
 use crate::response::{IntoResponse, Response};
 use crate::service::Service;
-use crate::BoxError;
 
 /// 将给定的处理程序转换为[`Service`]。
 ///
@@ -143,5 +143,9 @@ handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11);
 handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12);
 handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13);
 handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14);
-handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15);
-handler_tuples!(T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16);
+handler_tuples!(
+    T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15
+);
+handler_tuples!(
+    T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16
+);

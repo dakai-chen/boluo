@@ -1,7 +1,7 @@
 use std::convert::Infallible;
 
 use boluo_core::body::Body;
-use boluo_core::http::{header::LOCATION, HeaderValue, StatusCode};
+use boluo_core::http::{HeaderValue, StatusCode, header::LOCATION};
 use boluo_core::response::{IntoResponse, Response};
 
 /// 将请求重定向到另一个位置的响应。

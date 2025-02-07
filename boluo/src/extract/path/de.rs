@@ -1,5 +1,5 @@
 use serde::de::{DeserializeSeed, EnumAccess, MapAccess, SeqAccess, VariantAccess, Visitor};
-use serde::{forward_to_deserialize_any, Deserializer};
+use serde::{Deserializer, forward_to_deserialize_any};
 
 macro_rules! parse_single_value {
     ($trait_fn:ident, $visit_fn:ident, $ty:literal) => {

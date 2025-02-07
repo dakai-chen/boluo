@@ -1,5 +1,5 @@
-use base64::engine::general_purpose::STANDARD;
 use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 use boluo_core::body::Bytes;
 use boluo_core::http::header::{HeaderMap, HeaderName, HeaderValue};
 use sha1::{Digest, Sha1};

@@ -1,4 +1,4 @@
-use boluo_core::http::{header, HeaderValue};
+use boluo_core::http::{HeaderValue, header};
 use boluo_core::response::{IntoResponse, Response};
 
 /// HTML响应。

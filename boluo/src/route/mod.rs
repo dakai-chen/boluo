@@ -4,8 +4,8 @@ mod error;
 pub use error::{RouteError, RouteErrorKind, RouterError};
 
 mod method;
-pub use method::{any, connect, delete, get, head, options, patch, post, put, trace};
 pub use method::{IntoMethodRoute, MethodRoute};
+pub use method::{any, connect, delete, get, head, options, patch, post, put, trace};
 
 mod router;
 pub use router::{Route, Router};

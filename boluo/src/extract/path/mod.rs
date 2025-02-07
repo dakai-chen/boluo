@@ -57,7 +57,7 @@ impl FromRequest for RawPathParams {
         Ok(RawPathParams(
             req.extensions()
                 .get::<PathParams>()
-                .map(|PathParams(ref params)| params.clone())
+                .map(|PathParams(params)| params.clone())
                 .unwrap_or_default(),
         ))
     }

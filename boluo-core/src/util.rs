@@ -1,18 +1,17 @@
 use std::any::Any;
 
+use crate::BoxError;
 use crate::request::Request;
 use crate::response::{IntoResponse, Response};
 use crate::service::{ArcService, Service, ServiceExt};
-use crate::BoxError;
 
 /// Private API
 #[doc(hidden)]
 pub fn __try_downcast<Src: 'static, Dst: 'static>(src: Src) -> Result<Dst, Src> {
     let mut src = Some(src);
-    if let Some(dst) = <dyn Any>::downcast_mut::<Option<Dst>>(&mut src) {
-        Ok(dst.take().unwrap())
-    } else {
-        Err(src.unwrap())
+    match <dyn Any>::downcast_mut::<Option<Dst>>(&mut src) {
+        Some(dst) => Ok(dst.take().unwrap()),
+        _ => Err(src.unwrap()),
     }
 }
 
