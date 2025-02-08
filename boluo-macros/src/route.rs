@@ -159,6 +159,13 @@ impl ToTokens for Route {
 
         let methods = methods.iter();
 
+        let handler_service = quote! {
+            ::boluo::service::Service<::boluo::request::Request,
+                Response = ::boluo::response::Response,
+                Error = ::boluo::BoxError,
+            >
+        };
+
         let stream = quote! {
             #(#docs)*
             #[allow(non_camel_case_types)]
@@ -175,19 +182,9 @@ impl ToTokens for Route {
                 ) -> ::std::result::Result<Self::Response, Self::Error> {
                     #item_fn
 
-                    fn assert_service<S>(
-                        service: S,
-                    ) -> impl ::boluo::service::Service<
-                        ::boluo::request::Request,
-                        Response = ::boluo::response::Response,
-                        Error = ::boluo::BoxError,
-                    >
+                    fn assert_service<S>(service: S) -> impl #handler_service
                     where
-                        S: ::boluo::service::Service<
-                            ::boluo::request::Request,
-                            Response = ::boluo::response::Response,
-                            Error = ::boluo::BoxError,
-                        >,
+                        S: #handler_service,
                     {
                         service
                     }
