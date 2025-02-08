@@ -28,8 +28,8 @@ use tokio_util::io::poll_read_buf;
 /// # 例子
 ///
 /// ```
-/// use boluo::fs::ServeFile;
 /// use boluo::route::Router;
+/// use boluo::static_file::ServeFile;
 ///
 /// Router::new().route("/favicon.ico", ServeFile::new("favicon.ico"));
 /// ```
@@ -59,8 +59,8 @@ impl Service<Request> for ServeFile {
 /// # 例子
 ///
 /// ```
-/// use boluo::fs::ServeDir;
 /// use boluo::route::Router;
+/// use boluo::static_file::ServeDir;
 ///
 /// Router::new().scope("/static/", ServeDir::new("static"));
 /// ```

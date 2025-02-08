@@ -70,7 +70,7 @@ ws = [
     "sha1",
     "base64",
 ]
-fs = ["tokio/fs", "tokio/io-util", "tokio-util/io", "mime_guess"]
+static-file = ["tokio/fs", "tokio/io-util", "tokio-util/io", "mime_guess"]
 
 [package.metadata.docs.rs]
 all-features = true

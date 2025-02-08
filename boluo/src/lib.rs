@@ -290,5 +290,5 @@ pub mod multipart;
 #[cfg(feature = "ws")]
 pub mod ws;
 
-#[cfg(feature = "fs")]
-pub mod fs;
+#[cfg(feature = "static-file")]
+pub mod static_file;

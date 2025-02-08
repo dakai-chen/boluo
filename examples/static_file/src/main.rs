@@ -1,10 +1,10 @@
 use std::fmt::Write;
 
-use boluo::fs::{ServeDir, ServeFile};
 use boluo::handler::handler_fn;
 use boluo::response::{Html, IntoResponse};
 use boluo::route::Router;
 use boluo::server::Server;
+use boluo::static_file::{ServeDir, ServeFile};
 use boluo::BoxError;
 use tokio::net::TcpListener;
 
