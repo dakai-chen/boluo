@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use boluo::listener::{ConnectionInfo, Listener};
+use boluo::listener::Listener;
 use boluo::BoxError;
 use tokio::fs::{File, ReadDir};
 
@@ -30,9 +30,10 @@ impl FileListener {
 
 impl Listener for FileListener {
     type IO = File;
+    type Addr = ();
     type Error = BoxError;
 
-    async fn accept(&mut self) -> Result<(Self::IO, Option<ConnectionInfo>), Self::Error> {
+    async fn accept(&mut self) -> Result<(Self::IO, Self::Addr), Self::Error> {
         let Some(path) = self.next_file_path().await? else {
             std::future::pending().await
         };
@@ -43,9 +44,6 @@ impl Listener for FileListener {
         tokio::fs::create_dir_all(&self.odir).await?;
         tokio::fs::copy(path, &temp).await?;
 
-        Ok((
-            File::options().read(true).write(true).open(temp).await?,
-            None,
-        ))
+        Ok((File::options().read(true).write(true).open(temp).await?, ()))
     }
 }

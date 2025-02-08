@@ -18,25 +18,29 @@ pub trait Listener {
     /// 监听器返回的连接。
     type IO;
 
+    /// 监听器返回的连接地址。
+    type Addr;
+
     /// 监听器产生的错误。
     type Error;
 
     /// 接收此监听器新传入的连接。
     fn accept(
         &mut self,
-    ) -> impl Future<Output = Result<(Self::IO, Option<ConnectionInfo>), Self::Error>> + Send;
+    ) -> impl Future<Output = Result<(Self::IO, Self::Addr), Self::Error>> + Send;
 }
 
 impl Listener for tokio::net::TcpListener {
     type IO = tokio::net::TcpStream;
+    type Addr = ConnectionInfo;
     type Error = io::Error;
 
-    async fn accept(&mut self) -> io::Result<(Self::IO, Option<ConnectionInfo>)> {
+    async fn accept(&mut self) -> io::Result<(Self::IO, Self::Addr)> {
         tokio::net::TcpListener::accept(self)
             .await
             .and_then(|(conn, remote)| {
                 self.local_addr()
-                    .map(|local| (conn, Some(ConnectionInfo { local, remote })))
+                    .map(|local| (conn, ConnectionInfo { local, remote }))
             })
     }
 }

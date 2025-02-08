@@ -40,6 +40,7 @@ impl<L> Server<L>
 where
     L: Listener,
     L::IO: AsyncRead + AsyncWrite + Unpin + Send + 'static,
+    L::Addr: Clone + Send + Sync + 'static,
 {
     /// 使用指定的监听器创建服务器。
     pub fn new(listener: L) -> Self {
@@ -291,14 +292,14 @@ where
                     break timeout;
                 }
                 incoming = self.listener.accept() => {
-                    let (conn, info) = match incoming {
+                    let (conn, addr) = match incoming {
                         Ok(value) => value,
                         Err(e) => return Err(RunError::Listener(e, graceful)),
                     };
 
                     let service = service.clone();
                     let service = hyper::service::service_fn(move |mut req| {
-                        info.map(|info| req.extensions_mut().insert(info));
+                        req.extensions_mut().insert(addr.clone());
                         service.call(req)
                     });
 
