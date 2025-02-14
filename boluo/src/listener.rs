@@ -1,7 +1,6 @@
 //! 监听器的特征和相关类型的定义。
 
 use std::future::Future;
-use std::io;
 use std::net::SocketAddr;
 
 /// 连接信息。
@@ -30,12 +29,13 @@ pub trait Listener {
     ) -> impl Future<Output = Result<(Self::IO, Self::Addr), Self::Error>> + Send;
 }
 
+#[cfg(feature = "tokio")]
 impl Listener for tokio::net::TcpListener {
     type IO = tokio::net::TcpStream;
     type Addr = ConnectionInfo;
-    type Error = io::Error;
+    type Error = std::io::Error;
 
-    async fn accept(&mut self) -> io::Result<(Self::IO, Self::Addr)> {
+    async fn accept(&mut self) -> std::io::Result<(Self::IO, Self::Addr)> {
         tokio::net::TcpListener::accept(self)
             .await
             .and_then(|(conn, remote)| {

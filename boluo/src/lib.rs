@@ -272,17 +272,15 @@ pub use boluo_macros::route;
 
 pub mod data;
 pub mod extract;
+pub mod listener;
 pub mod middleware;
 pub mod response;
 pub mod route;
 
 pub use headers;
 
-#[cfg(all(feature = "server", any(feature = "http1", feature = "http2")))]
+#[cfg(any(feature = "http1", feature = "http2"))]
 pub mod server;
-
-#[cfg(feature = "listener")]
-pub mod listener;
 
 #[cfg(feature = "multipart")]
 pub mod multipart;

@@ -5,6 +5,7 @@
 - 迁移到 rust 2024 (1.85.0) 版本。
 - 改进 `Listener`，现在可以返回自定义的连接地址类型。
 - 将模块 fs 重命名为 static_file，并将功能修改为使用 static-file 特性开关。
+- 调整 features。
 
 # 0.5.4
 

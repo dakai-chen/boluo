@@ -47,19 +47,16 @@ criterion = { version = "0.5", features = ["async_tokio"] }
 tokio = { version = "1", features = ["full"] }
 
 [features]
-default = ["server", "http1"]
-listener = ["tokio/net"]
+default = ["http1"]
 server = [
-    "listener",
-    "hyper/server",
-    "hyper-util/tokio",
     "hyper-util/server",
+    "hyper-util/tokio",
     "tokio/rt",
     "tokio/macros",
     "tokio-util",
 ]
-http1 = ["hyper/http1", "hyper-util/http1"]
-http2 = ["hyper/http2", "hyper-util/http2"]
+http1 = ["server", "hyper/http1", "hyper-util/http1"]
+http2 = ["server", "hyper/http2", "hyper-util/http2"]
 multipart = ["multer"]
 sse = ["tokio/time", "memchr"]
 ws = [
@@ -71,6 +68,7 @@ ws = [
     "base64",
 ]
 static-file = ["tokio/fs", "tokio/io-util", "tokio-util/io", "mime_guess"]
+tokio = ["dep:tokio", "tokio/net"]
 
 [package.metadata.docs.rs]
 all-features = true
