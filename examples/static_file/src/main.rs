@@ -1,11 +1,11 @@
 use std::fmt::Write;
 
+use boluo::BoxError;
 use boluo::handler::handler_fn;
 use boluo::response::{Html, IntoResponse};
 use boluo::route::Router;
 use boluo::server::Server;
 use boluo::static_file::{ServeDir, ServeFile};
-use boluo::BoxError;
 use tokio::net::TcpListener;
 
 const ASSETS_DIR: &str = "./static_file/assets";

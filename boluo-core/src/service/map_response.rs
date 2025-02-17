@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use super::Service;
 
 /// [`map_response`]返回的服务。

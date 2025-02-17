@@ -1,10 +1,10 @@
+use boluo::BoxError;
 use boluo::extract::Path;
 use boluo::http::StatusCode;
 use boluo::response::{IntoResponse, Response};
 use boluo::route::Router;
 use boluo::server::Server;
 use boluo::service::ServiceExt;
-use boluo::BoxError;
 use tokio::net::TcpListener;
 
 #[tokio::main]

@@ -1,6 +1,5 @@
 //! 用于解析文件上传中常用的`multipart/form-data`格式数据。
 
-use std::future::Future;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 

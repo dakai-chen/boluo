@@ -1,7 +1,7 @@
 use std::time::Duration;
 
-use boluo::response::sse::{Event, KeepAlive, Sse};
 use boluo::response::IntoResponse;
+use boluo::response::sse::{Event, KeepAlive, Sse};
 use boluo::route::Router;
 use boluo::server::Server;
 use futures_util::stream::repeat_with;

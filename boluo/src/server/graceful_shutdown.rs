@@ -1,5 +1,5 @@
 use std::pin::Pin;
-use std::{future::Future, time::Duration};
+use std::time::Duration;
 
 use tokio::sync::watch::{self, Receiver, Sender};
 use tokio_util::sync::CancellationToken;

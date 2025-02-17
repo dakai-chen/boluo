@@ -6,7 +6,6 @@ mod graceful_shutdown;
 pub use graceful_shutdown::GracefulShutdown;
 
 use std::convert::Infallible;
-use std::future::Future;
 use std::time::Duration;
 
 use boluo_core::BoxError;

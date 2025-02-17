@@ -1,6 +1,5 @@
 //! 可用于处理请求并返回响应的异步函数。
 
-use std::future::Future;
 use std::marker::PhantomData;
 
 use crate::BoxError;

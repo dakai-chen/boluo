@@ -1,12 +1,12 @@
-use boluo::http::header::AUTHORIZATION;
+use boluo::BoxError;
 use boluo::http::HeaderName;
+use boluo::http::header::AUTHORIZATION;
 use boluo::middleware::simple_middleware_fn_with_state;
 use boluo::request::Request;
 use boluo::response::{IntoResponse, Response};
 use boluo::route::Router;
 use boluo::server::Server;
 use boluo::service::{Service, ServiceExt};
-use boluo::BoxError;
 use tokio::net::TcpListener;
 
 #[tokio::main]

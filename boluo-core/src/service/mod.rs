@@ -30,7 +30,6 @@ pub use service_fn::{ServiceFn, service_fn};
 mod then;
 pub use then::Then;
 
-use std::future::Future;
 use std::sync::Arc;
 
 /// 表示一个接收请求并返回响应的异步函数。

@@ -5,7 +5,7 @@ mod util;
 mod message;
 pub use message::{CloseCode, CloseFrame, Message};
 
-use std::future::{Future, poll_fn};
+use std::future::poll_fn;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 

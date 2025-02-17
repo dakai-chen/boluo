@@ -1,7 +1,6 @@
 //! 从请求中提取数据的类型和特征。
 
 use std::convert::Infallible;
-use std::future::Future;
 
 use http::{Extensions, HeaderMap, Method, Uri, Version};
 use http_body_util::BodyExt;

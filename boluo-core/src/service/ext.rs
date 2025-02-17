@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use crate::middleware::Middleware;
 use crate::util::assert_service;
 

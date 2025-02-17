@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use super::Service;
 
 /// [`then`]返回的服务。

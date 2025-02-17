@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use boluo::listener::Listener;
 use boluo::BoxError;
+use boluo::listener::Listener;
 use tokio::fs::{File, ReadDir};
 
 pub struct FileListener {

@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use super::Service;
 
 /// 将给定的异步函数转换为[`Service`]。

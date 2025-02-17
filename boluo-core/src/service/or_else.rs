@@ -1,5 +1,3 @@
-use std::future::Future;
-
 use super::Service;
 
 /// [`or_else`]返回的服务。

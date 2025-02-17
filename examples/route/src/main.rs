@@ -1,10 +1,10 @@
+use boluo::BoxError;
 use boluo::handler::handler_fn;
 use boluo::request::Request;
 use boluo::response::IntoResponse;
 use boluo::route::Router;
 use boluo::server::Server;
 use boluo::service::Service;
-use boluo::BoxError;
 use tokio::net::TcpListener;
 
 #[tokio::main]

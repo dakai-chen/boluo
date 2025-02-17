@@ -1,6 +1,5 @@
 //! 监听器的特征和相关类型的定义。
 
-use std::future::Future;
 use std::net::SocketAddr;
 
 /// 连接信息。
