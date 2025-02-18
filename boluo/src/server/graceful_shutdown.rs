@@ -19,6 +19,7 @@ pub(super) struct Monitor {
 }
 
 impl Monitor {
+    /// 监视任务并在接收到关机信号时执行关机操作。
     pub(super) async fn watch<T>(self, task: T, shutdown: impl FnOnce(Pin<&mut T>)) -> T::Output
     where
         T: Future,
@@ -37,6 +38,7 @@ impl Monitor {
 }
 
 impl GracefulShutdown {
+    /// 创建新的 `GracefulShutdown` 实例。
     pub(super) fn new() -> Self {
         let (tx, rx) = watch::channel(());
         Self {
@@ -46,6 +48,7 @@ impl GracefulShutdown {
         }
     }
 
+    /// 创建一个 `Monitor` 实例，用于监视任务。
     pub(super) fn monitor(&self) -> Monitor {
         Monitor {
             rx: self.rx.clone(),
@@ -53,10 +56,13 @@ impl GracefulShutdown {
         }
     }
 
-    /// 发出关机信号，在指定时间内等待服务器完成剩余请求。如果超时时间设置为`None`，则该函数
-    /// 将持续等待，直到服务器完成所有剩余请求为止。
+    /// 发出关机信号，在指定时间内等待服务器完成剩余请求。
     ///
-    /// 服务器完成所有剩余请求返回`true`，超时未完成返回`false`。
+    /// 如果超时时间设置为 `None`，则该函数将持续等待，直到服务器完成所有剩余请求为止。
+    /// 如果设置了超时时间，则该函数将在超时时间到达时返回。
+    ///
+    /// 该函数返回 `true` 表示服务器完成了所有剩余请求，
+    /// 返回 `false` 表示在超时时间内服务器未能完成所有剩余请求。
     pub async fn shutdown(self, timeout: Option<Duration>) -> bool {
         let GracefulShutdown {
             tx,
