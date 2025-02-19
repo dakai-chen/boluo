@@ -31,12 +31,13 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// let service = handler_fn(|| async {});
     /// let service = service.with(middleware_fn(add_extension));
     /// ```
-    fn with<T>(self, middleware: T) -> T::Service
+    fn with<T, R>(self, middleware: T) -> T::Service
     where
         Self: Sized,
         T: Middleware<Self>,
+        T::Service: Service<R>,
     {
-        middleware.transform(self)
+        assert_service(middleware.transform(self))
     }
 
     /// 在此服务执行完成后执行给定的异步函数。

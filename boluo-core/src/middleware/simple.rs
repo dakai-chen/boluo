@@ -11,13 +11,6 @@ use crate::service::Service;
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
-/// fn assert_service<S, R>(service: S) -> S
-/// where
-///     S: Service<R>,
-/// {
-///     service
-/// }
-///
 /// // 日志中间件
 /// async fn log<S>(prefix: &&str, req: Request, service: &S) -> Result<S::Response, S::Error>
 /// where
@@ -29,8 +22,6 @@ use crate::service::Service;
 ///
 /// let service = handler_fn(|| async {});
 /// let service = service.with(simple_middleware_fn_with_state("HTTP", log));
-///
-/// assert_service(service);
 /// ```
 pub fn simple_middleware_fn_with_state<T, F>(state: T, f: F) -> SimpleMiddlewareFnWithState<T, F> {
     SimpleMiddlewareFnWithState { state, f }
@@ -148,13 +139,6 @@ where
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
-/// fn assert_service<S, R>(service: S) -> S
-/// where
-///     S: Service<R>,
-/// {
-///     service
-/// }
-///
 /// // 日志中间件
 /// async fn log<S>(req: Request, service: &S) -> Result<S::Response, S::Error>
 /// where
@@ -166,8 +150,6 @@ where
 ///
 /// let service = handler_fn(|| async {});
 /// let service = service.with(simple_middleware_fn(log));
-///
-/// assert_service(service);
 /// ```
 pub fn simple_middleware_fn<F>(f: F) -> SimpleMiddlewareFn<F> {
     SimpleMiddlewareFn { f }
