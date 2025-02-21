@@ -21,6 +21,7 @@ mime = "0.3"
 bytes = "1"
 sync_wrapper = "1"
 futures-core = "0.3"
+futures-io = "0.3"
 pin-project-lite = "0.2"
 
 [package.metadata.docs.rs]

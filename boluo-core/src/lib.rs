@@ -19,6 +19,7 @@ pub mod middleware;
 pub mod request;
 pub mod response;
 pub mod service;
+pub mod upgrade;
 
 pub mod http {
     //! [`http`]库的重新导出。

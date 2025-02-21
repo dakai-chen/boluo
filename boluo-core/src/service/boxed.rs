@@ -1,12 +1,8 @@
-use std::pin::Pin;
 use std::sync::Arc;
 
-use super::Service;
+use futures_core::future::BoxFuture;
 
-/// 装箱的[`Future`]特征对象。
-///
-/// 此类型别名表示一个装箱的[`Future`]，可以跨线程移动。
-type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
+use super::Service;
 
 /// 装箱的[`Service`]特征对象。
 ///

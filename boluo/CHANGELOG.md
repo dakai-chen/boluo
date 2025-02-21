@@ -7,6 +7,10 @@
 - 将模块 fs 重命名为 static_file，并将功能修改为使用 static-file 特性开关。
 - 调整 features。
 
+## 新增
+
+- 新增模块 upgrade。
+
 # 0.5.4
 
 ## 新增
