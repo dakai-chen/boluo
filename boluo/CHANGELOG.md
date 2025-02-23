@@ -11,6 +11,10 @@
 
 - 新增模块 upgrade。
 
+## 变化
+
+- 使用 upgrade 模块完成 WebSocket 升级。
+
 # 0.5.4
 
 ## 新增

@@ -277,8 +277,8 @@ where
             let service = service.clone();
             async move {
                 let service = service
-                    .map_request(compat::into_boluo_request)
-                    .map_response(compat::into_hyper_response);
+                    .map_request(compat::request_into_boluo)
+                    .map_response(compat::response_into_hyper);
                 service.call(req).await
             }
         });

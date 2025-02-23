@@ -16,11 +16,11 @@ use boluo_core::http::StatusCode;
 use boluo_core::http::header::{self, HeaderValue};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
+use boluo_core::upgrade::{OnUpgrade, Upgraded};
 use futures_util::{FutureExt, Sink, SinkExt, Stream, StreamExt, ready};
-use hyper::upgrade::{OnUpgrade, Upgraded};
-use hyper_util::rt::TokioIo;
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
+use tokio_util::compat::{Compat, FuturesAsyncReadCompatExt};
 
 /// 用于建立WebSocket连接的提取器。
 ///
@@ -207,7 +207,7 @@ impl FromRequest for WebSocketUpgrade {
 
 /// WebSocket消息流。
 pub struct WebSocket {
-    inner: WebSocketStream<TokioIo<Upgraded>>,
+    inner: WebSocketStream<Compat<Upgraded>>,
 }
 
 impl WebSocket {
@@ -216,7 +216,7 @@ impl WebSocket {
         role: protocol::Role,
         config: Option<WebSocketConfig>,
     ) -> Self {
-        WebSocketStream::from_raw_socket(TokioIo::new(upgraded), role, config)
+        WebSocketStream::from_raw_socket(upgraded.compat(), role, config)
             .map(|inner| WebSocket { inner })
             .await
     }

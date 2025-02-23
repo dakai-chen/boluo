@@ -53,7 +53,7 @@ server = [
     "hyper-util/tokio",
     "tokio/rt",
     "tokio/macros",
-    "tokio-util",
+    "tokio-util/compat",
 ]
 http1 = ["server", "hyper/http1", "hyper-util/http1"]
 http2 = ["server", "hyper/http2", "hyper-util/http2"]
@@ -63,6 +63,7 @@ ws = [
     "hyper",
     "hyper-util/tokio",
     "tokio/rt",
+    "tokio-util/compat",
     "tokio-tungstenite",
     "sha1",
     "base64",
