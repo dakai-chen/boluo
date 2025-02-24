@@ -21,6 +21,14 @@ impl KeepAlive {
         Default::default()
     }
 
+    /// 自定义保持连接的消息间隔。
+    ///
+    /// 默认值为15秒。
+    pub fn interval(mut self, time: Duration) -> Self {
+        self.interval = time;
+        self
+    }
+
     /// 自定义保持连接的消息文本。
     ///
     /// 默认为空注释。
@@ -31,11 +39,11 @@ impl KeepAlive {
         })
     }
 
-    /// 自定义保持连接的消息间隔。
+    /// 自定义保持连接的消息事件。
     ///
-    /// 默认值为15秒。
-    pub fn interval(mut self, time: Duration) -> Self {
-        self.interval = time;
+    /// 默认为空注释。
+    pub fn event(mut self, event: Event) -> Self {
+        self.event = event;
         self
     }
 }

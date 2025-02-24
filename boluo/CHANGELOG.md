@@ -10,6 +10,7 @@
 ## 新增
 
 - 新增模块 upgrade。
+- 新增函数 `KeepAlive::event`，用于自定义 SSE 保持连接的消息事件。
 
 ## 变化
 
