@@ -3,9 +3,8 @@
 mod util;
 
 mod message;
-pub use message::{CloseCode, CloseFrame, Message};
+pub use message::{CloseCode, CloseFrame, Message, Utf8Bytes};
 
-use std::future::poll_fn;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -42,12 +41,28 @@ use tokio_util::compat::{Compat, FuturesAsyncReadCompatExt};
 /// }
 /// ```
 pub struct WebSocketUpgrade {
-    config: Option<WebSocketConfig>,
+    config: WebSocketConfig,
     sec_websocket_key: HeaderValue,
+    on_upgrade_error: Option<Box<dyn FnOnce(BoxError) + Send>>,
     on_upgrade: OnUpgrade,
 }
 
 impl WebSocketUpgrade {
+    /// Read buffer capacity. This buffer is eagerly allocated and used for receiving
+    /// messages.
+    ///
+    /// For high read load scenarios a larger buffer, e.g. 128 KiB, improves performance.
+    ///
+    /// For scenarios where you expect a lot of connections and don't need high read load
+    /// performance a smaller buffer, e.g. 4 KiB, would be appropriate to lower total
+    /// memory usage.
+    ///
+    /// The default value is 128 KiB.
+    pub fn read_buffer_size(mut self, size: usize) -> Self {
+        self.config.read_buffer_size = size;
+        self
+    }
+
     /// The target minimum size of the write buffer to reach before writing the data
     /// to the underlying stream.
     /// The default value is 128 KiB.
@@ -56,10 +71,8 @@ impl WebSocketUpgrade {
     /// It is often more optimal to allow them to buffer a little, hence the default value.
     ///
     /// Note: [`flush`](SinkExt::flush) will always fully write the buffer regardless.
-    pub fn write_buffer_size(mut self, max: usize) -> Self {
-        self.config
-            .get_or_insert_with(WebSocketConfig::default)
-            .write_buffer_size = max;
+    pub fn write_buffer_size(mut self, size: usize) -> Self {
+        self.config.write_buffer_size = size;
         self
     }
 
@@ -74,9 +87,7 @@ impl WebSocketUpgrade {
     /// Note: Should always be at least [`write_buffer_size + 1 message`](Self::write_buffer_size)
     /// and probably a little more depending on error handling strategy.
     pub fn max_write_buffer_size(mut self, max: usize) -> Self {
-        self.config
-            .get_or_insert_with(WebSocketConfig::default)
-            .max_write_buffer_size = max;
+        self.config.max_write_buffer_size = max;
         self
     }
 
@@ -84,9 +95,7 @@ impl WebSocketUpgrade {
     /// which should be reasonably big for all normal use-cases but small enough to prevent
     /// memory eating by a malicious user.
     pub fn max_message_size(mut self, max: usize) -> Self {
-        self.config
-            .get_or_insert_with(WebSocketConfig::default)
-            .max_message_size = Some(max);
+        self.config.max_message_size = Some(max);
         self
     }
 
@@ -95,9 +104,7 @@ impl WebSocketUpgrade {
     /// be reasonably big for all normal use-cases but small enough to prevent memory eating
     /// by a malicious user.
     pub fn max_frame_size(mut self, max: usize) -> Self {
-        self.config
-            .get_or_insert_with(WebSocketConfig::default)
-            .max_frame_size = Some(max);
+        self.config.max_frame_size = Some(max);
         self
     }
 
@@ -107,13 +114,21 @@ impl WebSocketUpgrade {
     /// some popular libraries that are sending unmasked frames, ignoring the RFC.
     /// By default this option is set to `false`, i.e. according to RFC 6455.
     pub fn accept_unmasked_frames(mut self, accept: bool) -> Self {
-        self.config
-            .get_or_insert_with(WebSocketConfig::default)
-            .accept_unmasked_frames = accept;
+        self.config.accept_unmasked_frames = accept;
         self
     }
 
-    /// 尝试将HTTP协议升级为WebSocket协议，升级成功将调用提供的异步函数。
+    /// 使用方式请参阅 [`WebSocketUpgrade::on_upgrade`] 函数中的说明。
+    pub fn on_upgrade_error<F>(mut self, callback: F) -> Self
+    where
+        F: FnOnce(BoxError) + Send + 'static,
+    {
+        self.on_upgrade_error = Some(Box::new(callback));
+        self
+    }
+
+    /// 尝试将 HTTP 协议升级为 WebSocket 协议，若升级成功则调用提供的异步函数，
+    /// 若失败则触发 [`WebSocketUpgrade::on_upgrade_error`] 处理错误。
     ///
     /// # 例子
     ///
@@ -123,7 +138,9 @@ impl WebSocketUpgrade {
     ///
     /// #[boluo::route("/", method = "GET")]
     /// async fn echo(upgrade: WebSocketUpgrade, /* WebSocket 协议升级对象 */) -> impl IntoResponse {
-    ///     upgrade.on_upgrade(handle) // 尝试将 HTTP 协议升级为 WebSocket 协议
+    ///     upgrade
+    ///         .on_upgrade_error(|err| println!("{err}")) // 升级失败的错误处理
+    ///         .on_upgrade(handle) // 尝试将 HTTP 协议升级为 WebSocket 协议
     /// }
     ///
     /// async fn handle(mut socket: WebSocket) {
@@ -140,15 +157,21 @@ impl WebSocketUpgrade {
         let WebSocketUpgrade {
             config,
             sec_websocket_key,
+            on_upgrade_error,
             on_upgrade,
         } = self;
 
         tokio::spawn(async move {
             let socket = match on_upgrade.await {
                 Ok(upgraded) => {
-                    WebSocket::from_raw_socket(upgraded, protocol::Role::Server, config).await
+                    WebSocket::from_raw_socket(upgraded, protocol::Role::Server, Some(config)).await
                 }
-                Err(_) => return,
+                Err(error) => {
+                    if let Some(f) = on_upgrade_error {
+                        f(error);
+                    }
+                    return;
+                }
             };
             callback(socket).await;
         });
@@ -198,8 +221,9 @@ impl FromRequest for WebSocketUpgrade {
             .ok_or(WebSocketUpgradeError::ConnectionNotUpgradable)?;
 
         Ok(Self {
-            config: None,
+            config: WebSocketConfig::default(),
             sec_websocket_key,
+            on_upgrade_error: None,
             on_upgrade,
         })
     }
@@ -232,11 +256,6 @@ impl WebSocket {
             .send(msg.into_tungstenite())
             .await
             .map_err(From::from)
-    }
-
-    /// 关闭WebSocket消息流。
-    pub async fn close(mut self) -> Result<(), BoxError> {
-        poll_fn(|cx| Pin::new(&mut self).poll_close(cx)).await
     }
 }
 

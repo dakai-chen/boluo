@@ -1,27 +1,30 @@
 use std::borrow::Cow;
 
 use boluo_core::BoxError;
+use bytes::Bytes;
 use tokio_tungstenite::tungstenite as ts;
 
-pub use tokio_tungstenite::tungstenite::protocol::{CloseFrame, frame::coding::CloseCode};
+pub use tokio_tungstenite::tungstenite::Utf8Bytes;
+pub use tokio_tungstenite::tungstenite::protocol::CloseFrame;
+pub use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
 
 /// An enum representing the various forms of a WebSocket message.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Message {
     /// A text WebSocket message
-    Text(String),
+    Text(Utf8Bytes),
     /// A binary WebSocket message
-    Binary(Vec<u8>),
+    Binary(Bytes),
     /// A ping message with the specified payload
     ///
     /// The payload here must have a length less than 125 bytes
-    Ping(Vec<u8>),
+    Ping(Bytes),
     /// A pong message with the specified payload
     ///
     /// The payload here must have a length less than 125 bytes
-    Pong(Vec<u8>),
+    Pong(Bytes),
     /// A close message with the optional close frame.
-    Close(Option<CloseFrame<'static>>),
+    Close(Option<CloseFrame>),
 }
 
 impl Message {
@@ -49,7 +52,7 @@ impl Message {
     /// 创建文本消息。
     pub fn text<S>(text: S) -> Message
     where
-        S: Into<String>,
+        S: Into<Utf8Bytes>,
     {
         Message::Text(text.into())
     }
@@ -57,7 +60,7 @@ impl Message {
     /// 创建二进制消息。
     pub fn binary<D>(data: D) -> Message
     where
-        D: Into<Vec<u8>>,
+        D: Into<Bytes>,
     {
         Message::Binary(data.into())
     }
@@ -65,7 +68,7 @@ impl Message {
     /// 创建`ping`消息。
     pub fn ping<D>(data: D) -> Message
     where
-        D: Into<Vec<u8>>,
+        D: Into<Bytes>,
     {
         Message::Ping(data.into())
     }
@@ -73,7 +76,7 @@ impl Message {
     /// 创建`pong`消息。
     pub fn pong<D>(data: D) -> Message
     where
-        D: Into<Vec<u8>>,
+        D: Into<Bytes>,
     {
         Message::Pong(data.into())
     }
@@ -84,7 +87,7 @@ impl Message {
     }
 
     /// 创建带有状态码和原因的关闭消息。
-    pub fn close_with(code: impl Into<u16>, reason: impl Into<Cow<'static, str>>) -> Message {
+    pub fn close_with(code: impl Into<u16>, reason: impl Into<Utf8Bytes>) -> Message {
         Message::Close(Some(CloseFrame {
             code: CloseCode::from(code.into()),
             reason: reason.into(),
@@ -131,12 +134,12 @@ impl Message {
     }
 
     /// 将消息作为二进制数据返回。
-    pub fn into_bytes(self) -> Vec<u8> {
+    pub fn into_bytes(self) -> Bytes {
         match self {
-            Message::Text(text) => text.into_bytes(),
+            Message::Text(text) => text.into(),
             Message::Binary(data) | Message::Ping(data) | Message::Pong(data) => data,
-            Message::Close(None) => Vec::new(),
-            Message::Close(Some(frame)) => frame.reason.into_owned().into_bytes(),
+            Message::Close(None) => Bytes::new(),
+            Message::Close(Some(frame)) => frame.reason.into(),
         }
     }
 
@@ -151,14 +154,14 @@ impl Message {
     }
 
     /// 尝试将消息作为文本数据返回。
-    pub fn into_text(self) -> Result<String, BoxError> {
+    pub fn into_text(self) -> Result<Utf8Bytes, BoxError> {
         match self {
             Message::Text(text) => Ok(text),
             Message::Binary(data) | Message::Ping(data) | Message::Pong(data) => {
-                String::from_utf8(data).map_err(From::from)
+                Utf8Bytes::try_from(data).map_err(From::from)
             }
-            Message::Close(None) => Ok(String::new()),
-            Message::Close(Some(frame)) => Ok(frame.reason.into_owned()),
+            Message::Close(None) => Ok(Utf8Bytes::default()),
+            Message::Close(Some(frame)) => Ok(frame.reason),
         }
     }
 
@@ -177,7 +180,7 @@ impl Message {
 
 impl<'a> From<Cow<'a, str>> for Message {
     fn from(text: Cow<'a, str>) -> Self {
-        Message::text(text)
+        Message::text(text.into_owned())
     }
 }
 
@@ -195,7 +198,7 @@ impl<'a> From<&'a str> for Message {
 
 impl<'a> From<Cow<'a, [u8]>> for Message {
     fn from(data: Cow<'a, [u8]>) -> Self {
-        Message::binary(data)
+        Message::binary(data.into_owned())
     }
 }
 
@@ -207,11 +210,11 @@ impl From<Vec<u8>> for Message {
 
 impl<'a> From<&'a [u8]> for Message {
     fn from(data: &'a [u8]) -> Self {
-        Message::binary(data)
+        Message::binary(data.to_vec())
     }
 }
 
-impl From<Message> for Vec<u8> {
+impl From<Message> for Bytes {
     fn from(message: Message) -> Self {
         message.into_bytes()
     }

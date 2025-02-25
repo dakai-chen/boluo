@@ -6,6 +6,7 @@
 - 改进 `Listener`，现在可以返回自定义的连接地址类型。
 - 将模块 fs 重命名为 static_file，并将功能修改为使用 static-file 特性开关。
 - 调整 features。
+- 将 tokio-tungstenite 依赖的版本提升到 0.26，并重构 ws 模块。
 
 ## 新增
 
