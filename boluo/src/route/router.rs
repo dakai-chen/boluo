@@ -208,8 +208,8 @@ impl Router {
                 .into_method_route()
                 .with(middleware_fn(boluo_core::util::__into_arc_service)),
         );
-        if let Some(path) = path.strip_suffix("{*}") {
-            self.add_endpoint(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep)
+        if let Some(path) = path.strip_suffix("/{*}") {
+            self.add_endpoint(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep)
         } else if path.ends_with('/') {
             self.add_endpoint(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
                 .add_endpoint(path.to_owned(), ep)
