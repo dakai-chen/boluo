@@ -1,5 +1,7 @@
 # unreleased
 
+# 0.5.1
+
 ## 修复
 
 - 修复 `Upgraded::downcast` 无法向下转型。
