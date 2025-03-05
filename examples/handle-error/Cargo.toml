@@ -1,5 +1,5 @@
 [package]
-name = "compat_tower"
+name = "handle-error"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,6 +8,4 @@ edition = "2024"
 [dependencies]
 boluo = { path = "../../boluo" }
 tokio = { version = "1", features = ["full"] }
-http = "1"
-tower = { version = "0.4", features = ["timeout"] }
-tower-http = { version = "0.5", features = ["add-extension"] }
+serde = { version = "1", features = ["derive"] }

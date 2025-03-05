@@ -1,5 +1,5 @@
 [package]
-name = "handle_error"
+name = "graceful-shutdown"
 version = "0.1.0"
 edition = "2024"
 
@@ -8,4 +8,3 @@ edition = "2024"
 [dependencies]
 boluo = { path = "../../boluo" }
 tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }

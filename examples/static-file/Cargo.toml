@@ -1,11 +1,10 @@
 [package]
-name = "extract_path"
+name = "static-file"
 version = "0.1.0"
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-boluo = { path = "../../boluo" }
+boluo = { path = "../../boluo", features = ["static-file"] }
 tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
