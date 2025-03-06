@@ -1,5 +1,9 @@
 # unreleased
 
+## 变化
+
+- `Router` 的 `merge`，`merge_with`，`try_merge`，`try_merge_with` 方法现在接受任何可以转换为 `Router` 的类型。
+
 # 0.6.1
 
 ## 修复

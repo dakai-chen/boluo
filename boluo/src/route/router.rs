@@ -250,10 +250,7 @@ impl Router {
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        route
-            .into()
-            .with(middleware)
-            .try_mount_to(self)
+        self.try_mount_with(route, middleware)
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
@@ -270,7 +267,7 @@ impl Router {
         S::Response: IntoResponse,
         S::Error: Into<BoxError>,
     {
-        route.into().try_mount_to(self)
+        self.try_mount_with(route, middleware_fn(|s| s))
     }
 
     /// 尝试将[`Route`](Route)对象注册到路由器，并对服务应用中间件，这通常和[`route`]宏配合使用。
@@ -299,7 +296,7 @@ impl Router {
     /// # 恐慌
     ///
     /// 当路由表发生冲突时会出现恐慌。
-    pub fn merge(self, other: Router) -> Self {
+    pub fn merge(self, other: impl Into<Router>) -> Self {
         self.try_merge(other).unwrap_or_else(|e| panic!("{e}"))
     }
 
@@ -308,7 +305,7 @@ impl Router {
     /// # 恐慌
     ///
     /// 当路由表发生冲突时会出现恐慌。
-    pub fn merge_with<M>(self, other: Router, middleware: M) -> Self
+    pub fn merge_with<M>(self, other: impl Into<Router>, middleware: M) -> Self
     where
         M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
         M::Service: Service<Request> + 'static,
@@ -324,7 +321,7 @@ impl Router {
     /// # 错误
     ///
     /// 当路由表发生冲突时会返回错误。
-    pub fn try_merge(self, other: Router) -> Result<Self, RouterError> {
+    pub fn try_merge(self, other: impl Into<Router>) -> Result<Self, RouterError> {
         self.try_merge_with(other, middleware_fn(|s| s))
     }
 
@@ -333,13 +330,18 @@ impl Router {
     /// # 错误
     ///
     /// 当路由表发生冲突时会返回错误。
-    pub fn try_merge_with<M>(mut self, other: Router, middleware: M) -> Result<Self, RouterError>
+    pub fn try_merge_with<M>(
+        mut self,
+        other: impl Into<Router>,
+        middleware: M,
+    ) -> Result<Self, RouterError>
     where
         M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
         M::Service: Service<Request> + 'static,
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
+        let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
                 other.inner.id_to_path[&id].as_ref().to_owned(),
