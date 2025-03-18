@@ -1,8 +1,8 @@
 //! 处理WebSocket连接。
 
+mod message;
 mod util;
 
-mod message;
 pub use message::{CloseCode, CloseFrame, Message, Utf8Bytes};
 
 use std::pin::Pin;

@@ -1,5 +1,8 @@
 //! HTTP主体。
 
+pub use bytes::Bytes;
+pub use http_body::{Body as HttpBody, Frame, SizeHint};
+
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -7,9 +10,6 @@ use futures_core::{Stream, TryStream};
 use http_body_util::{BodyExt, Empty, Full};
 
 use crate::BoxError;
-
-pub use bytes::Bytes;
-pub use http_body::{Body as HttpBody, Frame, SizeHint};
 
 type BoxBody = http_body_util::combinators::UnsyncBoxBody<Bytes, BoxError>;
 

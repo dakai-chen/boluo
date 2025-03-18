@@ -1,33 +1,25 @@
 //! 服务的特征和相关类型的定义。
 
 mod and_then;
-pub use and_then::AndThen;
-
 mod boxed;
-pub use boxed::{ArcService, BoxCloneService, BoxService};
-
 mod ext;
-pub use ext::ServiceExt;
-
 mod map_err;
-pub use map_err::MapErr;
-
 mod map_request;
-pub use map_request::MapRequest;
-
 mod map_response;
-pub use map_response::MapResponse;
-
 mod map_result;
-pub use map_result::MapResult;
-
 mod or_else;
-pub use or_else::OrElse;
-
 mod service_fn;
-pub use service_fn::{ServiceFn, service_fn};
-
 mod then;
+
+pub use and_then::AndThen;
+pub use boxed::{ArcService, BoxCloneService, BoxService};
+pub use ext::ServiceExt;
+pub use map_err::MapErr;
+pub use map_request::MapRequest;
+pub use map_response::MapResponse;
+pub use map_result::MapResult;
+pub use or_else::OrElse;
+pub use service_fn::{ServiceFn, service_fn};
 pub use then::Then;
 
 use std::sync::Arc;

@@ -3,19 +3,15 @@
 pub use boluo_core::extract::*;
 
 mod extension;
-pub use extension::{Extension, ExtensionExtractError};
-
 mod form;
-pub use form::{Form, FormExtractError};
-
-mod query;
-pub use query::{Query, QueryExtractError, RawQuery};
-
-mod json;
-pub use json::{Json, JsonExtractError};
-
-mod path;
-pub use path::{Path, PathExtractError, RawPathParams};
-
 mod header;
+mod json;
+mod path;
+mod query;
+
+pub use extension::{Extension, ExtensionExtractError};
+pub use form::{Form, FormExtractError};
 pub use header::{TypedHeader, TypedHeaderExtractError};
+pub use json::{Json, JsonExtractError};
+pub use path::{Path, PathExtractError, RawPathParams};
+pub use query::{Query, QueryExtractError, RawQuery};

@@ -2,20 +2,17 @@
 
 pub use boluo_core::response::*;
 
-mod extension;
-pub use extension::Extension;
-
-mod html;
-pub use html::Html;
-
-mod json;
-pub use json::{Json, JsonResponseError};
-
-mod form;
-pub use form::{Form, FormResponseError};
-
-mod redirect;
-pub use redirect::{Redirect, RedirectUriError};
-
 #[cfg(feature = "sse")]
 pub mod sse;
+
+mod extension;
+mod form;
+mod html;
+mod json;
+mod redirect;
+
+pub use extension::Extension;
+pub use form::{Form, FormResponseError};
+pub use html::Html;
+pub use json::{Json, JsonResponseError};
+pub use redirect::{Redirect, RedirectUriError};

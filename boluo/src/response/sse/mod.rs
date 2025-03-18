@@ -1,9 +1,9 @@
 //! 服务器发送事件（SSE）。
 
 mod event;
-pub use event::{Event, EventBuilder, EventValueError};
-
 mod keep_alive;
+
+pub use event::{Event, EventBuilder, EventValueError};
 pub use keep_alive::KeepAlive;
 
 use std::convert::Infallible;
