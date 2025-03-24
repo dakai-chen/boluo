@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use boluo_core::BoxError;
-use boluo_core::http::uri::{Parts, Uri};
+use boluo_core::http::uri::Uri;
 use boluo_core::middleware::{Middleware, middleware_fn};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
@@ -12,17 +12,20 @@ use matchit::{Match, MatchError};
 use super::method::{MergeToMethodRouter, MethodRouter};
 use super::{IntoMethodRoute, MethodRoute, RouteError, RouterError};
 
-pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__tail_param";
+pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__boluo_tail_param";
+pub(super) const PRIVATE_TAIL_PARAM_CAPTURE: &str = "{*__private__boluo_tail_param}";
+
+fn replace_tail_param(path: &str) -> String {
+    path.replace("{*}", PRIVATE_TAIL_PARAM_CAPTURE)
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 struct RouteId(u32);
 
 impl RouteId {
-    fn next(mut self) -> Option<Self> {
-        self.0.checked_add(1).map(|id| {
-            self.0 = id;
-            self
-        })
+    #[inline]
+    fn next(self) -> Option<Self> {
+        self.0.checked_add(1).map(Self)
     }
 }
 
@@ -35,28 +38,36 @@ struct RouterInner {
 }
 
 impl RouterInner {
-    fn at<'m, 'p>(&'m self, path: &'p str) -> Result<Match<'m, 'p, &'m RouteId>, MatchError> {
+    fn match_route<'m, 'p>(
+        &'m self,
+        path: &'p str,
+    ) -> Result<Match<'m, 'p, &'m RouteId>, MatchError> {
         self.inner.at(path)
     }
 
-    fn get(&self, path: &str) -> Option<RouteId> {
+    fn find_id(&self, path: &str) -> Option<RouteId> {
         self.path_to_id.get(path).copied()
+    }
+
+    fn find_path(&self, id: RouteId) -> Option<&str> {
+        self.id_to_path.get(&id).map(Arc::as_ref)
     }
 
     fn add(&mut self, path: &str) -> Result<RouteId, RouterError> {
         let id = self.next_id().ok_or(RouterError::TooManyPath)?;
 
-        if let Err(e) = self.inner.insert(path, id) {
+        if let Err(e) = self.inner.insert(replace_tail_param(path), id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
         }
 
-        let path = Arc::<str>::from(path);
-        self.id_to_path.insert(id, path.clone());
-        self.path_to_id.insert(path, id);
+        let shared_path = Arc::<str>::from(path);
+        self.id_to_path.insert(id, shared_path.clone());
+        self.path_to_id.insert(shared_path, id);
 
         Ok(id)
     }
 
+    #[inline]
     fn next_id(&mut self) -> Option<RouteId> {
         self.id.next().inspect(|&id| {
             self.id = id;
@@ -146,22 +157,14 @@ impl Router {
         <S::Service as Service<Request>>::Response: IntoResponse,
         <S::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        if !path.starts_with('/') {
-            return Err(RouterError::InvalidPath {
-                path: path.to_owned(),
-                message: "path must start with a `/`".to_owned(),
-            });
-        }
-        let path = if let Some(path) = path.strip_suffix("{*}") {
-            format!("{path}{{*{PRIVATE_TAIL_PARAM}}}")
-        } else {
-            path.to_owned()
-        };
+        Self::validate_path(path)?;
+
         let ep = Endpoint::Route(
             service
                 .into_method_route()
                 .with(middleware_fn(boluo_core::util::__into_arc_service)),
         );
+
         self.add_endpoint(path, ep)
     }
 
@@ -197,26 +200,23 @@ impl Router {
         <S::Service as Service<Request>>::Response: IntoResponse,
         <S::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        if !path.starts_with('/') {
-            return Err(RouterError::InvalidPath {
-                path: path.to_owned(),
-                message: "path must start with a `/`".to_owned(),
-            });
-        }
+        Self::validate_path(path)?;
+
         let ep = Endpoint::Scope(
             service
                 .into_method_route()
                 .with(middleware_fn(boluo_core::util::__into_arc_service)),
         );
-        if let Some(path) = path.strip_suffix("/{*}") {
-            self.add_endpoint(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep)
+
+        if path.ends_with("/{*}") {
+            self.add_endpoint(path, ep)
         } else if path.ends_with('/') {
-            self.add_endpoint(format!("{path}{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
-                .add_endpoint(path.to_owned(), ep)
+            self.add_endpoint(&format!("{path}{{*}}"), ep.clone())?
+                .add_endpoint(path, ep)
         } else {
-            self.add_endpoint(format!("{path}/{{*{PRIVATE_TAIL_PARAM}}}"), ep.clone())?
-                .add_endpoint(format!("{path}/"), ep.clone())?
-                .add_endpoint(path.to_owned(), ep)
+            self.add_endpoint(&format!("{path}/{{*}}"), ep.clone())?
+                .add_endpoint(&format!("{path}/"), ep.clone())?
+                .add_endpoint(path, ep)
         }
     }
 
@@ -344,7 +344,7 @@ impl Router {
         let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
-                other.inner.id_to_path[&id].as_ref().to_owned(),
+                other.inner.find_path(id).unwrap(),
                 endpoint,
                 middleware.clone(),
             )?;
@@ -354,7 +354,7 @@ impl Router {
 
     fn add_endpoint<T: MergeToMethodRouter>(
         self,
-        path: String,
+        path: &str,
         endpoint: Endpoint<T>,
     ) -> Result<Self, RouterError> {
         self.add_endpoint_with(path, endpoint, middleware_fn(|s| s))
@@ -362,7 +362,7 @@ impl Router {
 
     fn add_endpoint_with<T: MergeToMethodRouter, M>(
         mut self,
-        path: String,
+        path: &str,
         endpoint: Endpoint<T>,
         middleware: M,
     ) -> Result<Self, RouterError>
@@ -372,26 +372,26 @@ impl Router {
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        let id = self.add_path(&path)?;
+        let id = self.add_path(path)?;
 
         let result = match endpoint {
             Endpoint::Route(service) => {
-                let Some(router) = self.get_or_add_route(id) else {
+                let Some(method_router) = self.get_or_add_route(id) else {
                     return Err(RouterError::PathConflict {
-                        path,
+                        path: path.to_owned(),
                         message: "conflict with previously registered path".to_owned(),
                     });
                 };
-                service.merge_to_with(router, middleware)
+                service.merge_to_with(method_router, middleware)
             }
             Endpoint::Scope(service) => {
-                let Some(router) = self.get_or_add_scope(id) else {
+                let Some(method_router) = self.get_or_add_scope(id) else {
                     return Err(RouterError::PathConflict {
-                        path,
+                        path: path.to_owned(),
                         message: "conflict with previously registered path".to_owned(),
                     });
                 };
-                service.merge_to_with(router, middleware)
+                service.merge_to_with(method_router, middleware)
             }
         };
 
@@ -402,14 +402,17 @@ impl Router {
                 }
                 None => "conflict with previously registered any HTTP method".to_owned(),
             };
-            return Err(RouterError::PathConflict { path, message });
+            return Err(RouterError::PathConflict {
+                path: path.to_owned(),
+                message,
+            });
         }
 
         Ok(self)
     }
 
     fn add_path(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = if let Some(id) = self.inner.get(path) {
+        let id = if let Some(id) = self.inner.find_id(path) {
             id
         } else {
             self.inner.add(path)?
@@ -438,6 +441,16 @@ impl Router {
         };
         Some(router)
     }
+
+    fn validate_path(path: &str) -> Result<(), RouterError> {
+        if !path.starts_with('/') {
+            return Err(RouterError::InvalidPath {
+                path: path.to_owned(),
+                message: "path must start with a `/`".to_owned(),
+            });
+        }
+        Ok(())
+    }
 }
 
 impl std::fmt::Debug for Router {
@@ -451,10 +464,9 @@ impl Service<Request> for Router {
     type Error = BoxError;
 
     async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
-        let Ok(Match { value: id, params }) = self.inner.at(req.uri().path()) else {
+        let Ok(Match { value: id, params }) = self.inner.match_route(req.uri().path()) else {
             return Err(RouteError::not_found(req).into());
         };
-
         let Some(endpoint) = self.table.get(id) else {
             return Err(RouteError::not_found(req).into());
         };
@@ -465,7 +477,7 @@ impl Service<Request> for Router {
         match endpoint {
             Endpoint::Route(service) => service.call(req).await,
             Endpoint::Scope(service) => {
-                replace_request_path(&mut req, tail.as_deref().unwrap_or_default());
+                req = replace_request_path(req, tail.as_deref().unwrap_or_default());
                 service.call(req).await
             }
         }
@@ -531,26 +543,24 @@ impl<S> Route<S> {
     }
 }
 
-fn replace_request_path(req: &mut Request, path: &str) {
-    let uri = req.uri_mut();
+fn replace_request_path(req: Request, path: &str) -> Request {
+    let (mut parts, body) = req.into_inner();
+    parts.uri = replace_uri_path(parts.uri, path);
+    Request::from_parts(parts, body)
+}
 
+fn replace_uri_path(uri: Uri, path: &str) -> Uri {
     let path = if let Some(path) = path.strip_prefix('/') {
         path
     } else {
         path
     };
-
     let path_and_query = if let Some(query) = uri.query() {
         format!("/{path}?{query}")
     } else {
         format!("/{path}")
     };
-
-    let mut parts = Parts::default();
-
-    parts.scheme = uri.scheme().cloned();
-    parts.authority = uri.authority().cloned();
+    let mut parts = uri.into_parts();
     parts.path_and_query = Some(path_and_query.parse().unwrap());
-
-    *uri = Uri::from_parts(parts).unwrap();
+    Uri::from_parts(parts).unwrap()
 }
