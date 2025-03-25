@@ -44,6 +44,21 @@ impl MethodRouter {
             .map(|(method, service)| (Some(method), service))
             .chain(self.any.as_ref().map(|service| (None, service)))
     }
+
+    pub(super) fn remove<'a>(
+        &mut self,
+        method: impl Into<Option<&'a Method>>,
+    ) -> Option<ArcService<Request, Response, BoxError>> {
+        if let Some(method) = method.into() {
+            self.map.remove(method)
+        } else {
+            self.any.take()
+        }
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.map.is_empty() && self.any.is_none()
+    }
 }
 
 impl Service<Request> for MethodRouter {

@@ -68,6 +68,13 @@ impl RouterInner {
         Ok(id)
     }
 
+    fn remove(&mut self, path: &str) -> Option<RouteId> {
+        self.inner.remove(replace_tail_param(path)).inspect(|id| {
+            self.path_to_id.remove(path);
+            self.id_to_path.remove(id);
+        })
+    }
+
     #[inline]
     fn next_id(&mut self) -> Option<RouteId> {
         self.id.next().inspect(|&id| {
@@ -85,6 +92,14 @@ enum Endpoint<T> {
 impl<T> Endpoint<T> {
     #[inline]
     fn as_ref(&self) -> &T {
+        match self {
+            Endpoint::Route(v) => v,
+            Endpoint::Scope(v) => v,
+        }
+    }
+
+    #[inline]
+    fn as_mut(&mut self) -> &mut T {
         match self {
             Endpoint::Route(v) => v,
             Endpoint::Scope(v) => v,
@@ -361,6 +376,40 @@ impl Router {
             )?;
         }
         Ok(self)
+    }
+
+    /// 从路由器中移除指定的路由。
+    ///
+    /// # 例子
+    ///
+    /// ```
+    /// use boluo::handler::handler_fn;
+    /// use boluo::http::Method;
+    /// use boluo::route::{Router, any, get};
+    ///
+    /// let router = Router::new()
+    ///     .route("/a", any(handler_fn(|| async { "a" })))
+    ///     .route("/b", get(handler_fn(|| async { "b" })))
+    ///     // 移除路径 "/a" 下接收任意方法的路由
+    ///     .remove("/a", None)
+    ///     // 移除路径 "/b" 下接收 GET 方法的路由
+    ///     .remove("/b", &Method::GET);
+    /// ```
+    pub fn remove<'a>(mut self, path: &str, method: impl Into<Option<&'a Method>>) -> Self {
+        let Some(id) = self.inner.find_id(path) else {
+            return self;
+        };
+        let Some(method_router) = self.table.get_mut(&id).map(Endpoint::as_mut) else {
+            return self;
+        };
+
+        method_router.remove(method);
+        if method_router.is_empty() {
+            self.table.remove(&id);
+            self.inner.remove(path);
+        }
+
+        self
     }
 
     /// 返回一个迭代器，遍历路由器中的所有路由。
