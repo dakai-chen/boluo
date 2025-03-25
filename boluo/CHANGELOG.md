@@ -4,6 +4,7 @@
 
 - 新增函数 `Router::iter`，用于遍历路由器中的所有路由。
 - 新增函数 `Router::remove`，用于移除路由器中的指定路由。
+- 公开 `Endpoint` 类型，改进 `Router::iter` 函数。
 
 # 0.6.2
 

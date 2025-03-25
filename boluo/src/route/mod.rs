@@ -9,4 +9,4 @@ pub use error::{RouteError, RouteErrorKind, RouterError};
 pub use method::{IntoMethodRoute, MethodRoute};
 pub use method::{any, connect, delete, get, head, options, patch, post, put, trace};
 pub use params::PathParams;
-pub use router::{Route, Router};
+pub use router::{Endpoint, Route, Router};

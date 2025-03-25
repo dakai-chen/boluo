@@ -20,6 +20,12 @@ fn replace_tail_param(path: &str) -> String {
     path.replace("{*}", PRIVATE_TAIL_PARAM_CAPTURE)
 }
 
+type RouteEntry<'a> = (
+    &'a str,
+    Option<&'a Method>,
+    Endpoint<&'a ArcService<Request, Response, BoxError>>,
+);
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 struct RouteId(u32);
 
@@ -83,13 +89,16 @@ impl RouterInner {
     }
 }
 
-#[derive(Debug, Clone)]
-enum Endpoint<T> {
+/// 路由端点。
+#[derive(Debug, Clone, Copy)]
+pub enum Endpoint<T> {
+    /// 普通路由。
     Route(T),
+    /// 嵌套路由。
     Scope(T),
 }
 
-impl<T> Endpoint<T> {
+impl<T> AsRef<T> for Endpoint<T> {
     #[inline]
     fn as_ref(&self) -> &T {
         match self {
@@ -97,9 +106,22 @@ impl<T> Endpoint<T> {
             Endpoint::Scope(v) => v,
         }
     }
+}
 
+impl<T> AsMut<T> for Endpoint<T> {
     #[inline]
     fn as_mut(&mut self) -> &mut T {
+        match self {
+            Endpoint::Route(v) => v,
+            Endpoint::Scope(v) => v,
+        }
+    }
+}
+
+impl<T> Endpoint<T> {
+    /// 得到端点内部的值。
+    #[inline]
+    pub fn into_inner(self) -> T {
         match self {
             Endpoint::Route(v) => v,
             Endpoint::Scope(v) => v,
@@ -418,31 +440,33 @@ impl Router {
     ///
     /// ```
     /// use boluo::handler::handler_fn;
-    /// use boluo::route::Router;
+    /// use boluo::route::{Endpoint, Router};
     ///
     /// let router = Router::new()
     ///     .route("/a", handler_fn(|| async { "a" }))
     ///     .route("/b", handler_fn(|| async { "b" }));
     ///
-    /// for (path, method, _service) in router.iter() {
-    ///     println!("Path: {}, Method: {:?}", path, method);
+    /// for (path, method, endpoint) in router.iter() {
+    ///     match endpoint {
+    ///         Endpoint::Route(_) => {
+    ///             println!("Route - Path: {}, Method: {:?}", path, method);
+    ///         }
+    ///         Endpoint::Scope(_) => {
+    ///             println!("Scope - Path: {}, Method: {:?}", path, method);
+    ///         }
+    ///     }
     /// }
     /// ```
-    pub fn iter(
-        &self,
-    ) -> impl Iterator<
-        Item = (
-            &str,
-            Option<&Method>,
-            &ArcService<Request, Response, BoxError>,
-        ),
-    > {
+    pub fn iter(&self) -> impl Iterator<Item = RouteEntry<'_>> {
         self.table.iter().flat_map(|(&id, endpoint)| {
             let path = self.inner.find_path(id).unwrap();
-            endpoint
-                .as_ref()
-                .iter()
-                .map(move |(method, service)| (path, method, service))
+            endpoint.as_ref().iter().map(move |(method, service)| {
+                let endpoint = match endpoint {
+                    Endpoint::Route(_) => Endpoint::Route(service),
+                    Endpoint::Scope(_) => Endpoint::Scope(service),
+                };
+                (path, method, endpoint)
+            })
         })
     }
 
