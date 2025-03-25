@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use boluo_core::BoxError;
+use boluo_core::http::Method;
 use boluo_core::http::uri::Uri;
 use boluo_core::middleware::{Middleware, middleware_fn};
 use boluo_core::request::Request;
@@ -79,6 +80,16 @@ impl RouterInner {
 enum Endpoint<T> {
     Route(T),
     Scope(T),
+}
+
+impl<T> Endpoint<T> {
+    #[inline]
+    fn as_ref(&self) -> &T {
+        match self {
+            Endpoint::Route(v) => v,
+            Endpoint::Scope(v) => v,
+        }
+    }
 }
 
 /// 路由器。
@@ -350,6 +361,40 @@ impl Router {
             )?;
         }
         Ok(self)
+    }
+
+    /// 返回一个迭代器，遍历路由器中的所有路由。
+    ///
+    /// # 例子
+    ///
+    /// ```
+    /// use boluo::handler::handler_fn;
+    /// use boluo::route::Router;
+    ///
+    /// let router = Router::new()
+    ///     .route("/a", handler_fn(|| async { "a" }))
+    ///     .route("/b", handler_fn(|| async { "b" }));
+    ///
+    /// for (path, method, _service) in router.iter() {
+    ///     println!("Path: {}, Method: {:?}", path, method);
+    /// }
+    /// ```
+    pub fn iter(
+        &self,
+    ) -> impl Iterator<
+        Item = (
+            &str,
+            Option<&Method>,
+            &ArcService<Request, Response, BoxError>,
+        ),
+    > {
+        self.table.iter().flat_map(|(&id, endpoint)| {
+            let path = self.inner.find_path(id).unwrap();
+            endpoint
+                .as_ref()
+                .iter()
+                .map(move |(method, service)| (path, method, service))
+        })
     }
 
     fn add_endpoint<T: MergeToMethodRouter>(

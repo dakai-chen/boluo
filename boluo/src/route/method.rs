@@ -35,6 +35,15 @@ impl MethodRouter {
     fn contains_any(&self) -> bool {
         self.any.is_some()
     }
+
+    pub(super) fn iter(
+        &self,
+    ) -> impl Iterator<Item = (Option<&Method>, &ArcService<Request, Response, BoxError>)> {
+        self.map
+            .iter()
+            .map(|(method, service)| (Some(method), service))
+            .chain(self.any.as_ref().map(|service| (None, service)))
+    }
 }
 
 impl Service<Request> for MethodRouter {
