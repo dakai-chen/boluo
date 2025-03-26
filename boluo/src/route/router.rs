@@ -185,7 +185,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     pub fn route<S>(self, path: &str, service: S) -> Self
     where
         S: IntoMethodRoute,
@@ -203,7 +203,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     pub fn try_route<S>(self, path: &str, service: S) -> Result<Self, RouterError>
     where
         S: IntoMethodRoute,
@@ -228,7 +228,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     pub fn scope<S>(self, path: &str, service: S) -> Self
     where
         S: IntoMethodRoute,
@@ -246,7 +246,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     pub fn try_scope<S>(self, path: &str, service: S) -> Result<Self, RouterError>
     where
         S: IntoMethodRoute,
@@ -278,7 +278,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     ///
     /// [`route`]: macro@boluo_macros::route
     pub fn mount<S>(self, route: impl Into<Route<S>>) -> Self
@@ -294,7 +294,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     ///
     /// [`route`]: macro@boluo_macros::route
     pub fn mount_with<S, M>(self, route: impl Into<Route<S>>, middleware: M) -> Self
@@ -312,7 +312,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     ///
     /// [`route`]: macro@boluo_macros::route
     pub fn try_mount<S>(self, route: impl Into<Route<S>>) -> Result<Self, RouterError>
@@ -328,7 +328,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     ///
     /// [`route`]: macro@boluo_macros::route
     pub fn try_mount_with<S, M>(
@@ -410,7 +410,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     pub fn scope_merge(self, path: &str, other: impl Into<Router>) -> Self {
         self.try_scope_merge(path, other)
             .unwrap_or_else(|e| panic!("{e}"))
@@ -420,7 +420,7 @@ impl Router {
     ///
     /// # 恐慌
     ///
-    /// 当路由表发生冲突时会出现恐慌。
+    /// 给定了无效路径或路由表发生冲突时会出现恐慌。
     pub fn scope_merge_with<M>(self, path: &str, other: impl Into<Router>, middleware: M) -> Self
     where
         M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
@@ -436,7 +436,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     pub fn try_scope_merge(
         self,
         path: &str,
@@ -449,7 +449,7 @@ impl Router {
     ///
     /// # 错误
     ///
-    /// 当路由表发生冲突时会返回错误。
+    /// 给定了无效路径或路由表发生冲突时会返回错误。
     pub fn try_scope_merge_with<M>(
         mut self,
         path: &str,
