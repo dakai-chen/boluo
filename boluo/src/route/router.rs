@@ -17,7 +17,11 @@ pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__boluo_tail_param";
 pub(super) const PRIVATE_TAIL_PARAM_CAPTURE: &str = "{*__private__boluo_tail_param}";
 
 fn normalize_tail_param_capture(path: &str) -> String {
-    path.replace("{*}", PRIVATE_TAIL_PARAM_CAPTURE)
+    if let Some(path) = path.strip_suffix("{*}") {
+        format!("{path}{PRIVATE_TAIL_PARAM_CAPTURE}")
+    } else {
+        path.to_owned()
+    }
 }
 
 type RouteEntry<'a> = (

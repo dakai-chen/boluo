@@ -4,6 +4,10 @@
 
 - 新增函数 `Router::scope_merge`，`Router::scope_merge_with`，`Router::try_scope_merge`，`Router::try_scope_merge_with`，允许在合并路由器时向所有路由添加前缀。
 
+## 修复
+
+- 恢复路径通配符替换逻辑为仅处理末尾的 {*}。
+
 # 0.6.3
 
 ## 新增
