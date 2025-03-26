@@ -321,13 +321,10 @@ impl MergeToMethodRouter for MethodRoute<ArcService<Request, Response, BoxError>
                         return Err(Some(method.clone()));
                     }
                 }
+                let service =
+                    boluo_core::util::__into_arc_service(middleware.transform(self.service));
                 for method in methods {
-                    router.add(
-                        boluo_core::util::__into_arc_service(
-                            middleware.clone().transform(self.service.clone()),
-                        ),
-                        method,
-                    );
+                    router.add(service.clone(), method);
                 }
             }
         }
