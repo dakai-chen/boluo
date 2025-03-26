@@ -1,5 +1,9 @@
 # unreleased
 
+## 新增
+
+- 新增函数 `Router::scope_merge`，`Router::scope_merge_with`，`Router::try_scope_merge`，`Router::try_scope_merge_with`，允许在合并路由器时向所有路由添加前缀。
+
 # 0.6.3
 
 ## 新增

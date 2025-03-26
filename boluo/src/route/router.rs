@@ -400,6 +400,75 @@ impl Router {
         Ok(self)
     }
 
+    /// 将另一个路由器的所有路由添加前缀后合并到此路由器中。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
+    pub fn scope_merge(self, path: &str, other: impl Into<Router>) -> Self {
+        self.try_scope_merge(path, other)
+            .unwrap_or_else(|e| panic!("{e}"))
+    }
+
+    /// 将另一个路由器的所有路由添加前缀后合并到此路由器中，并对合并的服务应用中间件。
+    ///
+    /// # 恐慌
+    ///
+    /// 当路由表发生冲突时会出现恐慌。
+    pub fn scope_merge_with<M>(self, path: &str, other: impl Into<Router>, middleware: M) -> Self
+    where
+        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
+        M::Service: Service<Request> + 'static,
+        <M::Service as Service<Request>>::Response: IntoResponse,
+        <M::Service as Service<Request>>::Error: Into<BoxError>,
+    {
+        self.try_scope_merge_with(path, other, middleware)
+            .unwrap_or_else(|e| panic!("{e}"))
+    }
+
+    /// 尝试将另一个路由器的所有路由添加前缀后合并到此路由器中。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
+    pub fn try_scope_merge(
+        self,
+        path: &str,
+        other: impl Into<Router>,
+    ) -> Result<Self, RouterError> {
+        self.try_scope_merge_with(path, other, middleware_fn(|s| s))
+    }
+
+    /// 尝试将另一个路由器的所有路由添加前缀后合并到此路由器中，并对合并的服务应用中间件。
+    ///
+    /// # 错误
+    ///
+    /// 当路由表发生冲突时会返回错误。
+    pub fn try_scope_merge_with<M>(
+        mut self,
+        path: &str,
+        other: impl Into<Router>,
+        middleware: M,
+    ) -> Result<Self, RouterError>
+    where
+        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
+        M::Service: Service<Request> + 'static,
+        <M::Service as Service<Request>>::Response: IntoResponse,
+        <M::Service as Service<Request>>::Error: Into<BoxError>,
+    {
+        Self::validate_path(path)?;
+
+        let other = other.into();
+        for (id, endpoint) in other.table {
+            self = self.add_endpoint_with(
+                &join_path(path, other.inner.find_path(id).unwrap()),
+                endpoint,
+                middleware.clone(),
+            )?;
+        }
+        Ok(self)
+    }
+
     /// 从路由器中移除指定的路由。
     ///
     /// # 例子
@@ -681,4 +750,10 @@ fn replace_uri_path(uri: Uri, path: &str) -> Uri {
     let mut parts = uri.into_parts();
     parts.path_and_query = Some(path_and_query.parse().unwrap());
     Uri::from_parts(parts).unwrap()
+}
+
+fn join_path(prefix: &str, path: &str) -> String {
+    let prefix = prefix.strip_suffix('/').unwrap_or(prefix);
+    let path = path.strip_prefix('/').unwrap_or(path);
+    format!("{prefix}/{path}")
 }
