@@ -16,7 +16,7 @@ use super::{IntoMethodRoute, MethodRoute, RouteError, RouterError};
 pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__boluo_tail_param";
 pub(super) const PRIVATE_TAIL_PARAM_CAPTURE: &str = "{*__private__boluo_tail_param}";
 
-fn replace_tail_param(path: &str) -> String {
+fn normalize_tail_param_capture(path: &str) -> String {
     path.replace("{*}", PRIVATE_TAIL_PARAM_CAPTURE)
 }
 
@@ -63,7 +63,7 @@ impl RouterInner {
     fn add(&mut self, path: &str) -> Result<RouteId, RouterError> {
         let id = self.next_id().ok_or(RouterError::TooManyPath)?;
 
-        if let Err(e) = self.inner.insert(replace_tail_param(path), id) {
+        if let Err(e) = self.inner.insert(normalize_tail_param_capture(path), id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
         }
 
@@ -75,10 +75,12 @@ impl RouterInner {
     }
 
     fn remove(&mut self, path: &str) -> Option<RouteId> {
-        self.inner.remove(replace_tail_param(path)).inspect(|id| {
-            self.path_to_id.remove(path);
-            self.id_to_path.remove(id);
-        })
+        self.inner
+            .remove(normalize_tail_param_capture(path))
+            .inspect(|id| {
+                self.path_to_id.remove(path);
+                self.id_to_path.remove(id);
+            })
     }
 
     #[inline]
@@ -461,7 +463,7 @@ impl Router {
         let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
-                &join_path(path, other.inner.find_path(id).unwrap()),
+                &combine_path_segments(path, other.inner.find_path(id).unwrap()),
                 endpoint,
                 middleware.clone(),
             )?;
@@ -559,11 +561,11 @@ impl Router {
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        let id = self.add_path(path)?;
+        let id = self.get_or_create_route_id(path)?;
 
         let result = match endpoint {
             Endpoint::Route(service) => {
-                let Some(method_router) = self.get_or_add_route(id) else {
+                let Some(method_router) = self.get_or_create_route_endpoint(id) else {
                     return Err(RouterError::PathConflict {
                         path: path.to_owned(),
                         message: "conflict with previously registered path".to_owned(),
@@ -572,7 +574,7 @@ impl Router {
                 service.merge_to_with(method_router, middleware)
             }
             Endpoint::Scope(service) => {
-                let Some(method_router) = self.get_or_add_scope(id) else {
+                let Some(method_router) = self.get_or_create_scope_endpoint(id) else {
                     return Err(RouterError::PathConflict {
                         path: path.to_owned(),
                         message: "conflict with previously registered path".to_owned(),
@@ -598,7 +600,7 @@ impl Router {
         Ok(self)
     }
 
-    fn add_path(&mut self, path: &str) -> Result<RouteId, RouterError> {
+    fn get_or_create_route_id(&mut self, path: &str) -> Result<RouteId, RouterError> {
         let id = if let Some(id) = self.inner.find_id(path) {
             id
         } else {
@@ -607,7 +609,7 @@ impl Router {
         Ok(id)
     }
 
-    fn get_or_add_route(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
+    fn get_or_create_route_endpoint(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
         let Endpoint::Route(router) = self
             .table
             .entry(id)
@@ -618,7 +620,7 @@ impl Router {
         Some(router)
     }
 
-    fn get_or_add_scope(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
+    fn get_or_create_scope_endpoint(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
         let Endpoint::Scope(router) = self
             .table
             .entry(id)
@@ -658,7 +660,7 @@ impl Service<Request> for Router {
             return Err(RouteError::not_found(req).into());
         };
 
-        let (params, tail) = super::params::prase_path_params(params);
+        let (params, tail) = super::params::parse_path_params(params);
         super::params::insert_path_params(req.extensions_mut(), params);
 
         match endpoint {
@@ -752,7 +754,7 @@ fn replace_uri_path(uri: Uri, path: &str) -> Uri {
     Uri::from_parts(parts).unwrap()
 }
 
-fn join_path(prefix: &str, path: &str) -> String {
+fn combine_path_segments(prefix: &str, path: &str) -> String {
     let prefix = prefix.strip_suffix('/').unwrap_or(prefix);
     let path = path.strip_prefix('/').unwrap_or(path);
     format!("{prefix}/{path}")

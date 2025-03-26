@@ -25,7 +25,7 @@ impl DerefMut for PathParams {
     }
 }
 
-pub(super) fn prase_path_params(params: Params<'_, '_>) -> (PathParams, Option<String>) {
+pub(super) fn parse_path_params(params: Params<'_, '_>) -> (PathParams, Option<String>) {
     let mut path_params = PathParams(Vec::with_capacity(params.len()));
     let mut tail_params = None;
 
