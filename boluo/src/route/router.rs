@@ -56,16 +56,39 @@ impl RouterInner {
         self.inner.at(path)
     }
 
-    fn find_id(&self, path: &str) -> Option<RouteId> {
-        self.path_to_id.get(path).copied()
-    }
-
-    fn find_path(&self, id: RouteId) -> Option<&str> {
+    fn get_path(&self, id: RouteId) -> Option<&str> {
         self.id_to_path.get(&id).map(Arc::as_ref)
     }
 
-    fn add(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = self.next_id().ok_or(RouterError::TooManyPath)?;
+    fn get_id(&self, path: &str) -> Option<RouteId> {
+        self.path_to_id.get(path).copied()
+    }
+
+    fn get_or_create_id(&mut self, path: &str) -> Result<RouteId, RouterError> {
+        if let Some(id) = self.get_id(path) {
+            Ok(id)
+        } else {
+            self.__insert(path)
+        }
+    }
+
+    fn remove(&mut self, path: &str) -> Option<RouteId> {
+        self.path_to_id.remove(path).inspect(|id| {
+            self.id_to_path.remove(id);
+            self.inner.remove(normalize_tail_param_capture(path));
+        })
+    }
+
+    #[inline]
+    fn generate_next_id(&mut self) -> Option<RouteId> {
+        self.id.next().inspect(|&id| {
+            self.id = id;
+        })
+    }
+
+    /// 仅供 `RouterInner` 内部使用，不检查路径是否存在。
+    fn __insert(&mut self, path: &str) -> Result<RouteId, RouterError> {
+        let id = self.generate_next_id().ok_or(RouterError::TooManyPath)?;
 
         if let Err(e) = self.inner.insert(normalize_tail_param_capture(path), id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
@@ -76,22 +99,6 @@ impl RouterInner {
         self.path_to_id.insert(shared_path, id);
 
         Ok(id)
-    }
-
-    fn remove(&mut self, path: &str) -> Option<RouteId> {
-        self.inner
-            .remove(normalize_tail_param_capture(path))
-            .inspect(|id| {
-                self.path_to_id.remove(path);
-                self.id_to_path.remove(id);
-            })
-    }
-
-    #[inline]
-    fn next_id(&mut self) -> Option<RouteId> {
-        self.id.next().inspect(|&id| {
-            self.id = id;
-        })
     }
 }
 
@@ -398,7 +405,7 @@ impl Router {
         let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
-                other.inner.find_path(id).unwrap(),
+                other.inner.get_path(id).unwrap(),
                 endpoint,
                 middleware.clone(),
             )?;
@@ -467,7 +474,7 @@ impl Router {
         let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
-                &combine_path_segments(path, other.inner.find_path(id).unwrap()),
+                &combine_path_segments(path, other.inner.get_path(id).unwrap()),
                 endpoint,
                 middleware.clone(),
             )?;
@@ -493,7 +500,7 @@ impl Router {
     ///     .remove("/b", &Method::GET);
     /// ```
     pub fn remove<'a>(mut self, path: &str, method: impl Into<Option<&'a Method>>) -> Self {
-        let Some(id) = self.inner.find_id(path) else {
+        let Some(id) = self.inner.get_id(path) else {
             return self;
         };
         let Some(method_router) = self.table.get_mut(&id).map(Endpoint::as_mut) else {
@@ -534,7 +541,7 @@ impl Router {
     /// ```
     pub fn iter(&self) -> impl Iterator<Item = RouteEntry<'_>> {
         self.table.iter().flat_map(|(&id, endpoint)| {
-            let path = self.inner.find_path(id).unwrap();
+            let path = self.inner.get_path(id).unwrap();
             endpoint.as_ref().iter().map(move |(method, service)| {
                 let endpoint = match endpoint {
                     Endpoint::Route(_) => Endpoint::Route(service),
@@ -565,7 +572,7 @@ impl Router {
         <M::Service as Service<Request>>::Response: IntoResponse,
         <M::Service as Service<Request>>::Error: Into<BoxError>,
     {
-        let id = self.get_or_create_route_id(path)?;
+        let id = self.inner.get_or_create_id(path)?;
 
         let result = match endpoint {
             Endpoint::Route(service) => {
@@ -602,15 +609,6 @@ impl Router {
         }
 
         Ok(self)
-    }
-
-    fn get_or_create_route_id(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = if let Some(id) = self.inner.find_id(path) {
-            id
-        } else {
-            self.inner.add(path)?
-        };
-        Ok(id)
     }
 
     fn get_or_create_route_endpoint(&mut self, id: RouteId) -> Option<&mut MethodRouter> {
