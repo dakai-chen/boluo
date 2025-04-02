@@ -4,6 +4,10 @@
 
 - 新增方法 `Body::to_bytes`。
 
+## 变化
+
+- 使用 `Body::to_bytes` 实现 `Bytes` 的 `FromRequest`。
+
 # 0.5.1
 
 ## 修复

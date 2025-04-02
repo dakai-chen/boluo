@@ -3,7 +3,6 @@
 use std::convert::Infallible;
 
 use http::{Extensions, HeaderMap, Method, Uri, Version};
-use http_body_util::BodyExt;
 
 use crate::BoxError;
 use crate::body::{Body, Bytes};
@@ -163,7 +162,7 @@ impl FromRequest for Bytes {
     type Error = BoxError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        req.body_mut().collect().await.map(|col| col.to_bytes())
+        std::mem::take(req.body_mut()).to_bytes().await
     }
 }
 
