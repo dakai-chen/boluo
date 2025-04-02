@@ -54,6 +54,11 @@ impl Body {
     pub fn into_data_stream(self) -> BodyDataStream {
         BodyDataStream { inner: self }
     }
+
+    /// 消耗此 [`Body`] 对象，将其所有数据收集并合并为单个 [`Bytes`] 缓冲区。
+    pub async fn to_bytes(self) -> Result<Bytes, BoxError> {
+        self.collect().await.map(|col| col.to_bytes())
+    }
 }
 
 impl Default for Body {

@@ -1,5 +1,9 @@
 # unreleased
 
+## 新增
+
+- 新增方法 `Body::to_bytes`。
+
 # 0.5.1
 
 ## 修复
