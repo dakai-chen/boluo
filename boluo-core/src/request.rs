@@ -1,4 +1,4 @@
-//! HTTP请求。
+//! HTTP 请求。
 
 use std::convert::TryFrom;
 
@@ -10,33 +10,33 @@ use sync_wrapper::SyncWrapper;
 
 use crate::body::Body;
 
-/// HTTP请求。
+/// HTTP 请求。
 ///
-/// HTTP请求由头部和可选的主体组成。主体是泛型的，允许任意类型来表示HTTP请求的主体。
+/// HTTP 请求由头部和可选的主体组成。主体是泛型的，允许任意类型来表示 HTTP 请求的主体。
 #[derive(Default)]
 pub struct Request<T = Body> {
     head: RequestParts,
     body: SyncWrapper<T>,
 }
 
-/// HTTP请求的头部。
+/// HTTP 请求的头部。
 ///
-/// HTTP请求的头部由方法、URI、版本、一组标头和扩展组成。
+/// HTTP 请求的头部由方法、URI、版本、一组标头和扩展组成。
 #[derive(Default, Clone)]
 pub struct RequestParts {
-    /// HTTP请求的方法。
+    /// HTTP 请求的方法。
     pub method: Method,
-    /// HTTP请求的URI。
+    /// HTTP 请求的 URI。
     pub uri: Uri,
-    /// HTTP请求的版本。
+    /// HTTP 请求的版本。
     pub version: Version,
-    /// HTTP请求的标头集。
+    /// HTTP 请求的标头集。
     pub headers: HeaderMap<HeaderValue>,
-    /// HTTP请求的扩展。
+    /// HTTP 请求的扩展。
     pub extensions: Extensions,
 }
 
-/// HTTP请求的构建器。
+/// HTTP 请求的构建器。
 #[derive(Debug)]
 pub struct RequestBuilder {
     inner: Result<Request<()>>,
@@ -112,7 +112,7 @@ impl<T> Request<T> {
         }
     }
 
-    /// 获取请求的HTTP方法的引用。
+    /// 获取请求的 HTTP 方法的引用。
     ///
     /// # 例子
     ///
@@ -129,7 +129,7 @@ impl<T> Request<T> {
         &self.head.method
     }
 
-    /// 获取请求的HTTP方法的可变引用。
+    /// 获取请求的 HTTP 方法的可变引用。
     ///
     /// # 例子
     ///
@@ -147,7 +147,7 @@ impl<T> Request<T> {
         &mut self.head.method
     }
 
-    /// 获取请求的URI的引用。
+    /// 获取请求的 URI 的引用。
     ///
     /// # 例子
     ///
@@ -163,7 +163,7 @@ impl<T> Request<T> {
         &self.head.uri
     }
 
-    /// 获取请求的URI的可变引用。
+    /// 获取请求的 URI 的可变引用。
     ///
     /// # 例子
     ///
@@ -180,7 +180,7 @@ impl<T> Request<T> {
         &mut self.head.uri
     }
 
-    /// 获取请求的HTTP版本。
+    /// 获取请求的 HTTP 版本。
     ///
     /// # 例子
     ///
@@ -197,7 +197,7 @@ impl<T> Request<T> {
         self.head.version
     }
 
-    /// 获取请求的HTTP版本的可变引用。
+    /// 获取请求的 HTTP 版本的可变引用。
     ///
     /// # 例子
     ///
@@ -468,9 +468,9 @@ impl RequestBuilder {
         RequestBuilder::default()
     }
 
-    /// 设置请求的HTTP方法。
+    /// 设置请求的 HTTP 方法。
     ///
-    /// 默认情况下，这是`GET`。
+    /// 默认情况下，这是 `GET`。
     ///
     /// # 例子
     ///
@@ -494,9 +494,9 @@ impl RequestBuilder {
         })
     }
 
-    /// 获取请求的HTTP方法的引用。
+    /// 获取请求的 HTTP 方法的引用。
     ///
-    /// 默认情况下，这是`GET`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `GET`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -514,9 +514,9 @@ impl RequestBuilder {
         self.inner.as_ref().ok().map(|req| &req.head.method)
     }
 
-    /// 获取请求的HTTP方法的可变引用。
+    /// 获取请求的 HTTP 方法的可变引用。
     ///
-    /// 默认情况下，这是`GET`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `GET`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -534,9 +534,9 @@ impl RequestBuilder {
         self.inner.as_mut().ok().map(|req| &mut req.head.method)
     }
 
-    /// 设置请求的URI。
+    /// 设置请求的 URI。
     ///
-    /// 默认情况下，这是`/`。
+    /// 默认情况下，这是 `/`。
     ///
     /// # 例子
     ///
@@ -560,9 +560,9 @@ impl RequestBuilder {
         })
     }
 
-    /// 获取请求的URI的引用。
+    /// 获取请求的 URI 的引用。
     ///
-    /// 默认情况下，这是`/`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `/`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -579,9 +579,9 @@ impl RequestBuilder {
         self.inner.as_ref().ok().map(|req| &req.head.uri)
     }
 
-    /// 获取请求的URI的可变引用。
+    /// 获取请求的 URI 的可变引用。
     ///
-    /// 默认情况下，这是`/`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `/`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -598,9 +598,9 @@ impl RequestBuilder {
         self.inner.as_mut().ok().map(|req| &mut req.head.uri)
     }
 
-    /// 设置请求的HTTP版本。
+    /// 设置请求的 HTTP 版本。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。
+    /// 默认情况下，这是 `HTTP/1.1`。
     ///
     /// # 例子
     ///
@@ -620,9 +620,9 @@ impl RequestBuilder {
         })
     }
 
-    /// 获取请求的HTTP版本的引用。
+    /// 获取请求的 HTTP 版本的引用。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `HTTP/1.1`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -640,9 +640,9 @@ impl RequestBuilder {
         self.inner.as_ref().ok().map(|req| &req.head.version)
     }
 
-    /// 获取请求的HTTP版本的可变引用。
+    /// 获取请求的 HTTP 版本的可变引用。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `HTTP/1.1`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -662,8 +662,8 @@ impl RequestBuilder {
 
     /// 将标头追加到请求中。
     ///
-    /// 此函数将提供的键值对追加到请求内部的[`HeaderMap`]中。本质上，
-    /// 这相当于调用[`HeaderMap::append`]。
+    /// 此函数将提供的键值对追加到请求内部的 [`HeaderMap`] 中。本质上，
+    /// 这相当于调用 [`HeaderMap::append`]。
     ///
     /// # 例子
     ///
@@ -693,7 +693,7 @@ impl RequestBuilder {
 
     /// 获取请求的标头集的引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -715,7 +715,7 @@ impl RequestBuilder {
 
     /// 获取请求的标头集的可变引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -764,7 +764,7 @@ impl RequestBuilder {
 
     /// 获取请求的扩展的引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -783,7 +783,7 @@ impl RequestBuilder {
 
     /// 获取请求的扩展的可变引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///

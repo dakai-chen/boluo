@@ -1,4 +1,4 @@
-//! `boluo`的核心类型和特征。
+//! `boluo` 的核心类型和特征。
 
 #![forbid(unsafe_code)]
 #![warn(
@@ -22,7 +22,7 @@ pub mod service;
 pub mod upgrade;
 
 pub mod http {
-    //! [`http`]库的重新导出。
+    //! http 库的重新导出。
 
     pub use http::header::{self, HeaderMap, HeaderName, HeaderValue};
     pub use http::method::{self, Method};

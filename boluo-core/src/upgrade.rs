@@ -1,4 +1,4 @@
-//! HTTP升级。
+//! HTTP 升级。
 
 use std::any::Any;
 use std::pin::Pin;

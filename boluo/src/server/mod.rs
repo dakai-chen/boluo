@@ -1,4 +1,4 @@
-//! HTTP服务器。
+//! HTTP 服务器。
 
 mod compat;
 mod graceful_shutdown;
@@ -20,7 +20,7 @@ use tokio::io::{AsyncRead, AsyncWrite};
 
 use crate::listener::Listener;
 
-/// HTTP服务器。
+/// HTTP 服务器。
 pub struct Server<L> {
     listener: L,
     builder: Builder<TokioExecutor>,

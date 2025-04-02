@@ -1,6 +1,6 @@
 use super::Service;
 
-/// [`and_then`]返回的服务。
+/// [`and_then`] 返回的服务。
 ///
 /// [`and_then`]: crate::service::ServiceExt::and_then
 #[derive(Clone, Copy)]
@@ -10,7 +10,7 @@ pub struct AndThen<S, F> {
 }
 
 impl<S, F> AndThen<S, F> {
-    /// 创建一个新的[`AndThen`]服务。
+    /// 创建一个新的 [`AndThen`] 服务。
     pub fn new(service: S, f: F) -> Self {
         Self { service, f }
     }

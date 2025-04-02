@@ -9,7 +9,7 @@ use crate::BoxError;
 use crate::body::{Body, Bytes};
 use crate::request::{Request, RequestParts};
 
-/// 可以根据[`Request`]创建的类型，用于实现提取器。
+/// 可以根据 [`Request`] 创建的类型，用于实现提取器。
 ///
 /// # 例子
 ///
@@ -20,10 +20,10 @@ use crate::request::{Request, RequestParts};
 /// use boluo_core::http::{header, HeaderValue};
 /// use boluo_core::request::Request;
 ///
-/// // 从请求头中提取HOST的提取器。
+/// // 从请求头中提取 HOST 的提取器。
 /// struct Host(Option<HeaderValue>);
 ///
-/// // 为提取器实现`FromRequest`特征。
+/// // 为提取器实现 `FromRequest` 特征。
 /// impl FromRequest for Host {
 ///     type Error = Infallible;
 ///
@@ -42,13 +42,13 @@ pub trait FromRequest: Sized {
     /// 提取器的错误类型。
     type Error;
 
-    /// 根据[`Request`]创建提取器实例。
+    /// 根据 [`Request`] 创建提取器实例。
     fn from_request(req: &mut Request) -> impl Future<Output = Result<Self, Self::Error>> + Send;
 }
 
-/// 可以根据[`Request`]创建的类型，用于实现提取器。
+/// 可以根据 [`Request`] 创建的类型，用于实现提取器。
 ///
-/// 与[`FromRequest`]不同的是，如果提取的数据不存在，则返回`Ok(None)`。
+/// 与 [`FromRequest`] 不同的是，如果提取的数据不存在，则返回 `Ok(None)`。
 ///
 /// # 例子
 ///
@@ -59,10 +59,10 @@ pub trait FromRequest: Sized {
 /// use boluo_core::http::{header, HeaderValue};
 /// use boluo_core::request::Request;
 ///
-/// // 从请求头中提取HOST的提取器。
+/// // 从请求头中提取 HOST 的提取器。
 /// struct Host(HeaderValue);
 ///
-/// // 为提取器实现`OptionalFromRequest`特征。
+/// // 为提取器实现 `OptionalFromRequest` 特征。
 /// impl OptionalFromRequest for Host {
 ///     type Error = Infallible;
 ///
@@ -82,7 +82,7 @@ pub trait OptionalFromRequest: Sized {
     /// 提取器的错误类型。
     type Error;
 
-    /// 根据[`Request`]创建提取器实例。
+    /// 根据 [`Request`] 创建提取器实例。
     fn from_request(
         req: &mut Request,
     ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
@@ -224,5 +224,5 @@ impl FromRequest for RequestParts {
     }
 }
 
-/// 简化[`Result`]提取器的书写。
+/// 简化 [`Result`] 提取器的书写。
 pub type ExtractResult<T> = std::result::Result<T, <T as FromRequest>::Error>;

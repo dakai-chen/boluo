@@ -1,4 +1,4 @@
-//! HTTP响应。
+//! HTTP 响应。
 
 pub use boluo_core::response::*;
 

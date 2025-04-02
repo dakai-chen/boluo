@@ -1,4 +1,4 @@
-//! `boluo`的宏。
+//! `boluo` 的宏。
 
 #![forbid(unsafe_code)]
 #![warn(

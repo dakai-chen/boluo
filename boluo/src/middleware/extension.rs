@@ -15,7 +15,7 @@ impl<S, T> Middleware<S> for Extension<T> {
     }
 }
 
-/// 中间件[`Extension`]返回的服务。
+/// 中间件 [`Extension`] 返回的服务。
 #[derive(Debug, Clone, Copy)]
 pub struct ExtensionService<S, T> {
     service: S,

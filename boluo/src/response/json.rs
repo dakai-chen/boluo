@@ -25,7 +25,7 @@ where
     }
 }
 
-/// JSON响应错误。
+/// JSON 响应错误。
 #[derive(Debug)]
 pub enum JsonResponseError {
     /// 序列化错误。

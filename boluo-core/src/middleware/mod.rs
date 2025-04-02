@@ -22,7 +22,7 @@ pub use simple::*;
 /// #[derive(Debug, Clone, Copy)]
 /// struct Log;
 ///
-/// /// 为日志中间件实现[`Middleware`]特征。
+/// /// 为日志中间件实现 [`Middleware`] 特征。
 /// impl<S> Middleware<S> for Log
 /// where
 ///     S: Service<Request>,
@@ -82,12 +82,12 @@ pub use simple::*;
 /// let service = service.with(Log); // 添加日志中间件。
 /// ```
 pub trait Middleware<S> {
-    /// 新的[`Service`]类型。
+    /// 新的 [`Service`] 类型。
     ///
     /// [`Service`]: crate::service::Service
     type Service;
 
-    /// 将给定的[`Service`]对象转换为一个新的[`Service`]。
+    /// 将给定的 [`Service`] 对象转换为一个新的 [`Service`]。
     ///
     /// [`Service`]: crate::service::Service
     fn transform(self, service: S) -> Self::Service;

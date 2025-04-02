@@ -1,4 +1,4 @@
-//! HTTP响应。
+//! HTTP 响应。
 
 mod into_response;
 
@@ -14,31 +14,31 @@ use sync_wrapper::SyncWrapper;
 
 use crate::body::Body;
 
-/// HTTP响应。
+/// HTTP 响应。
 ///
-/// HTTP响应由头部和可选的主体组成。主体是泛型的，允许任意类型来表示HTTP响应的主体。
+/// HTTP 响应由头部和可选的主体组成。主体是泛型的，允许任意类型来表示 HTTP 响应的主体。
 #[derive(Default)]
 pub struct Response<T = Body> {
     head: ResponseParts,
     body: SyncWrapper<T>,
 }
 
-/// HTTP响应的头部。
+/// HTTP 响应的头部。
 ///
-/// HTTP响应的头部由状态码、版本、一组标头和扩展组成。
+/// HTTP 响应的头部由状态码、版本、一组标头和扩展组成。
 #[derive(Default, Clone)]
 pub struct ResponseParts {
-    /// HTTP响应的状态码。
+    /// HTTP 响应的状态码。
     pub status: StatusCode,
-    /// HTTP响应的版本。
+    /// HTTP 响应的版本。
     pub version: Version,
-    /// HTTP响应的标头集。
+    /// HTTP 响应的标头集。
     pub headers: HeaderMap<HeaderValue>,
-    /// HTTP响应的扩展。
+    /// HTTP 响应的扩展。
     pub extensions: Extensions,
 }
 
-/// HTTP响应的构建器。
+/// HTTP 响应的构建器。
 #[derive(Debug)]
 pub struct ResponseBuilder {
     inner: Result<Response<()>>,
@@ -148,7 +148,7 @@ impl<T> Response<T> {
         &mut self.head.status
     }
 
-    /// 获取响应的HTTP版本。
+    /// 获取响应的 HTTP 版本。
     ///
     /// # 例子
     ///
@@ -165,7 +165,7 @@ impl<T> Response<T> {
         self.head.version
     }
 
-    /// 获取响应的HTTP版本的可变引用。
+    /// 获取响应的 HTTP 版本的可变引用。
     ///
     /// # 例子
     ///
@@ -434,7 +434,7 @@ impl ResponseBuilder {
 
     /// 设置响应的状态码。
     ///
-    /// 默认情况下，这是`200`。
+    /// 默认情况下，这是 `200`。
     ///
     /// # 例子
     ///
@@ -460,7 +460,7 @@ impl ResponseBuilder {
 
     /// 获取响应的状态码的引用。
     ///
-    /// 默认情况下，这是`200`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `200`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -480,7 +480,7 @@ impl ResponseBuilder {
 
     /// 获取响应的状态码的可变引用。
     ///
-    /// 默认情况下，这是`200`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `200`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -498,9 +498,9 @@ impl ResponseBuilder {
         self.inner.as_mut().ok().map(|res| &mut res.head.status)
     }
 
-    /// 设置响应的HTTP版本。
+    /// 设置响应的 HTTP 版本。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。
+    /// 默认情况下，这是 `HTTP/1.1`。
     ///
     /// # 例子
     ///
@@ -520,9 +520,9 @@ impl ResponseBuilder {
         })
     }
 
-    /// 获取响应的HTTP版本的引用。
+    /// 获取响应的 HTTP 版本的引用。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `HTTP/1.1`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -540,9 +540,9 @@ impl ResponseBuilder {
         self.inner.as_ref().ok().map(|res| &res.head.version)
     }
 
-    /// 获取响应的HTTP版本的可变引用。
+    /// 获取响应的 HTTP 版本的可变引用。
     ///
-    /// 默认情况下，这是`HTTP/1.1`。如果构建器有错误，则返回[`None`]。
+    /// 默认情况下，这是 `HTTP/1.1`。如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -562,8 +562,8 @@ impl ResponseBuilder {
 
     /// 将标头追加到响应中。
     ///
-    /// 此函数将提供的键值对追加到响应内部的[`HeaderMap`]中。本质上，
-    /// 这相当于调用[`HeaderMap::append`]。
+    /// 此函数将提供的键值对追加到响应内部的 [`HeaderMap`] 中。本质上，
+    /// 这相当于调用 [`HeaderMap::append`]。
     ///
     /// # 例子
     ///
@@ -594,7 +594,7 @@ impl ResponseBuilder {
 
     /// 获取响应的标头集的引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -616,7 +616,7 @@ impl ResponseBuilder {
 
     /// 获取响应的标头集的可变引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -665,7 +665,7 @@ impl ResponseBuilder {
 
     /// 获取响应的扩展的引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///
@@ -684,7 +684,7 @@ impl ResponseBuilder {
 
     /// 获取响应的扩展的可变引用。
     ///
-    /// 如果构建器有错误，则返回[`None`]。
+    /// 如果构建器有错误，则返回 [`None`]。
     ///
     /// # 例子
     ///

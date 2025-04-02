@@ -1,6 +1,6 @@
 use super::Service;
 
-/// [`or_else`]返回的服务。
+/// [`or_else`] 返回的服务。
 ///
 /// [`or_else`]: crate::service::ServiceExt::or_else
 #[derive(Clone, Copy)]
@@ -10,7 +10,7 @@ pub struct OrElse<S, F> {
 }
 
 impl<S, F> OrElse<S, F> {
-    /// 创建一个新的[`OrElse`]服务。
+    /// 创建一个新的 [`OrElse`] 服务。
     pub fn new(service: S, f: F) -> Self {
         Self { service, f }
     }

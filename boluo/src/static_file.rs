@@ -39,7 +39,7 @@ pub struct ServeFile {
 }
 
 impl ServeFile {
-    /// 使用指定路径创建一个新的[`ServeFile`]。
+    /// 使用指定路径创建一个新的 [`ServeFile`]。
     pub fn new(path: impl Into<PathBuf>) -> Self {
         Self { path: path.into() }
     }
@@ -70,7 +70,7 @@ pub struct ServeDir {
 }
 
 impl ServeDir {
-    /// 使用指定路径创建一个新的[`ServeDir`]。
+    /// 使用指定路径创建一个新的 [`ServeDir`]。
     pub fn new(root: impl Into<PathBuf>) -> Self {
         Self { root: root.into() }
     }
@@ -332,7 +332,7 @@ fn optimal_buf_size(metadata: &Metadata) -> usize {
 pub enum ServeFileError {
     /// 文件不存在。
     NotFound,
-    /// IO错误。
+    /// IO 错误。
     IO(io::Error),
 }
 

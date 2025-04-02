@@ -46,7 +46,7 @@ fn is_json_content_type(headers: &HeaderMap) -> bool {
     is_json_content_type
 }
 
-/// JSON提取错误。
+/// JSON 提取错误。
 #[derive(Debug)]
 pub enum JsonExtractError {
     /// 不支持的内容类型。

@@ -2,11 +2,11 @@
 
 use std::ops::{Deref, DerefMut};
 
-/// JSON提取器和响应。
+/// JSON 提取器和响应。
 ///
 /// # 提取
 ///
-/// 当用作提取器时，[`Json`]可以将请求体反序列化为实现[`serde::de::DeserializeOwned`]的类型。
+/// 当用作提取器时，[`Json`] 可以将请求体反序列化为实现 [`serde::de::DeserializeOwned`] 的类型。
 ///
 /// ```
 /// use boluo::data::Json;
@@ -25,8 +25,8 @@ use std::ops::{Deref, DerefMut};
 ///
 /// # 响应
 ///
-/// 当用作响应时，[`Json`]可以将实现[`serde::Serialize`]的类型序列化为JSON，
-/// 并设置响应标头`Content-Type: application/json`。
+/// 当用作响应时，[`Json`] 可以将实现 [`serde::Serialize`] 的类型序列化为 JSON，
+/// 并设置响应标头 `Content-Type: application/json`。
 ///
 /// ```
 /// use boluo::data::Json;
@@ -79,10 +79,10 @@ impl<T> Json<T> {
 ///
 /// # 提取
 ///
-/// 当用作提取器时，[`Form`]可以将请求中的表单数据反序列化为实现
-/// [`serde::de::DeserializeOwned`]的类型。
+/// 当用作提取器时，[`Form`] 可以将请求中的表单数据反序列化为实现
+/// [`serde::de::DeserializeOwned`] 的类型。
 ///
-/// 如果请求具有`GET`或`HEAD`方法，则会从查询字符串中读取表单数据（与[`Query`]相同），
+/// 如果请求具有 `GET` 或 `HEAD` 方法，则会从查询字符串中读取表单数据（与 [`Query`] 相同），
 /// 如果请求具有不同的方法，则会从请求体中读取表单数据。
 ///
 /// ```
@@ -102,8 +102,8 @@ impl<T> Json<T> {
 ///
 /// # 响应
 ///
-/// 当用作响应时，[`Form`]可以将实现[`serde::Serialize`]的类型序列化为表单，
-/// 并设置响应标头`Content-Type: application/x-www-form-urlencoded`。
+/// 当用作响应时，[`Form`] 可以将实现 [`serde::Serialize`] 的类型序列化为表单，
+/// 并设置响应标头 `Content-Type: application/x-www-form-urlencoded`。
 ///
 /// ```
 /// use boluo::data::Form;

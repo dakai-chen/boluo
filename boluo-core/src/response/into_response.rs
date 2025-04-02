@@ -7,7 +7,7 @@ use crate::BoxError;
 use crate::body::{Body, Bytes, HttpBody};
 use crate::response::{Response, ResponseParts};
 
-/// 用于生成[`Response`]的特征。
+/// 用于生成 [`Response`] 的特征。
 ///
 /// # 例子
 ///
@@ -34,7 +34,7 @@ use crate::response::{Response, ResponseParts};
 ///     }
 /// }
 ///
-/// // 在处理程序中使用`Html`响应页面。
+/// // 在处理程序中使用 `Html` 响应页面。
 /// async fn response_html() -> impl IntoResponse {
 ///     Html("<html><body>Hello, World!</body></html>")
 /// }
@@ -43,7 +43,7 @@ pub trait IntoResponse {
     /// 发生错误时返回的类型。
     type Error: Into<BoxError>;
 
-    /// 得到一个[`Response`]实例。
+    /// 得到一个 [`Response`] 实例。
     fn into_response(self) -> Result<Response, Self::Error>;
 }
 

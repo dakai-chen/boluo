@@ -1,4 +1,4 @@
-//! 处理WebSocket连接。
+//! 处理 WebSocket 连接。
 
 mod message;
 mod util;
@@ -21,7 +21,7 @@ use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
 use tokio_util::compat::{Compat, FuturesAsyncReadCompatExt};
 
-/// 用于建立WebSocket连接的提取器。
+/// 用于建立 WebSocket 连接的提取器。
 ///
 /// # 例子
 ///
@@ -229,7 +229,7 @@ impl FromRequest for WebSocketUpgrade {
     }
 }
 
-/// WebSocket消息流。
+/// WebSocket 消息流。
 pub struct WebSocket {
     inner: WebSocketStream<Compat<Upgraded>>,
 }
@@ -299,16 +299,16 @@ impl std::fmt::Debug for WebSocket {
     }
 }
 
-/// WebSocket连接升级失败。
+/// WebSocket 连接升级失败。
 #[derive(Debug, Clone, Copy)]
 pub enum WebSocketUpgradeError {
-    /// 无效的请求头`connection`。
+    /// 无效的请求头 `connection`。
     InvalidConnectionHeader,
-    /// 无效的请求头`upgrade`。
+    /// 无效的请求头 `upgrade`。
     InvalidUpgradeHeader,
-    /// 无效的请求头`sec-websocket-version`。
+    /// 无效的请求头 `sec-websocket-version`。
     InvalidSecWebSocketVersionHeader,
-    /// 缺少请求头`sec-websocket-key`。
+    /// 缺少请求头 `sec-websocket-key`。
     MissingSecWebSocketKeyHeader,
     /// 连接不可升级。
     ConnectionNotUpgradable,

@@ -1,7 +1,7 @@
 use crate::middleware::Middleware;
 use crate::service::Service;
 
-/// 将给定的异步函数转换为[`Middleware`]，并可以携带状态。
+/// 将给定的异步函数转换为 [`Middleware`]，并可以携带状态。
 ///
 /// # 例子
 ///
@@ -27,7 +27,7 @@ pub fn simple_middleware_fn_with_state<T, F>(state: T, f: F) -> SimpleMiddleware
     SimpleMiddlewareFnWithState { state, f }
 }
 
-/// 详情查看[`simple_middleware_fn_with_state`]。
+/// 详情查看 [`simple_middleware_fn_with_state`]。
 #[derive(Clone, Copy)]
 pub struct SimpleMiddlewareFnWithState<T, F> {
     state: T,
@@ -58,7 +58,7 @@ where
     }
 }
 
-/// 中间件[`SimpleMiddlewareFnWithState`]返回的服务。
+/// 中间件 [`SimpleMiddlewareFnWithState`] 返回的服务。
 #[derive(Clone, Copy)]
 pub struct SimpleMiddlewareFnWithStateService<T, F, S> {
     state: T,
@@ -129,7 +129,7 @@ where
     }
 }
 
-/// 将给定的异步函数转换为[`Middleware`]。
+/// 将给定的异步函数转换为 [`Middleware`]。
 ///
 /// # 例子
 ///
@@ -155,7 +155,7 @@ pub fn simple_middleware_fn<F>(f: F) -> SimpleMiddlewareFn<F> {
     SimpleMiddlewareFn { f }
 }
 
-/// 详情查看[`simple_middleware_fn`]。
+/// 详情查看 [`simple_middleware_fn`]。
 #[derive(Clone, Copy)]
 pub struct SimpleMiddlewareFn<F> {
     f: F,
@@ -177,7 +177,7 @@ impl<F> std::fmt::Debug for SimpleMiddlewareFn<F> {
     }
 }
 
-/// 中间件[`SimpleMiddlewareFn`]返回的服务。
+/// 中间件 [`SimpleMiddlewareFn`] 返回的服务。
 #[derive(Clone, Copy)]
 pub struct SimpleMiddlewareFnService<F, S> {
     f: F,

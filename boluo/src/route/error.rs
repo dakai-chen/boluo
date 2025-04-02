@@ -18,19 +18,19 @@ pub struct RouteError {
 }
 
 impl RouteError {
-    /// 使用给定的请求和类别创建[`RouteError`]。
+    /// 使用给定的请求和类别创建 [`RouteError`]。
     #[inline]
     pub fn new(request: Request, kind: RouteErrorKind) -> Self {
         Self { kind, request }
     }
 
-    /// 使用给定的请求创建[`RouteError`]，类别为[`RouteErrorKind::NotFound`]。
+    /// 使用给定的请求创建 [`RouteError`]，类别为 [`RouteErrorKind::NotFound`]。
     #[inline]
     pub fn not_found(request: Request) -> Self {
         Self::new(request, RouteErrorKind::NotFound)
     }
 
-    /// 使用给定的请求创建[`RouteError`]，类别为[`RouteErrorKind::MethodNotAllowed`]。
+    /// 使用给定的请求创建 [`RouteError`]，类别为 [`RouteErrorKind::MethodNotAllowed`]。
     #[inline]
     pub fn method_not_allowed(request: Request) -> Self {
         Self::new(request, RouteErrorKind::MethodNotAllowed)

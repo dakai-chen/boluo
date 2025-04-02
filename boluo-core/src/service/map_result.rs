@@ -1,6 +1,6 @@
 use super::Service;
 
-/// [`map_result`]返回的服务。
+/// [`map_result`] 返回的服务。
 ///
 /// [`map_result`]: crate::service::ServiceExt::map_result
 #[derive(Clone, Copy)]
@@ -10,7 +10,7 @@ pub struct MapResult<S, F> {
 }
 
 impl<S, F> MapResult<S, F> {
-    /// 创建一个新的[`MapResult`]服务。
+    /// 创建一个新的 [`MapResult`] 服务。
     pub fn new(service: S, f: F) -> Self {
         Self { service, f }
     }

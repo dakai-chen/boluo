@@ -43,7 +43,7 @@ boluo = "0.6"
 tokio = { version = "1", features = ["full"] }
 ```
 
-用以下内容覆盖`src/main.rs`：
+用以下内容覆盖 `src/main.rs`：
 
 ```rust
 use boluo::response::IntoResponse;
@@ -86,6 +86,6 @@ curl http://127.0.0.1:3000/
 cargo run --bin hello
 ```
 
-## 支持的最低Rust版本（MSRV）
+## 支持的最低 Rust 版本（MSRV）
 
-支持的最低Rust版本为`1.85.0`。
+支持的最低 Rust 版本为 `1.85.0`。

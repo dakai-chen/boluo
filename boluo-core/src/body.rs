@@ -1,4 +1,4 @@
-//! HTTP主体。
+//! HTTP 主体。
 
 pub use bytes::Bytes;
 pub use http_body::{Body as HttpBody, Frame, SizeHint};
@@ -26,7 +26,7 @@ where
 pub struct Body(BoxBody);
 
 impl Body {
-    /// 创建一个新的[`Body`]，内部包装给定的[`http_body::Body`]对象。
+    /// 创建一个新的 [`Body`]，内部包装给定的 [`http_body::Body`] 对象。
     pub fn new<B>(body: B) -> Self
     where
         B: HttpBody<Data = Bytes> + Send + 'static,
@@ -35,12 +35,12 @@ impl Body {
         crate::util::__try_downcast(body).unwrap_or_else(|body| Self(boxed(body)))
     }
 
-    /// 创建一个空的[`Body`]。
+    /// 创建一个空的 [`Body`]。
     pub fn empty() -> Self {
         Self::new(Empty::new())
     }
 
-    /// 从[`Stream`]中创建一个新的[`Body`]。
+    /// 从 [`Stream`] 中创建一个新的 [`Body`]。
     pub fn from_stream<S>(stream: S) -> Self
     where
         S: TryStream + Send + 'static,
@@ -50,7 +50,7 @@ impl Body {
         Self::new(StreamBody { stream })
     }
 
-    /// 将[`Body`]的数据帧转换为[`Stream`]，非数据帧的部分将被丢弃。
+    /// 将 [`Body`] 的数据帧转换为 [`Stream`]，非数据帧的部分将被丢弃。
     pub fn into_data_stream(self) -> BodyDataStream {
         BodyDataStream { inner: self }
     }

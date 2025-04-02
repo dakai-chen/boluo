@@ -7,7 +7,7 @@ use headers::{Header, HeaderMapExt};
 
 /// 获取请求标头值的提取器。
 ///
-/// `T`需要实现[`Header`]。
+/// `T` 需要实现 [`Header`]。
 ///
 /// # 例子
 ///

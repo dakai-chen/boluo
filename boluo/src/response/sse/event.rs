@@ -92,7 +92,7 @@ impl EventBuilder {
     ///
     /// # 错误
     ///
-    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
+    /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn comment(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -116,7 +116,7 @@ impl EventBuilder {
     ///
     /// # 错误
     ///
-    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
+    /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn id(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -130,7 +130,7 @@ impl EventBuilder {
     ///
     /// # 错误
     ///
-    /// 如果设置的值包含换行符或回车符，则调用[`EventBuilder::build`]将返回错误。
+    /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn event(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
@@ -144,7 +144,7 @@ impl EventBuilder {
     ///
     /// # 错误
     ///
-    /// 如果设置的值包含回车符，则调用[`EventBuilder::build`]将返回错误。
+    /// 如果设置的值包含回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn data(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             let value: Cow<'static, str> = value.into();
@@ -202,7 +202,7 @@ impl Default for EventBuilder {
     }
 }
 
-/// SSE事件值不能包含换行或回车。
+/// SSE 事件值不能包含换行或回车。
 pub struct EventValueError {
     _priv: (),
 }

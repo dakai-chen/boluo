@@ -65,7 +65,7 @@ impl Message {
         Message::Binary(data.into())
     }
 
-    /// 创建`ping`消息。
+    /// 创建 `ping` 消息。
     pub fn ping<D>(data: D) -> Message
     where
         D: Into<Bytes>,
@@ -73,7 +73,7 @@ impl Message {
         Message::Ping(data.into())
     }
 
-    /// 创建`pong`消息。
+    /// 创建 `pong` 消息。
     pub fn pong<D>(data: D) -> Message
     where
         D: Into<Bytes>,
@@ -94,27 +94,27 @@ impl Message {
         }))
     }
 
-    /// 判断消息是否为[`Message::Text`]。
+    /// 判断消息是否为 [`Message::Text`]。
     pub fn is_text(&self) -> bool {
         matches!(*self, Message::Text(_))
     }
 
-    /// 判断消息是否为[`Message::Binary`]。
+    /// 判断消息是否为 [`Message::Binary`]。
     pub fn is_binary(&self) -> bool {
         matches!(*self, Message::Binary(_))
     }
 
-    /// 判断消息是否为[`Message::Ping`]。
+    /// 判断消息是否为 [`Message::Ping`]。
     pub fn is_ping(&self) -> bool {
         matches!(*self, Message::Ping(_))
     }
 
-    /// 判断消息是否为[`Message::Pong`]。
+    /// 判断消息是否为 [`Message::Pong`]。
     pub fn is_pong(&self) -> bool {
         matches!(*self, Message::Pong(_))
     }
 
-    /// 判断消息是否为[`Message::Close`]。
+    /// 判断消息是否为 [`Message::Close`]。
     pub fn is_close(&self) -> bool {
         matches!(*self, Message::Close(_))
     }

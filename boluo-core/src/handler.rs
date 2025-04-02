@@ -8,7 +8,7 @@ use crate::request::Request;
 use crate::response::{IntoResponse, Response};
 use crate::service::Service;
 
-/// 将给定的处理程序转换为[`Service`]。
+/// 将给定的处理程序转换为 [`Service`]。
 ///
 /// # 例子
 ///
@@ -31,7 +31,7 @@ where
     }
 }
 
-/// 将给定的处理程序转换为[`Service`]。
+/// 将给定的处理程序转换为 [`Service`]。
 pub struct HandlerFn<F, T> {
     f: F,
     _marker: PhantomData<fn(T) -> T>,

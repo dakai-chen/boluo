@@ -1,6 +1,6 @@
 use super::Middleware;
 
-/// 将给定的闭包转换为[`Middleware`]。
+/// 将给定的闭包转换为 [`Middleware`]。
 ///
 /// # 例子
 ///
@@ -27,7 +27,7 @@ pub fn middleware_fn<F>(f: F) -> MiddlewareFn<F> {
     MiddlewareFn { f }
 }
 
-/// 将给定的闭包转换为[`Middleware`]。
+/// 将给定的闭包转换为 [`Middleware`]。
 #[derive(Clone, Copy)]
 pub struct MiddlewareFn<F> {
     f: F,

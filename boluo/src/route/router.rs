@@ -144,6 +144,10 @@ impl<T> Endpoint<T> {
 
 /// 路由器。
 ///
+#[doc = include_str!("../../doc/route/route.md")]
+///
+#[doc = include_str!("../../doc/route/scope.md")]
+///
 /// # 例子
 ///
 /// ```
@@ -188,8 +192,6 @@ impl Router {
 
     /// 将服务添加到指定路径。
     ///
-    #[doc = include_str!("../../doc/route/route.md")]
-    ///
     /// # 恐慌
     ///
     /// 给定了无效路径或路由表发生冲突时会出现恐慌。
@@ -205,8 +207,6 @@ impl Router {
     }
 
     /// 尝试将服务添加到指定路径。
-    ///
-    #[doc = include_str!("../../doc/route/route.md")]
     ///
     /// # 错误
     ///
@@ -229,9 +229,7 @@ impl Router {
         self.add_endpoint(path, ep)
     }
 
-    /// 将服务嵌套到指定路径并去掉前缀，新路径总是以`/`开头。
-    ///
-    #[doc = include_str!("../../doc/route/scope.md")]
+    /// 将服务嵌套到指定路径并去掉前缀，新路径总是以 `/` 开头。
     ///
     /// # 恐慌
     ///
@@ -247,9 +245,7 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
-    /// 尝试将服务嵌套到指定路径并去掉前缀，新路径总是以`/`开头。
-    ///
-    #[doc = include_str!("../../doc/route/scope.md")]
+    /// 尝试将服务嵌套到指定路径并去掉前缀，新路径总是以 `/` 开头。
     ///
     /// # 错误
     ///
@@ -281,7 +277,7 @@ impl Router {
         }
     }
 
-    /// 将[`Route`](Route)对象注册到路由器，这通常和[`route`]宏配合使用。
+    /// 将 [`Route`](Route) 对象注册到路由器，这通常和 [`route`] 宏配合使用。
     ///
     /// # 恐慌
     ///
@@ -297,7 +293,7 @@ impl Router {
         self.try_mount(route).unwrap_or_else(|e| panic!("{e}"))
     }
 
-    /// 将[`Route`](Route)对象注册到路由器，并对服务应用中间件，这通常和[`route`]宏配合使用。
+    /// 将 [`Route`](Route) 对象注册到路由器，并对服务应用中间件，这通常和 [`route`] 宏配合使用。
     ///
     /// # 恐慌
     ///
@@ -315,7 +311,7 @@ impl Router {
             .unwrap_or_else(|e| panic!("{e}"))
     }
 
-    /// 尝试将[`Route`](Route)对象注册到路由器，这通常和[`route`]宏配合使用。
+    /// 尝试将 [`Route`](Route) 对象注册到路由器，这通常和 [`route`] 宏配合使用。
     ///
     /// # 错误
     ///
@@ -331,7 +327,7 @@ impl Router {
         self.try_mount_with(route, middleware_fn(|s| s))
     }
 
-    /// 尝试将[`Route`](Route)对象注册到路由器，并对服务应用中间件，这通常和[`route`]宏配合使用。
+    /// 尝试将 [`Route`](Route) 对象注册到路由器，并对服务应用中间件，这通常和 [`route`] 宏配合使用。
     ///
     /// # 错误
     ///
@@ -686,8 +682,6 @@ pub struct Route<S> {
 
 impl<S> Route<S> {
     /// 创建路由，服务使用给定路径进行访问。
-    ///
-    #[doc = include_str!("../../doc/route/route.md")]
     pub fn new<T>(path: impl Into<String>, service: T) -> Self
     where
         T: IntoMethodRoute<Service = S>,

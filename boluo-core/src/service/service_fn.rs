@@ -1,6 +1,6 @@
 use super::Service;
 
-/// 将给定的异步函数转换为[`Service`]。
+/// 将给定的异步函数转换为 [`Service`]。
 ///
 /// # 例子
 ///
@@ -19,7 +19,7 @@ pub fn service_fn<F>(f: F) -> ServiceFn<F> {
     ServiceFn { f }
 }
 
-/// 将给定的异步函数转换为[`Service`]。
+/// 将给定的异步函数转换为 [`Service`]。
 #[derive(Clone, Copy)]
 
 pub struct ServiceFn<F> {

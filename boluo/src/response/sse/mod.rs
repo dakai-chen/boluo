@@ -18,7 +18,7 @@ use futures_util::Stream;
 
 use self::keep_alive::KeepAliveStream;
 
-/// 服务器发送事件的响应。
+/// 服务器发送事件。
 #[derive(Clone)]
 pub struct Sse<S> {
     stream: S,
@@ -26,7 +26,7 @@ pub struct Sse<S> {
 }
 
 impl<S> Sse<S> {
-    /// 创建一个新的[`Sse`]响应。
+    /// 创建一个新的 [`Sse`] 实例。
     pub fn new(stream: S) -> Self {
         Self {
             stream,

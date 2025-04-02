@@ -1,6 +1,6 @@
 use super::Service;
 
-/// [`map_err`]返回的服务。
+/// [`map_err`] 返回的服务。
 ///
 /// [`map_err`]: crate::service::ServiceExt::map_err
 #[derive(Clone, Copy)]
@@ -10,7 +10,7 @@ pub struct MapErr<S, F> {
 }
 
 impl<S, F> MapErr<S, F> {
-    /// 创建一个新的[`MapErr`]服务。
+    /// 创建一个新的 [`MapErr`] 服务。
     pub fn new(service: S, f: F) -> Self {
         Self { service, f }
     }

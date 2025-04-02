@@ -65,7 +65,7 @@ impl FromRequest for RawPathParams {
 
 /// 用于获取路径参数的提取器。
 ///
-/// `T`需要实现[`serde::de::DeserializeOwned`]。
+/// `T` 需要实现 [`serde::de::DeserializeOwned`]。
 ///
 /// # 例子
 ///
@@ -86,7 +86,7 @@ impl FromRequest for RawPathParams {
 ///     // ...
 /// }
 ///
-/// // 可以使用`HashMap`提取所有路径参数。
+/// // 可以使用 `HashMap` 提取所有路径参数。
 /// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
 /// async fn using_hashmap(Path(hashmap): Path<HashMap<String, String>>) {
 ///     // ...
@@ -98,7 +98,7 @@ impl FromRequest for RawPathParams {
 ///     // ...
 /// }
 ///
-/// // 可以使用`Vec`提取所有路径参数，路径参数将按照顺序解析到数组中。
+/// // 可以使用 `Vec` 提取所有路径参数，路径参数将按照顺序解析到数组中。
 /// #[boluo::route("/classes/{class_id}/students/{stdnt_id}", method = "GET")]
 /// async fn using_vec(Path(vec): Path<Vec<String>>) {
 ///     // ...

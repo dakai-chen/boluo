@@ -71,7 +71,7 @@ impl IntoResponse for Redirect {
     }
 }
 
-/// 重定向的URI不是有效的标头值。
+/// 重定向的 URI 不是有效的标头值。
 pub struct RedirectUriError {
     _priv: (),
 }

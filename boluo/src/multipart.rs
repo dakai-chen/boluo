@@ -1,4 +1,4 @@
-//! 用于解析文件上传中常用的`multipart/form-data`格式数据。
+//! 用于解析文件上传中常用的 `multipart/form-data` 格式数据。
 
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -10,7 +10,7 @@ use boluo_core::http::header::CONTENT_TYPE;
 use boluo_core::request::Request;
 use futures_util::Stream;
 
-/// 解析`multipart/form-data`请求的提取器。
+/// 解析 `multipart/form-data` 请求的提取器。
 ///
 /// # 例子
 ///
@@ -43,7 +43,7 @@ impl Multipart {
 }
 
 impl Multipart {
-    /// 生成下一个[`Field`]。
+    /// 生成下一个 [`Field`]。
     pub async fn next_field(&mut self) -> Result<Option<Field>, MultipartError> {
         let field = self
             .inner
@@ -88,12 +88,12 @@ pub struct Field {
 }
 
 impl Field {
-    /// 在`Content-Disposition`标头中找到的字段名。
+    /// 在 `Content-Disposition` 标头中找到的字段名。
     pub fn name(&self) -> Option<&str> {
         self.inner.name()
     }
 
-    /// 在`Content-Disposition`标头中找到的文件名。
+    /// 在 `Content-Disposition` 标头中找到的文件名。
     pub fn file_name(&self) -> Option<&str> {
         self.inner.file_name()
     }
@@ -140,7 +140,7 @@ impl Stream for Field {
     }
 }
 
-/// `multipart/form-data`解析错误。
+/// `multipart/form-data` 解析错误。
 #[derive(Debug, Clone)]
 pub enum MultipartError {
     /// 不支持的内容类型。

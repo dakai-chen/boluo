@@ -7,7 +7,7 @@ use serde::de::DeserializeOwned;
 
 /// 将查询字符串反序列化为某种类型的提取器。
 ///
-/// `T`需要实现[`serde::de::DeserializeOwned`]。
+/// `T` 需要实现 [`serde::de::DeserializeOwned`]。
 ///
 /// # 例子
 ///

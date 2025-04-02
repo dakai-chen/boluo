@@ -1,4 +1,4 @@
-//! `boluo`是一个简单易用的异步网络框架。
+//! `boluo` 是一个简单易用的异步网络框架。
 //!
 //! # 目录
 //!
@@ -27,7 +27,7 @@
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!
-//! 用以下内容覆盖`src/main.rs`：
+//! 用以下内容覆盖 `src/main.rs`：
 //!
 //! ```no_run
 //! use boluo::response::IntoResponse;
@@ -64,7 +64,7 @@
 //!
 //! # 服务
 //!
-//! [`Service`]特征表示一个接收请求并返回响应的异步函数。
+//! [`Service`] 特征表示一个接收请求并返回响应的异步函数。
 //!
 //! # 处理程序
 //!
@@ -77,29 +77,29 @@
 //! use boluo::handler::handler_fn;
 //! use boluo::response::IntoResponse;
 //!
-//! // 返回空的`200 OK`响应的处理程序。
+//! // 返回空的 `200 OK` 响应的处理程序。
 //! async fn empty() {}
 //!
-//! // 返回带有纯文本主体的`200 OK`响应的处理程序。
+//! // 返回带有纯文本主体的 `200 OK` 响应的处理程序。
 //! async fn hello() -> &'static str {
 //!     "Hello, World!"
 //! }
 //!
-//! // 返回带有请求主体的`200 OK`响应的处理程序。
+//! // 返回带有请求主体的 `200 OK` 响应的处理程序。
 //! //
-//! // `Body`实现了`FromRequest`特征，可以作为提取器解析请求。并且也实现了
-//! // `IntoResponse`特征，可以作为响应类型。
+//! // `Body` 实现了 `FromRequest` 特征，可以作为提取器解析请求。并且也实现了
+//! // `IntoResponse` 特征，可以作为响应类型。
 //! async fn echo(body: Body) -> impl IntoResponse {
 //!     body
 //! }
 //!
-//! // 使用`handler_fn`函数将处理程序转换为`Service`。
+//! // 使用 `handler_fn` 函数将处理程序转换为 `Service`。
 //! let service = handler_fn(echo);
 //! ```
 //!
 //! # 提取器
 //!
-//! 提取器是实现了[`FromRequest`]特征的类型，可以根据[`Request`]创建实例。
+//! 提取器是实现了 [`FromRequest`] 特征的类型，可以根据 [`Request`] 创建实例。
 //!
 //! ```
 //! use std::convert::Infallible;
@@ -108,10 +108,10 @@
 //! use boluo::http::{header, HeaderValue};
 //! use boluo::request::Request;
 //!
-//! // 从请求头中提取HOST的提取器。
+//! // 从请求头中提取 HOST 的提取器。
 //! struct Host(Option<HeaderValue>);
 //!
-//! // 为提取器实现`FromRequest`特征。
+//! // 为提取器实现 `FromRequest` 特征。
 //! impl FromRequest for Host {
 //!     type Error = Infallible;
 //!
@@ -129,18 +129,18 @@
 //!
 //! # 响应
 //!
-//! 任何实现[`IntoResponse`]特征的类型都可以作为响应。
+//! 任何实现 [`IntoResponse`] 特征的类型都可以作为响应。
 //!
 //! ```
 //! use boluo::response::Html;
 //! use boluo::response::IntoResponse;
 //!
-//! // 返回带有纯文本主体的`200 OK`响应的处理程序。
+//! // 返回带有纯文本主体的 `200 OK` 响应的处理程序。
 //! async fn hello() -> &'static str {
 //!     "Hello, World!"
 //! }
 //!
-//! // 返回显示`Hello, World!`的HTML页面的处理程序。
+//! // 返回显示 `Hello, World!` 的 HTML 页面的处理程序。
 //! async fn html() -> impl IntoResponse {
 //!     Html("<html><body>Hello, World!</body></html>")
 //! }
@@ -148,7 +148,7 @@
 //!
 //! # 路由
 //!
-//! [`Router`]用于设置哪些路径通向哪些服务。
+//! [`Router`] 用于设置哪些路径通向哪些服务。
 //!
 //! ```
 //! use boluo::handler::handler_fn;
@@ -183,7 +183,7 @@
 //!
 //! 错误和响应是分离的，可以在中间件对特定错误进行捕获，并将错误转换为自己想要的响应格式。
 //!
-//! 未经处理的错误到达服务器时，服务器将返回带有错误信息的`500 INTERNAL_SERVER_ERROR`响应。
+//! 未经处理的错误到达服务器时，服务器将返回带有错误信息的 `500 INTERNAL_SERVER_ERROR` 响应。
 //!
 //! ```
 //! use boluo::http::StatusCode;
@@ -230,8 +230,8 @@
 //!
 //! # 中间件
 //!
-//! 中间件是实现了[`Middleware`]特征的类型，可以调用[`ServiceExt::with`]函数将中间件
-//! 应用于[`Service`]。
+//! 中间件是实现了 [`Middleware`] 特征的类型，可以调用 [`ServiceExt::with`] 函数将中间件
+//! 应用于 [`Service`]。
 //!
 //! 中间件实际上是将原始服务转换为新的服务。
 //!

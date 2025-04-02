@@ -16,7 +16,7 @@ pub struct KeepAlive {
 }
 
 impl KeepAlive {
-    /// 创建一个新的[`KeepAlive`]。
+    /// 创建一个新的 [`KeepAlive`] 实例。
     pub fn new() -> Self {
         Default::default()
     }

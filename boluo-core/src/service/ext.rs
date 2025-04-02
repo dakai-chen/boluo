@@ -6,7 +6,7 @@ use super::{
     OrElse, Service, Then,
 };
 
-/// [`Service`]的扩展特征，提供了一些方便的功能。
+/// [`Service`] 的扩展特征，提供了一些方便的功能。
 pub trait ServiceExt<Req>: Service<Req> {
     /// 在此服务上应用中间件。
     ///
@@ -282,9 +282,9 @@ pub trait ServiceExt<Req>: Service<Req> {
         assert_service(MapRequest::new(self, f))
     }
 
-    /// 将此服务转换为[`Service`]特征对象并装箱。
+    /// 将此服务转换为 [`Service`] 特征对象并装箱。
     ///
-    /// 更多详细信息，请参阅[`BoxService`]。
+    /// 更多详细信息，请参阅 [`BoxService`]。
     fn boxed(self) -> BoxService<Req, Self::Response, Self::Error>
     where
         Self: Sized + 'static,
@@ -292,9 +292,9 @@ pub trait ServiceExt<Req>: Service<Req> {
         assert_service(BoxService::new(self))
     }
 
-    /// 将此服务转换为[`Service`]特征对象并装箱。
+    /// 将此服务转换为 [`Service`] 特征对象并装箱。
     ///
-    /// 更多详细信息，请参阅[`BoxCloneService`]。
+    /// 更多详细信息，请参阅 [`BoxCloneService`]。
     fn boxed_clone(self) -> BoxCloneService<Req, Self::Response, Self::Error>
     where
         Self: Sized + Clone + 'static,
@@ -302,9 +302,9 @@ pub trait ServiceExt<Req>: Service<Req> {
         assert_service(BoxCloneService::new(self))
     }
 
-    /// 将此服务转换为[`Service`]特征对象并装箱。
+    /// 将此服务转换为 [`Service`] 特征对象并装箱。
     ///
-    /// 更多详细信息，请参阅[`ArcService`]。
+    /// 更多详细信息，请参阅 [`ArcService`]。
     fn boxed_arc(self) -> ArcService<Req, Self::Response, Self::Error>
     where
         Self: Sized + 'static,
