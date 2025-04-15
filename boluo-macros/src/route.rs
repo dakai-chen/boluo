@@ -1,6 +1,7 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{ToTokens, TokenStreamExt, quote};
+use syn::ext::IdentExt;
 use syn::parse::{Parse, ParseStream};
 use syn::{Attribute, Error, Ident, ItemFn, LitStr, Token, Visibility};
 
@@ -36,35 +37,22 @@ impl ToTokens for PathAttr {
 struct MethodAttr(String);
 
 impl MethodAttr {
-    fn parse_array(input: ParseStream<'_>) -> syn::Result<Vec<Self>> {
+    fn parse_more(input: ParseStream<'_>) -> syn::Result<Vec<Self>> {
         let content;
         let _bracket_token = syn::bracketed!(content in input);
-
-        let methods = content.parse_terminated(MethodAttr::parse_str, Token![,])?;
+        let methods = content.parse_terminated(MethodAttr::parse_one, Token![,])?;
         Ok(methods.into_iter().collect())
     }
 
-    fn parse_str(input: ParseStream<'_>) -> syn::Result<Self> {
+    fn parse_one(input: ParseStream<'_>) -> syn::Result<Self> {
         input.parse::<LitStr>().and_then(MethodAttr::try_from)
     }
 
     fn parse(input: ParseStream<'_>) -> syn::Result<Vec<Self>> {
-        let name = input.parse::<Ident>()?;
-
-        if name != "method" {
-            return Err(Error::new_spanned(
-                &name,
-                format!("illegal attribute `{name}`"),
-            ));
+        if MethodAttr::parse_more(&input.fork()).is_ok() {
+            return MethodAttr::parse_more(input);
         }
-
-        input.parse::<Token![=]>()?;
-
-        if MethodAttr::parse_array(&input.fork()).is_ok() {
-            return MethodAttr::parse_array(input);
-        }
-
-        MethodAttr::parse_str(input).map(|v| vec![v])
+        MethodAttr::parse_one(input).map(|v| vec![v])
     }
 }
 
@@ -87,9 +75,24 @@ impl TryFrom<LitStr> for MethodAttr {
     }
 }
 
+struct CratePath(syn::Path);
+
+impl CratePath {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
+        input.parse::<LitStr>()?.parse::<syn::Path>().map(Self)
+    }
+}
+
+impl ToTokens for CratePath {
+    fn to_tokens(&self, stream: &mut TokenStream2) {
+        self.0.to_tokens(stream);
+    }
+}
+
 struct RouteAttr {
     path: PathAttr,
     methods: Vec<MethodAttr>,
+    crate_path: Option<CratePath>,
 }
 
 impl Parse for RouteAttr {
@@ -97,21 +100,51 @@ impl Parse for RouteAttr {
         let path = PathAttr::parse(input).map_err(|_| {
             Error::new(
                 Span::call_site(),
-                r#"invalid route definition, expected #[route("<path>")]"#,
+                r#"invalid route definition, expected #[route("<path>", ...)]"#,
             )
         })?;
 
-        if input.peek(Token![,]) {
+        let mut methods = None;
+        let mut crate_path = None;
+
+        while !input.is_empty() {
             input.parse::<Token![,]>()?;
+            let ident = Ident::parse_any(input)?;
+            input.parse::<Token![=]>()?;
+
+            match ident.to_string().as_str() {
+                "method" => {
+                    if methods.is_some() {
+                        return Err(Error::new_spanned(
+                            &ident,
+                            format!("duplicate attribute `{ident}`"),
+                        ));
+                    }
+                    methods = Some(MethodAttr::parse(input)?);
+                }
+                "crate" => {
+                    if crate_path.is_some() {
+                        return Err(Error::new_spanned(
+                            &ident,
+                            format!("duplicate attribute `{ident}`"),
+                        ));
+                    }
+                    crate_path = Some(CratePath::parse(input)?);
+                }
+                _ => {
+                    return Err(Error::new_spanned(
+                        &ident,
+                        format!("illegal attribute `{ident}`"),
+                    ));
+                }
+            }
         }
 
-        let methods = if input.is_empty() {
-            vec![]
-        } else {
-            MethodAttr::parse(input)?
-        };
-
-        Ok(Self { path, methods })
+        Ok(Self {
+            path,
+            methods: methods.unwrap_or_default(),
+            crate_path,
+        })
     }
 }
 
@@ -155,14 +188,24 @@ impl ToTokens for Route {
             docs,
         } = self;
 
-        let RouteAttr { path, methods } = attr;
+        let RouteAttr {
+            path,
+            methods,
+            crate_path,
+        } = attr;
+
+        let crate_path = if let Some(name) = crate_path {
+            quote!(#name)
+        } else {
+            quote!(::boluo)
+        };
 
         let methods = methods.iter();
 
         let handler_service = quote! {
-            ::boluo::service::Service<::boluo::request::Request,
-                Response = ::boluo::response::Response,
-                Error = ::boluo::BoxError,
+            #crate_path::service::Service<#crate_path::request::Request,
+                Response = #crate_path::response::Response,
+                Error = #crate_path::BoxError,
             >
         };
 
@@ -172,13 +215,13 @@ impl ToTokens for Route {
             #[derive(Clone, Copy)]
             #vis struct #name;
 
-            impl ::boluo::service::Service<::boluo::request::Request> for #name {
-                type Response = ::boluo::response::Response;
-                type Error = ::boluo::BoxError;
+            impl #crate_path::service::Service<#crate_path::request::Request> for #name {
+                type Response = #crate_path::response::Response;
+                type Error = #crate_path::BoxError;
 
                 async fn call(
                     &self,
-                    req: ::boluo::request::Request,
+                    req: #crate_path::request::Request,
                 ) -> ::std::result::Result<Self::Response, Self::Error> {
                     #item_fn
 
@@ -189,18 +232,18 @@ impl ToTokens for Route {
                         service
                     }
 
-                    let service = ::boluo::handler::handler_fn(#name);
+                    let service = #crate_path::handler::handler_fn(#name);
                     let service = assert_service(service);
 
-                    ::boluo::service::Service::call(&service, req).await
+                    #crate_path::service::Service::call(&service, req).await
                 }
             }
 
-            impl ::std::convert::Into<::boluo::route::Route<#name>> for #name {
-                fn into(self) -> ::boluo::route::Route<#name> {
-                    let method_route = ::boluo::route::any(#name)
-                        #(.add(::boluo::http::Method::try_from(#methods).unwrap()))*;
-                    ::boluo::route::Route::new(#path, method_route)
+            impl ::std::convert::Into<#crate_path::route::Route<#name>> for #name {
+                fn into(self) -> #crate_path::route::Route<#name> {
+                    let method_route = #crate_path::route::any(#name)
+                        #(.add(#crate_path::http::Method::try_from(#methods).unwrap()))*;
+                    #crate_path::route::Route::new(#path, method_route)
                 }
             }
         };
