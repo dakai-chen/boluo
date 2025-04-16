@@ -1,5 +1,7 @@
 # unreleased
 
+# 0.2.1
+
 ## 新增
 
 - `route` 宏支持通过 `crate` 属性指定别名路径。
