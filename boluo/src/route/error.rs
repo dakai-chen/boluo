@@ -64,8 +64,8 @@ impl RouteError {
 impl std::fmt::Display for RouteError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self.kind() {
-            RouteErrorKind::NotFound { .. } => write!(f, "{}", StatusCode::NOT_FOUND),
-            RouteErrorKind::MethodNotAllowed { .. } => {
+            RouteErrorKind::NotFound => write!(f, "{}", StatusCode::NOT_FOUND),
+            RouteErrorKind::MethodNotAllowed => {
                 write!(f, "{}", StatusCode::METHOD_NOT_ALLOWED)
             }
         }
