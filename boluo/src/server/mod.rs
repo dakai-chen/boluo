@@ -5,15 +5,12 @@ mod graceful_shutdown;
 
 pub use graceful_shutdown::GracefulShutdown;
 
-use std::convert::Infallible;
 use std::time::Duration;
 
 use boluo_core::BoxError;
-use boluo_core::http::StatusCode;
 use boluo_core::request::Request;
-use boluo_core::response::{IntoResponse, Response};
-use boluo_core::service::{ArcService, Service, ServiceExt};
-use hyper::service::Service as _;
+use boluo_core::response::IntoResponse;
+use boluo_core::service::Service;
 use hyper_util::rt::{TokioExecutor, TokioIo, TokioTimer};
 use hyper_util::server::conn::auto::Builder;
 use tokio::io::{AsyncRead, AsyncWrite};
@@ -272,18 +269,8 @@ where
     {
         let mut signal = std::pin::pin!(signal);
 
-        let service = wrapped_service(service);
-        let service = hyper::service::service_fn(move |req| {
-            let service = service.clone();
-            async move {
-                let service = service
-                    .map_request(compat::request_into_boluo)
-                    .map_response(compat::response_into_hyper);
-                service.call(req).await
-            }
-        });
-
-        let graceful = GracefulShutdown::new();
+        let service = compat::service_to_hyper(service);
+        let graceful_shutdown = GracefulShutdown::new();
 
         let timeout = loop {
             tokio::select! {
@@ -293,17 +280,18 @@ where
                 incoming = self.listener.accept() => {
                     let (conn, addr) = match incoming {
                         Ok(value) => value,
-                        Err(e) => return Err(RunError::Listener(e, graceful)),
+                        Err(e) => return Err(RunError::Listener(e, graceful_shutdown)),
                     };
 
                     let service = service.clone();
                     let service = hyper::service::service_fn(move |mut req| {
                         req.extensions_mut().insert(addr.clone());
-                        service.call(req)
+                        let service = service.clone();
+                        async move { service.call(req).await }
                     });
 
                     let builder = self.builder.clone();
-                    let monitor = graceful.monitor();
+                    let monitor = graceful_shutdown.monitor();
 
                     tokio::spawn(async move {
                         let conn = builder.serve_connection_with_upgrades(TokioIo::new(conn), service);
@@ -314,32 +302,12 @@ where
             }
         };
 
-        if !graceful.shutdown(timeout).await {
+        if !graceful_shutdown.shutdown(timeout).await {
             return Err(RunError::GracefulShutdownTimeout);
         }
 
         Ok(())
     }
-}
-
-fn wrapped_service<S>(service: S) -> ArcService<Request, Response, Infallible>
-where
-    S: Service<Request> + 'static,
-    S::Response: IntoResponse,
-    S::Error: Into<BoxError>,
-{
-    boluo_core::util::__try_downcast(service).unwrap_or_else(|service| {
-        let service = service.map_result(|res| {
-            res.map_err(Into::into)
-                .and_then(|r| r.into_response().map_err(Into::into))
-                .or_else(|e| {
-                    (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}"))
-                        .into_response()
-                        .map_err(|e| unreachable!("{e}"))
-                })
-        });
-        service.boxed_arc()
-    })
 }
 
 /// 服务器运行错误。
