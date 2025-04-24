@@ -59,6 +59,18 @@ impl MethodRouter {
     pub(super) fn is_empty(&self) -> bool {
         self.map.is_empty() && self.any.is_none()
     }
+
+    fn match_method(&self, method: &Method) -> Option<&ArcService<Request, Response, BoxError>> {
+        if let Some(service) = self.map.get(method) {
+            return Some(service);
+        }
+        if method == Method::HEAD {
+            if let Some(service) = self.map.get(&Method::GET) {
+                return Some(service);
+            }
+        }
+        self.any.as_ref()
+    }
 }
 
 impl Service<Request> for MethodRouter {
@@ -66,22 +78,7 @@ impl Service<Request> for MethodRouter {
     type Error = BoxError;
 
     async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-        fn match_method<'a>(
-            router: &'a MethodRouter,
-            method: &Method,
-        ) -> Option<&'a ArcService<Request, Response, BoxError>> {
-            if let Some(service) = router.map.get(method) {
-                return Some(service);
-            }
-            if method == Method::HEAD {
-                if let Some(service) = router.map.get(&Method::GET) {
-                    return Some(service);
-                }
-            }
-            router.any.as_ref()
-        }
-
-        let Some(service) = match_method(self, req.method()) else {
+        let Some(service) = self.match_method(req.method()) else {
             return Err(RouteError::method_not_allowed(req).into());
         };
         service.call(req).await
