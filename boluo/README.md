@@ -22,7 +22,7 @@
 | ----------- | ------------------------------------- | -------- |
 | http1       | 启用HTTP1服务器                       | 是       |
 | http2       | 启用HTTP2服务器                       |          |
-| multipart   | 添加对`multipart/form-data`格式的支持 |          |
+| multipart   | 添加对 `multipart/form-data` 格式的支持 |          |
 | sse         | 添加对服务器发送事件的支持            |          |
 | ws          | 添加对网络套接字的支持                |          |
 | static-file | 添加对静态文件的支持                  |          |
