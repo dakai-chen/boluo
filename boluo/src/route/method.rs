@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use boluo_core::BoxError;
 use boluo_core::http::Method;
-use boluo_core::middleware::{Middleware, middleware_fn};
+use boluo_core::middleware::Middleware;
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service};
@@ -229,36 +229,45 @@ impl<S> IntoMethodRoute for MethodRoute<S> {
     }
 }
 
-pub(super) trait MergeToMethodRouter: Sized {
-    #[allow(dead_code)]
-    fn merge_to(self, router: &mut MethodRouter) -> Result<(), Option<Method>> {
-        self.merge_to_with(router, middleware_fn(|s| s))
-    }
+pub(super) trait WithMiddleware<M> {
+    type Output;
 
-    fn merge_to_with<M>(
-        self,
-        router: &mut MethodRouter,
-        middleware: M,
-    ) -> Result<(), Option<Method>>
-    where
-        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
-        M::Service: Service<Request> + 'static,
-        <M::Service as Service<Request>>::Response: IntoResponse,
-        <M::Service as Service<Request>>::Error: Into<BoxError>;
+    fn with(self, middleware: M) -> Self::Output;
+}
+
+impl<M> WithMiddleware<M> for MethodRouter
+where
+    M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
+    M::Service: Service<Request> + 'static,
+    <M::Service as Service<Request>>::Response: IntoResponse,
+    <M::Service as Service<Request>>::Error: Into<BoxError>,
+{
+    type Output = MethodRouter;
+
+    fn with(mut self, middleware: M) -> Self::Output {
+        self.map = self
+            .map
+            .into_iter()
+            .map(|(method, service)| {
+                (
+                    method,
+                    boluo_core::util::__into_arc_service(middleware.clone().transform(service)),
+                )
+            })
+            .collect();
+        self.any = self.any.map(|service| {
+            boluo_core::util::__into_arc_service(middleware.clone().transform(service))
+        });
+        self
+    }
+}
+
+pub(super) trait MergeToMethodRouter {
+    fn merge_to(self, router: &mut MethodRouter) -> Result<(), Option<Method>>;
 }
 
 impl MergeToMethodRouter for MethodRouter {
-    fn merge_to_with<M>(
-        self,
-        router: &mut MethodRouter,
-        middleware: M,
-    ) -> Result<(), Option<Method>>
-    where
-        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
-        M::Service: Service<Request> + 'static,
-        <M::Service as Service<Request>>::Response: IntoResponse,
-        <M::Service as Service<Request>>::Error: Into<BoxError>,
-    {
+    fn merge_to(self, router: &mut MethodRouter) -> Result<(), Option<Method>> {
         for method in self.map.keys() {
             if router.contains(method) {
                 return Err(Some(method.clone()));
@@ -268,49 +277,29 @@ impl MergeToMethodRouter for MethodRouter {
             if router.contains_any() {
                 return Err(None);
             }
-            router.add_any(boluo_core::util::__into_arc_service(
-                middleware.clone().transform(service),
-            ));
+            router.add_any(service);
         }
         for (method, service) in self.map {
-            router.add(
-                boluo_core::util::__into_arc_service(middleware.clone().transform(service)),
-                method,
-            );
+            router.add(service, method);
         }
         Ok(())
     }
 }
 
 impl MergeToMethodRouter for MethodRoute<ArcService<Request, Response, BoxError>> {
-    fn merge_to_with<M>(
-        self,
-        router: &mut MethodRouter,
-        middleware: M,
-    ) -> Result<(), Option<Method>>
-    where
-        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
-        M::Service: Service<Request> + 'static,
-        <M::Service as Service<Request>>::Response: IntoResponse,
-        <M::Service as Service<Request>>::Error: Into<BoxError>,
-    {
+    fn merge_to(self, router: &mut MethodRouter) -> Result<(), Option<Method>> {
         match self.methods {
             Methods::Any => {
                 if router.contains_any() {
                     return Err(None);
                 }
-                router.add_any(boluo_core::util::__into_arc_service(
-                    middleware.transform(self.service),
-                ));
+                router.add_any(self.service);
             }
             Methods::One(method) => {
                 if router.contains(&method) {
                     return Err(Some(method));
                 }
-                router.add(
-                    boluo_core::util::__into_arc_service(middleware.transform(self.service)),
-                    method,
-                );
+                router.add(self.service, method);
             }
             Methods::Set(methods) => {
                 for method in methods.iter() {
@@ -318,10 +307,8 @@ impl MergeToMethodRouter for MethodRoute<ArcService<Request, Response, BoxError>
                         return Err(Some(method.clone()));
                     }
                 }
-                let service =
-                    boluo_core::util::__into_arc_service(middleware.transform(self.service));
                 for method in methods {
-                    router.add(service.clone(), method);
+                    router.add(self.service.clone(), method);
                 }
             }
         }

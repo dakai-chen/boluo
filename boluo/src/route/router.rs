@@ -10,7 +10,7 @@ use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service};
 use matchit::{Match, MatchError};
 
-use super::method::{MergeToMethodRouter, MethodRouter};
+use super::method::{MergeToMethodRouter, MethodRouter, WithMiddleware};
 use super::{IntoMethodRoute, MethodRoute, RouteError, RouterError};
 
 pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__boluo_tail_param";
@@ -138,6 +138,16 @@ impl<T> Endpoint<T> {
         match self {
             Endpoint::Route(v) => v,
             Endpoint::Scope(v) => v,
+        }
+    }
+
+    fn map<F, U>(self, f: F) -> Endpoint<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        match self {
+            Endpoint::Route(v) => Endpoint::Route(f(v)),
+            Endpoint::Scope(v) => Endpoint::Scope(f(v)),
         }
     }
 }
@@ -548,25 +558,22 @@ impl Router {
         })
     }
 
-    fn add_endpoint<T: MergeToMethodRouter>(
+    fn add_endpoint_with<T, M>(
         self,
-        path: &str,
-        endpoint: Endpoint<T>,
-    ) -> Result<Self, RouterError> {
-        self.add_endpoint_with(path, endpoint, middleware_fn(|s| s))
-    }
-
-    fn add_endpoint_with<T: MergeToMethodRouter, M>(
-        mut self,
         path: &str,
         endpoint: Endpoint<T>,
         middleware: M,
     ) -> Result<Self, RouterError>
     where
-        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
-        M::Service: Service<Request> + 'static,
-        <M::Service as Service<Request>>::Response: IntoResponse,
-        <M::Service as Service<Request>>::Error: Into<BoxError>,
+        T: WithMiddleware<M>,
+        T::Output: MergeToMethodRouter,
+    {
+        self.add_endpoint(path, endpoint.map(|s| s.with(middleware)))
+    }
+
+    fn add_endpoint<T>(mut self, path: &str, endpoint: Endpoint<T>) -> Result<Self, RouterError>
+    where
+        T: MergeToMethodRouter,
     {
         let id = self.inner.get_or_create_id(path)?;
 
@@ -578,7 +585,7 @@ impl Router {
                         message: "conflict with previously registered path".to_owned(),
                     });
                 };
-                service.merge_to_with(method_router, middleware)
+                service.merge_to(method_router)
             }
             Endpoint::Scope(service) => {
                 let Some(method_router) = self.get_or_create_scope_endpoint(id) else {
@@ -587,7 +594,7 @@ impl Router {
                         message: "conflict with previously registered path".to_owned(),
                     });
                 };
-                service.merge_to_with(method_router, middleware)
+                service.merge_to(method_router)
             }
         };
 
