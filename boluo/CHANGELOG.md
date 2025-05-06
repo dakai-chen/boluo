@@ -3,6 +3,7 @@
 ## 破坏
 
 - 将 `matchit` 的依赖版本锁定为 `0.8.6`。
+- 重命名 `ConnectionInfo` 为 `ConnectInfo`。
 
 ## 变化
 

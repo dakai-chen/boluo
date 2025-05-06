@@ -2,7 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use boluo::BoxError;
-use boluo::listener::{ConnectionInfo, Listener};
+use boluo::listener::{ConnectInfo, Listener};
 use tokio::net::{TcpListener, TcpStream, ToSocketAddrs};
 use tokio_rustls::TlsAcceptor;
 use tokio_rustls::rustls::ServerConfig;
@@ -29,7 +29,7 @@ impl TlsListener {
 
 impl Listener for TlsListener {
     type IO = TlsStream<TcpStream>;
-    type Addr = ConnectionInfo;
+    type Addr = ConnectInfo;
     type Error = BoxError;
 
     async fn accept(&mut self) -> Result<(Self::IO, Self::Addr), Self::Error> {
@@ -44,12 +44,12 @@ impl Listener for TlsListener {
                 }
             };
 
-            let connection_info = ConnectionInfo {
+            let connect_info = ConnectInfo {
                 local: self.listener.local_addr()?,
                 remote,
             };
 
-            return Ok((stream, connection_info));
+            return Ok((stream, connect_info));
         }
     }
 }
