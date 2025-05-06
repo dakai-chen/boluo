@@ -5,6 +5,7 @@
 - 重构：优化服务器的实现和代码结构。
 - 重构：将 `match_method` 提取为 `MethodRouter` 的方法以优化代码结构。
 - 重构：修改 `add_endpoint` 和 `add_endpoint_with` 的实现，减少代码膨胀。
+- 修改 `Server` 的 `Debug` 实现。
 
 # 0.6.5
 

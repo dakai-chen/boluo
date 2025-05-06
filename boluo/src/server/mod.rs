@@ -27,7 +27,6 @@ impl<L> std::fmt::Debug for Server<L> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Server")
             .field("listener", &std::any::type_name::<L>())
-            .field("builder", &self.builder)
             .finish()
     }
 }
