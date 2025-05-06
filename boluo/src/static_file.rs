@@ -198,7 +198,7 @@ async fn read_file(
     let buf_size = optimal_buf_size(&meta);
     let stream = file_to_stream(file, buf_size, (start, end));
 
-    let mut resp = Body::from_stream(stream).into_response().unwrap();
+    let mut resp = Body::from_data_stream(stream).into_response().unwrap();
 
     if sub_len != len {
         *resp.status_mut() = StatusCode::PARTIAL_CONTENT;

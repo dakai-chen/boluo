@@ -41,7 +41,7 @@ impl Body {
     }
 
     /// 从 [`Stream`] 中创建一个新的 [`Body`]。
-    pub fn from_stream<S>(stream: S) -> Self
+    pub fn from_data_stream<S>(stream: S) -> Self
     where
         S: TryStream + Send + 'static,
         S::Ok: Into<Bytes>,
