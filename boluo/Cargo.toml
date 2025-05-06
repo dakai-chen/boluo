@@ -23,7 +23,7 @@ boluo-macros = { path = "../boluo-macros", version = "0.2" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_urlencoded = "0.7"
-matchit = "0.8"
+matchit = "=0.8.6"
 futures-util = "0.3"
 pin-project-lite = "0.2"
 mime = "0.3"
