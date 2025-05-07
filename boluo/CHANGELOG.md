@@ -1,9 +1,12 @@
 # unreleased
 
+# 0.7.0
+
 ## 破坏
 
 - 将 `matchit` 的依赖版本锁定为 `0.8.6`。
 - 重命名 `ConnectionInfo` 为 `ConnectInfo`。
+- 将 `boluo-core` 升级到 `0.6`。
 
 ## 变化
 

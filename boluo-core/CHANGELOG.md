@@ -1,5 +1,7 @@
 # unreleased
 
+# 0.6.0
+
 ## 破坏
 
 - 重命名 `Body::from_stream` 为 `Body::from_data_stream`。

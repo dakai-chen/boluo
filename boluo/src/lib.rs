@@ -23,7 +23,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! boluo = "0.6"
+//! boluo = "0.7"
 //! tokio = { version = "1", features = ["full"] }
 //! ```
 //!
