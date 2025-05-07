@@ -7,7 +7,7 @@ use crate::service::Service;
 ///
 /// ```
 /// use boluo_core::handler::handler_fn;
-/// use boluo_core::middleware::simple_middleware_fn_with_state;
+/// use boluo_core::middleware::around_with_state_fn;
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
@@ -21,24 +21,24 @@ use crate::service::Service;
 /// }
 ///
 /// let service = handler_fn(|| async {});
-/// let service = service.with(simple_middleware_fn_with_state("HTTP", log));
+/// let service = service.with(around_with_state_fn("HTTP", log));
 /// ```
-pub fn simple_middleware_fn_with_state<T, F>(state: T, f: F) -> SimpleMiddlewareFnWithState<T, F> {
-    SimpleMiddlewareFnWithState { state, f }
+pub fn around_with_state_fn<T, F>(state: T, f: F) -> AroundWithStateFn<T, F> {
+    AroundWithStateFn { state, f }
 }
 
-/// 详情查看 [`simple_middleware_fn_with_state`]。
+/// 详情查看 [`around_with_state_fn`]。
 #[derive(Clone, Copy)]
-pub struct SimpleMiddlewareFnWithState<T, F> {
+pub struct AroundWithStateFn<T, F> {
     state: T,
     f: F,
 }
 
-impl<T, F, S> Middleware<S> for SimpleMiddlewareFnWithState<T, F> {
-    type Service = SimpleMiddlewareFnWithStateService<T, F, S>;
+impl<T, F, S> Middleware<S> for AroundWithStateFn<T, F> {
+    type Service = AroundWithStateFnService<T, F, S>;
 
     fn transform(self, service: S) -> Self::Service {
-        SimpleMiddlewareFnWithStateService {
+        AroundWithStateFnService {
             state: self.state,
             f: self.f,
             service,
@@ -46,29 +46,29 @@ impl<T, F, S> Middleware<S> for SimpleMiddlewareFnWithState<T, F> {
     }
 }
 
-impl<T, F> std::fmt::Debug for SimpleMiddlewareFnWithState<T, F>
+impl<T, F> std::fmt::Debug for AroundWithStateFn<T, F>
 where
     T: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimpleMiddlewareFnWithState")
+        f.debug_struct("AroundWithStateFn")
             .field("state", &self.state)
             .field("f", &std::any::type_name::<F>())
             .finish()
     }
 }
 
-/// 中间件 [`SimpleMiddlewareFnWithState`] 返回的服务。
+/// 中间件 [`AroundWithStateFn`] 返回的服务。
 #[derive(Clone, Copy)]
-pub struct SimpleMiddlewareFnWithStateService<T, F, S> {
+pub struct AroundWithStateFnService<T, F, S> {
     state: T,
     f: F,
     service: S,
 }
 
-impl<T, F, S, Req, Res, Err> Service<Req> for SimpleMiddlewareFnWithStateService<T, F, S>
+impl<T, F, S, Req, Res, Err> Service<Req> for AroundWithStateFnService<T, F, S>
 where
-    for<'a> F: SimpleMiddlewareWithState<'a, T, S, Req, Res = Res, Err = Err>,
+    for<'a> F: AroundWithState<'a, T, S, Req, Res = Res, Err = Err>,
     Self: Send + Sync,
 {
     type Response = Res;
@@ -79,13 +79,13 @@ where
     }
 }
 
-impl<T, F, S> std::fmt::Debug for SimpleMiddlewareFnWithStateService<T, F, S>
+impl<T, F, S> std::fmt::Debug for AroundWithStateFnService<T, F, S>
 where
     T: std::fmt::Debug,
     S: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimpleMiddlewareFnWithStateService")
+        f.debug_struct("AroundWithStateFnService")
             .field("state", &self.state)
             .field("f", &std::any::type_name::<F>())
             .field("service", &self.service)
@@ -93,7 +93,7 @@ where
     }
 }
 
-trait SimpleMiddlewareWithState<'a, T, S, R>
+trait AroundWithState<'a, T, S, R>
 where
     T: ?Sized,
     S: ?Sized,
@@ -109,7 +109,7 @@ where
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, T, S, F, Fut, Req, Res, Err> SimpleMiddlewareWithState<'a, T, S, Req> for F
+impl<'a, T, S, F, Fut, Req, Res, Err> AroundWithState<'a, T, S, Req> for F
 where
     T: ?Sized + 'a,
     S: ?Sized + 'a,
@@ -135,7 +135,7 @@ where
 ///
 /// ```
 /// use boluo_core::handler::handler_fn;
-/// use boluo_core::middleware::simple_middleware_fn;
+/// use boluo_core::middleware::around_fn;
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
@@ -149,44 +149,44 @@ where
 /// }
 ///
 /// let service = handler_fn(|| async {});
-/// let service = service.with(simple_middleware_fn(log));
+/// let service = service.with(around_fn(log));
 /// ```
-pub fn simple_middleware_fn<F>(f: F) -> SimpleMiddlewareFn<F> {
-    SimpleMiddlewareFn { f }
+pub fn around_fn<F>(f: F) -> AroundFn<F> {
+    AroundFn { f }
 }
 
-/// 详情查看 [`simple_middleware_fn`]。
+/// 详情查看 [`around_fn`]。
 #[derive(Clone, Copy)]
-pub struct SimpleMiddlewareFn<F> {
+pub struct AroundFn<F> {
     f: F,
 }
 
-impl<F, S> Middleware<S> for SimpleMiddlewareFn<F> {
-    type Service = SimpleMiddlewareFnService<F, S>;
+impl<F, S> Middleware<S> for AroundFn<F> {
+    type Service = AroundFnService<F, S>;
 
     fn transform(self, service: S) -> Self::Service {
-        SimpleMiddlewareFnService { f: self.f, service }
+        AroundFnService { f: self.f, service }
     }
 }
 
-impl<F> std::fmt::Debug for SimpleMiddlewareFn<F> {
+impl<F> std::fmt::Debug for AroundFn<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimpleMiddlewareFn")
+        f.debug_struct("AroundFn")
             .field("f", &std::any::type_name::<F>())
             .finish()
     }
 }
 
-/// 中间件 [`SimpleMiddlewareFn`] 返回的服务。
+/// 中间件 [`AroundFn`] 返回的服务。
 #[derive(Clone, Copy)]
-pub struct SimpleMiddlewareFnService<F, S> {
+pub struct AroundFnService<F, S> {
     f: F,
     service: S,
 }
 
-impl<F, S, Req, Res, Err> Service<Req> for SimpleMiddlewareFnService<F, S>
+impl<F, S, Req, Res, Err> Service<Req> for AroundFnService<F, S>
 where
-    for<'a> F: SimpleMiddleware<'a, S, Req, Res = Res, Err = Err>,
+    for<'a> F: Around<'a, S, Req, Res = Res, Err = Err>,
     Self: Send + Sync,
 {
     type Response = Res;
@@ -197,19 +197,19 @@ where
     }
 }
 
-impl<F, S> std::fmt::Debug for SimpleMiddlewareFnService<F, S>
+impl<F, S> std::fmt::Debug for AroundFnService<F, S>
 where
     S: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("SimpleMiddlewareFnService")
+        f.debug_struct("AroundFnService")
             .field("f", &std::any::type_name::<F>())
             .field("service", &self.service)
             .finish()
     }
 }
 
-trait SimpleMiddleware<'a, S, R>
+trait Around<'a, S, R>
 where
     S: ?Sized,
 {
@@ -223,7 +223,7 @@ where
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, S, F, Fut, Req, Res, Err> SimpleMiddleware<'a, S, Req> for F
+impl<'a, S, F, Fut, Req, Res, Err> Around<'a, S, Req> for F
 where
     S: ?Sized + 'a,
     F: Fn(Req, &'a S) -> Fut,

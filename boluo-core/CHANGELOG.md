@@ -3,6 +3,7 @@
 ## 破坏
 
 - 重命名 `Body::from_stream` 为 `Body::from_data_stream`。
+- 将 `simple_middleware_fn_with_state` 和 `simple_middleware_fn` 分别重命名为 `around_with_state_fn` 和 `around_fn`，并重构相关代码。
 
 # 0.5.2
 
