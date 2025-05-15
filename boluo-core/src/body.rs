@@ -3,6 +3,7 @@
 pub use bytes::Bytes;
 pub use http_body::{Body as HttpBody, Frame, SizeHint};
 
+use std::borrow::Cow;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -26,7 +27,7 @@ where
 pub struct Body(BoxBody);
 
 impl Body {
-    /// 创建一个新的 [`Body`]，内部包装给定的 [`http_body::Body`] 对象。
+    /// 使用给定的 [`HttpBody`] 对象，创建一个新的 [`Body`]。
     pub fn new<B>(body: B) -> Self
     where
         B: HttpBody<Data = Bytes> + Send + 'static,
@@ -84,11 +85,11 @@ macro_rules! body_from_impl {
 }
 
 body_from_impl!(&'static [u8]);
-body_from_impl!(std::borrow::Cow<'static, [u8]>);
+body_from_impl!(Cow<'static, [u8]>);
 body_from_impl!(Vec<u8>);
 
 body_from_impl!(&'static str);
-body_from_impl!(std::borrow::Cow<'static, str>);
+body_from_impl!(Cow<'static, str>);
 body_from_impl!(String);
 
 body_from_impl!(Bytes);
@@ -116,7 +117,7 @@ impl HttpBody for Body {
     }
 }
 
-/// [`Body`]的数据帧流。
+/// [`Body`] 的数据帧流。
 #[derive(Debug)]
 pub struct BodyDataStream {
     inner: Body,
