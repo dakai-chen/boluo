@@ -10,7 +10,7 @@ use super::Service;
 ///
 /// 如果需要一个实现 [`Clone`] 的装箱服务，考虑使用 [`BoxCloneService`] 或 [`ArcService`]。
 pub struct BoxService<Req, Res, Err> {
-    service: Box<dyn AnyService<Req, Response = Res, Error = Err>>,
+    service: Box<dyn DynService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> BoxService<Req, Res, Err> {
@@ -47,7 +47,7 @@ impl<Req, Res, Err> std::fmt::Debug for BoxService<Req, Res, Err> {
 ///
 /// 这与 [`BoxService`] 类似，只是 [`ArcService`] 实现了 [`Clone`]。
 pub struct ArcService<Req, Res, Err> {
-    service: Arc<dyn AnyService<Req, Response = Res, Error = Err>>,
+    service: Arc<dyn DynService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> ArcService<Req, Res, Err> {
@@ -92,7 +92,7 @@ impl<Req, Res, Err> std::fmt::Debug for ArcService<Req, Res, Err> {
 ///
 /// 这与 [`BoxService`] 类似，只是 [`BoxCloneService`] 实现了 [`Clone`]。
 pub struct BoxCloneService<Req, Res, Err> {
-    service: Box<dyn CloneService<Req, Response = Res, Error = Err>>,
+    service: Box<dyn DynCloneService<Req, Response = Res, Error = Err>>,
 }
 
 impl<Req, Res, Err> BoxCloneService<Req, Res, Err> {
@@ -130,24 +130,24 @@ impl<Req, Res, Err> std::fmt::Debug for BoxCloneService<Req, Res, Err> {
     }
 }
 
-trait CloneService<Req>: AnyService<Req> {
+trait DynCloneService<Req>: DynService<Req> {
     fn clone_box(
         &self,
-    ) -> Box<dyn CloneService<Req, Response = Self::Response, Error = Self::Error>>;
+    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>>;
 }
 
-impl<S, Req> CloneService<Req> for S
+impl<S, Req> DynCloneService<Req> for S
 where
     S: Service<Req> + Clone + 'static,
 {
     fn clone_box(
         &self,
-    ) -> Box<dyn CloneService<Req, Response = Self::Response, Error = Self::Error>> {
+    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>> {
         Box::new(self.clone())
     }
 }
 
-trait AnyService<Req>: Send + Sync {
+trait DynService<Req>: Send + Sync {
     type Response;
     type Error;
 
@@ -156,7 +156,7 @@ trait AnyService<Req>: Send + Sync {
         Req: 'a;
 }
 
-impl<S, Req> AnyService<Req> for S
+impl<S, Req> DynService<Req> for S
 where
     S: Service<Req> + ?Sized,
 {
