@@ -50,14 +50,11 @@ where
 {
     boluo_core::util::__try_downcast(service).unwrap_or_else(|service| {
         let service = service.map_result(|result| {
-            result
-                .map_err(Into::into)
-                .and_then(|r| r.into_response().map_err(Into::into))
-                .or_else(|e| {
-                    (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}"))
-                        .into_response()
-                        .map_err(|e| unreachable!("{e}"))
-                })
+            result.into_response().or_else(|e| {
+                (StatusCode::INTERNAL_SERVER_ERROR, format!("{e}"))
+                    .into_response()
+                    .map_err(|e| unreachable!("{e}"))
+            })
         });
         service.boxed_arc()
     })

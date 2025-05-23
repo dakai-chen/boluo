@@ -24,12 +24,9 @@ where
     S::Error: Into<BoxError>,
 {
     __try_downcast(service).unwrap_or_else(|service| {
-        let service = service.map_result(|result| {
-            result
-                .map_err(Into::into)
-                .and_then(|r| r.into_response().map_err(Into::into))
-        });
-        service.boxed_arc()
+        service
+            .map_result(|result| result.into_response())
+            .boxed_arc()
     })
 }
 
