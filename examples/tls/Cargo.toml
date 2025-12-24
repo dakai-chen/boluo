@@ -1,9 +1,0 @@
-[package]
-name = "tls"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-boluo = { path = "../../boluo" }
-tokio = { version = "1", features = ["full"] }
-tokio-rustls = "0.26"

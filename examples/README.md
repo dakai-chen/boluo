@@ -20,5 +20,4 @@ cargo run --bin [crate] # [crate]替换为具体的示例项目
 | [ws](./ws/)                               | 网络套接字                                 |
 | [log](./log/)                             | 记录请求日志                               |
 | [static-file](./static-file/)             | 静态文件服务                               |
-| [tls](./tls/)                             | 配置 TLS 加密以增强安全性                  |
 | [compat-tower](./compat-tower/)           | 使用 `tower` 的服务和中间件                |
