@@ -56,13 +56,13 @@ impl<T> FromRequest for Query<T>
 where
     T: DeserializeOwned,
 {
-    type Error = QueryExtractError;
+    type Error = QueryError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         let query = req.uri().query().unwrap_or_default();
         serde_urlencoded::from_str::<T>(query)
             .map(|value| Query(value))
-            .map_err(QueryExtractError::FailedToDeserialize)
+            .map_err(QueryError::FailedToDeserialize)
     }
 }
 
@@ -115,19 +115,19 @@ impl FromRequest for RawQuery {
 
 /// 查询字符串提取错误。
 #[derive(Debug)]
-pub enum QueryExtractError {
+pub enum QueryError {
     /// 反序列化错误。
     FailedToDeserialize(serde_urlencoded::de::Error),
 }
 
-impl std::fmt::Display for QueryExtractError {
+impl std::fmt::Display for QueryError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            QueryExtractError::FailedToDeserialize(e) => {
+            QueryError::FailedToDeserialize(e) => {
                 write!(f, "failed to deserialize query string ({e})")
             }
         }
     }
 }
 
-impl std::error::Error for QueryExtractError {}
+impl std::error::Error for QueryError {}

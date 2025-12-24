@@ -8,7 +8,7 @@ macro_rules! parse_single_value {
             V: Visitor<'de>,
         {
             if self.path_params.len() != 1 {
-                return Err(PathDeserializationError::WrongNumberOfParameters {
+                return Err(PathDeError::WrongNumberOfParameters {
                     got: self.path_params.len(),
                     expected: 1,
                 });
@@ -17,16 +17,14 @@ macro_rules! parse_single_value {
             let value = self.path_params[0].1.as_str();
             let value = percent_encoding::percent_decode_str(value)
                 .decode_utf8()
-                .map_err(|_| PathDeserializationError::InvalidUtf8 {
+                .map_err(|_| PathDeError::InvalidUtf8 {
                     value: value.to_owned(),
                 })?;
 
-            let value = value
-                .parse()
-                .map_err(|_| PathDeserializationError::ParseError {
-                    value: value.into_owned(),
-                    expected_type: $ty,
-                })?;
+            let value = value.parse().map_err(|_| PathDeError::ParseError {
+                value: value.into_owned(),
+                expected_type: $ty,
+            })?;
 
             visitor.$visit_fn(value)
         }
@@ -52,17 +50,17 @@ macro_rules! parse_value {
         {
             let value = percent_encoding::percent_decode_str(self.value)
                 .decode_utf8()
-                .map_err(|_| PathDeserializationError::InvalidUtf8 {
+                .map_err(|_| PathDeError::InvalidUtf8 {
                     value: self.value.to_owned(),
                 })?;
 
             let v = value.parse().map_err(|_| match self.key {
-                KeyOrIdx::Key(key) => PathDeserializationError::ParseErrorAtKey {
+                KeyOrIdx::Key(key) => PathDeError::ParseErrorAtKey {
                     key: key.to_owned(),
                     value: value.into_owned(),
                     expected_type: $ty,
                 },
-                KeyOrIdx::Idx(index) => PathDeserializationError::ParseErrorAtIndex {
+                KeyOrIdx::Idx(index) => PathDeError::ParseErrorAtIndex {
                     index,
                     value: value.into_owned(),
                     expected_type: $ty,
@@ -86,13 +84,13 @@ impl<'de> PathDeserializer<'de> {
 }
 
 impl<'de> Deserializer<'de> for PathDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     fn deserialize_option<V>(self, _: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -101,7 +99,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -110,7 +108,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -123,7 +121,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -180,7 +178,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
         V: Visitor<'de>,
     {
         if !self.path_params.is_empty() {
-            return Err(PathDeserializationError::WrongNumberOfParameters {
+            return Err(PathDeError::WrongNumberOfParameters {
                 got: self.path_params.len(),
                 expected: 0,
             });
@@ -193,7 +191,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
         V: Visitor<'de>,
     {
         if self.path_params.len() != len {
-            return Err(PathDeserializationError::WrongNumberOfParameters {
+            return Err(PathDeError::WrongNumberOfParameters {
                 got: self.path_params.len(),
                 expected: len,
             });
@@ -245,7 +243,7 @@ impl<'de> Deserializer<'de> for PathDeserializer<'de> {
         V: Visitor<'de>,
     {
         if self.path_params.len() != 1 {
-            return Err(PathDeserializationError::WrongNumberOfParameters {
+            return Err(PathDeError::WrongNumberOfParameters {
                 got: self.path_params.len(),
                 expected: 1,
             });
@@ -262,7 +260,7 @@ struct SeqDeserializer<'de> {
 }
 
 impl<'de> SeqAccess<'de> for SeqDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>, Self::Error>
     where
@@ -293,7 +291,7 @@ struct MapDeserializer<'de> {
 }
 
 impl<'de> MapAccess<'de> for MapDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>, Self::Error>
     where
@@ -330,7 +328,7 @@ struct KeyDeserializer<'de> {
 }
 
 impl<'de> Deserializer<'de> for KeyDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     parse_key!(deserialize_identifier);
     parse_key!(deserialize_str);
@@ -340,7 +338,7 @@ impl<'de> Deserializer<'de> for KeyDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedKeyType {
+        Err(PathDeError::UnsupportedKeyType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -359,13 +357,13 @@ struct ValueDeserializer<'de> {
 }
 
 impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     fn deserialize_unit<V>(self, _: V) -> Result<V::Value, Self::Error>
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -374,7 +372,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -383,7 +381,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -396,7 +394,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -405,7 +403,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -419,7 +417,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -428,7 +426,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -442,7 +440,7 @@ impl<'de> Deserializer<'de> for ValueDeserializer<'de> {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: std::any::type_name::<V::Value>(),
         })
     }
@@ -516,7 +514,7 @@ struct EnumDeserializer<'de> {
 }
 
 impl<'de> EnumAccess<'de> for EnumDeserializer<'de> {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
     type Variant = UnitVariant;
 
     fn variant_seed<V>(self, seed: V) -> Result<(V::Value, Self::Variant), Self::Error>
@@ -533,7 +531,7 @@ impl<'de> EnumAccess<'de> for EnumDeserializer<'de> {
 struct UnitVariant;
 
 impl<'de> VariantAccess<'de> for UnitVariant {
-    type Error = PathDeserializationError;
+    type Error = PathDeError;
 
     fn unit_variant(self) -> Result<(), Self::Error> {
         Ok(())
@@ -543,7 +541,7 @@ impl<'de> VariantAccess<'de> for UnitVariant {
     where
         T: DeserializeSeed<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: "newtype enum variant",
         })
     }
@@ -552,7 +550,7 @@ impl<'de> VariantAccess<'de> for UnitVariant {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: "tuple enum variant",
         })
     }
@@ -565,7 +563,7 @@ impl<'de> VariantAccess<'de> for UnitVariant {
     where
         V: Visitor<'de>,
     {
-        Err(PathDeserializationError::UnsupportedValueType {
+        Err(PathDeError::UnsupportedValueType {
             name: "struct enum variant",
         })
     }
@@ -578,7 +576,7 @@ enum KeyOrIdx<'de> {
 }
 
 #[derive(Debug)]
-pub(super) enum PathDeserializationError {
+pub(super) enum PathDeError {
     /// 参数数量不正确。
     WrongNumberOfParameters { got: usize, expected: usize },
 
@@ -615,22 +613,22 @@ pub(super) enum PathDeserializationError {
     Message(String),
 }
 
-impl std::fmt::Display for PathDeserializationError {
+impl std::fmt::Display for PathDeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            PathDeserializationError::WrongNumberOfParameters { got, expected } => {
+            PathDeError::WrongNumberOfParameters { got, expected } => {
                 write!(
                     f,
                     "wrong number of path arguments. expected {expected} but got {got}"
                 )
             }
-            PathDeserializationError::UnsupportedKeyType { name } => {
+            PathDeError::UnsupportedKeyType { name } => {
                 write!(f, "unsupported key type `{name}`")
             }
-            PathDeserializationError::UnsupportedValueType { name } => {
+            PathDeError::UnsupportedValueType { name } => {
                 write!(f, "unsupported value type `{name}`")
             }
-            PathDeserializationError::ParseErrorAtKey {
+            PathDeError::ParseErrorAtKey {
                 key,
                 value,
                 expected_type,
@@ -638,7 +636,7 @@ impl std::fmt::Display for PathDeserializationError {
                 f,
                 "cannot parse `{key}` with value `{value:?}` to a `{expected_type}`"
             ),
-            PathDeserializationError::ParseErrorAtIndex {
+            PathDeError::ParseErrorAtIndex {
                 index,
                 value,
                 expected_type,
@@ -646,25 +644,25 @@ impl std::fmt::Display for PathDeserializationError {
                 f,
                 "cannot parse value at index {index} with value `{value:?}` to a `{expected_type}`"
             ),
-            PathDeserializationError::ParseError {
+            PathDeError::ParseError {
                 value,
                 expected_type,
             } => write!(f, "cannot parse `{value:?}` to a `{expected_type}`"),
-            PathDeserializationError::InvalidUtf8 { value } => {
+            PathDeError::InvalidUtf8 { value } => {
                 write!(f, "cannot parse `{value:?}` to a UTF-8 string")
             }
-            PathDeserializationError::Message(msg) => msg.fmt(f),
+            PathDeError::Message(msg) => msg.fmt(f),
         }
     }
 }
 
-impl std::error::Error for PathDeserializationError {}
+impl std::error::Error for PathDeError {}
 
-impl serde::de::Error for PathDeserializationError {
+impl serde::de::Error for PathDeError {
     fn custom<T>(msg: T) -> Self
     where
         T: std::fmt::Display,
     {
-        PathDeserializationError::Message(msg.to_string())
+        PathDeError::Message(msg.to_string())
     }
 }

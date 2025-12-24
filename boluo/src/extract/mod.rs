@@ -9,9 +9,9 @@ mod json;
 mod path;
 mod query;
 
-pub use extension::{Extension, ExtensionExtractError};
-pub use form::{Form, FormExtractError};
-pub use header::{TypedHeader, TypedHeaderExtractError};
-pub use json::{Json, JsonExtractError};
-pub use path::{Path, PathExtractError, RawPathParams};
-pub use query::{Query, QueryExtractError, RawQuery};
+pub use extension::{Extension, ExtensionError};
+pub use form::{Form, FormError};
+pub use header::{TypedHeader, TypedHeaderError};
+pub use json::{Json, JsonError};
+pub use path::{Path, PathError, RawPathParams};
+pub use query::{Query, QueryError, RawQuery};

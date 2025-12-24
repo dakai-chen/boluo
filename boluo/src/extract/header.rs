@@ -51,12 +51,12 @@ impl<T> FromRequest for TypedHeader<T>
 where
     T: Header,
 {
-    type Error = TypedHeaderExtractError;
+    type Error = TypedHeaderError;
 
     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
         Option::<TypedHeader<T>>::from_request(req)
             .await?
-            .ok_or_else(|| TypedHeaderExtractError::MissingHeader { name: T::name() })
+            .ok_or_else(|| TypedHeaderError::MissingHeader { name: T::name() })
     }
 }
 
@@ -64,13 +64,13 @@ impl<T> OptionalFromRequest for TypedHeader<T>
 where
     T: Header,
 {
-    type Error = TypedHeaderExtractError;
+    type Error = TypedHeaderError;
 
     async fn from_request(req: &mut Request) -> Result<Option<Self>, Self::Error> {
         req.headers()
             .typed_try_get()
             .map(|v| v.map(TypedHeader))
-            .map_err(|source| TypedHeaderExtractError::ParseError {
+            .map_err(|source| TypedHeaderError::ParseError {
                 name: T::name(),
                 source,
             })
@@ -79,7 +79,7 @@ where
 
 /// 获取请求标头值错误。
 #[derive(Debug)]
-pub enum TypedHeaderExtractError {
+pub enum TypedHeaderError {
     /// 标头不存在。
     MissingHeader {
         /// 标头名。
@@ -94,17 +94,17 @@ pub enum TypedHeaderExtractError {
     },
 }
 
-impl std::fmt::Display for TypedHeaderExtractError {
+impl std::fmt::Display for TypedHeaderError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TypedHeaderExtractError::MissingHeader { name } => {
+            TypedHeaderError::MissingHeader { name } => {
                 write!(f, "missing request header `{name}`")
             }
-            TypedHeaderExtractError::ParseError { name, source } => {
+            TypedHeaderError::ParseError { name, source } => {
                 write!(f, "failed to parse request header `{name}` ({source})")
             }
         }
     }
 }
 
-impl std::error::Error for TypedHeaderExtractError {}
+impl std::error::Error for TypedHeaderError {}
