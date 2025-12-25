@@ -1,5 +1,9 @@
 # unreleased
 
+## 新增
+
+- 添加 `Body::downcast*` 系列方法。
+
 # 0.6.0
 
 ## 破坏
