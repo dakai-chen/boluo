@@ -228,7 +228,7 @@ fn bytes_range(range: Option<Range>, max_len: u64) -> Option<(u64, u64)> {
         return Some((0, max_len));
     };
 
-    let ret = range
+    range
         .satisfiable_ranges(max_len)
         .map(|(start, end)| {
             let start = match start {
@@ -253,9 +253,7 @@ fn bytes_range(range: Option<Range>, max_len: u64) -> Option<(u64, u64)> {
             }
         })
         .next()
-        .unwrap_or(Some((0, max_len)));
-
-    ret
+        .unwrap_or(Some((0, max_len)))
 }
 
 fn file_to_stream(

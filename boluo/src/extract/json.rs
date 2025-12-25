@@ -40,10 +40,8 @@ fn is_json_content_type(headers: &HeaderMap) -> bool {
         return false;
     };
 
-    let is_json_content_type = mime.type_() == "application"
-        && (mime.subtype() == "json" || mime.suffix().filter(|name| *name == "json").is_some());
-
-    is_json_content_type
+    mime.type_() == "application"
+        && (mime.subtype() == "json" || mime.suffix().filter(|name| *name == "json").is_some())
 }
 
 /// JSON 提取错误。
