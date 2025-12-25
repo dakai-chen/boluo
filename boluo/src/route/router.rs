@@ -657,22 +657,22 @@ impl Service<Request> for Router {
     type Response = Response;
     type Error = BoxError;
 
-    async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
-        let Ok(Match { value: id, params }) = self.inner.match_route(req.uri().path()) else {
-            return Err(RouteError::not_found(req).into());
+    async fn call(&self, mut request: Request) -> Result<Self::Response, Self::Error> {
+        let Ok(Match { value: id, params }) = self.inner.match_route(request.uri().path()) else {
+            return Err(RouteError::not_found(request).into());
         };
         let Some(endpoint) = self.table.get(id) else {
-            return Err(RouteError::not_found(req).into());
+            return Err(RouteError::not_found(request).into());
         };
 
         let (params, tail) = super::params::parse_path_params(params);
-        super::params::insert_path_params(req.extensions_mut(), params);
+        super::params::insert_path_params(request.extensions_mut(), params);
 
         match endpoint {
-            Endpoint::Route(service) => service.call(req).await,
+            Endpoint::Route(service) => service.call(request).await,
             Endpoint::Scope(service) => {
-                req = replace_request_path(req, tail.as_deref().unwrap_or_default());
-                service.call(req).await
+                request = replace_request_path(request, tail.as_deref().unwrap_or_default());
+                service.call(request).await
             }
         }
     }
@@ -735,8 +735,8 @@ impl<S> Route<S> {
     }
 }
 
-fn replace_request_path(req: Request, path: &str) -> Request {
-    let (mut parts, body) = req.into_inner();
+fn replace_request_path(request: Request, path: &str) -> Request {
+    let (mut parts, body) = request.into_inner();
     parts.uri = replace_uri_path(parts.uri, path);
     Request::from_parts(parts, body)
 }

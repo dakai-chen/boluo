@@ -42,12 +42,12 @@ use std::sync::Arc;
 ///     type Response = Response;
 ///     type Error = Infallible;
 ///
-///     async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-///         Ok(Response::new(req.into_body()))
+///     async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+///         Ok(Response::new(request.into_body()))
 ///     }
 /// }
 /// ```
-pub trait Service<Req>: Send + Sync {
+pub trait Service<Request>: Send + Sync {
     /// 服务返回的响应。
     type Response;
 
@@ -55,7 +55,10 @@ pub trait Service<Req>: Send + Sync {
     type Error;
 
     /// 处理请求并异步返回响应。
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send;
+    fn call(
+        &self,
+        request: Request,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send;
 }
 
 impl<S, Req> Service<Req> for &mut S
@@ -65,8 +68,11 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        S::call(self, req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, request)
     }
 }
 
@@ -77,8 +83,11 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        S::call(self, req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, request)
     }
 }
 
@@ -89,8 +98,11 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        S::call(self, req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, request)
     }
 }
 
@@ -101,7 +113,10 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        S::call(self, req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        S::call(self, request)
     }
 }

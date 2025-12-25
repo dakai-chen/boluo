@@ -24,8 +24,11 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call(&self, req: R1) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.service.call((self.f)(req))
+    fn call(
+        &self,
+        request: R1,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call((self.f)(request))
     }
 }
 

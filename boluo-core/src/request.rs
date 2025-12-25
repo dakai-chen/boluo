@@ -458,7 +458,7 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::RequestBuilder;
     ///
-    /// let req = RequestBuilder::new()
+    /// let request = RequestBuilder::new()
     ///     .method("POST")
     ///     .body(())
     ///     .unwrap();
@@ -477,7 +477,7 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .method("POST")
     ///     .body(())
     ///     .unwrap();
@@ -487,10 +487,10 @@ impl RequestBuilder {
         Method: TryFrom<T>,
         <Method as TryFrom<T>>::Error: Into<http::Error>,
     {
-        self.and_then(move |mut req| {
+        self.and_then(move |mut request| {
             let method = TryFrom::try_from(method).map_err(Into::into)?;
-            req.head.method = method;
-            Ok(req)
+            request.head.method = method;
+            Ok(request)
         })
     }
 
@@ -504,14 +504,14 @@ impl RequestBuilder {
     /// use boluo_core::http::Method;
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.method_ref(), Some(&Method::GET));
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.method_ref(), Some(&Method::GET));
     ///
-    /// req = req.method("POST");
-    /// assert_eq!(req.method_ref(), Some(&Method::POST));
+    /// request = request.method("POST");
+    /// assert_eq!(request.method_ref(), Some(&Method::POST));
     /// ```
     pub fn method_ref(&self) -> Option<&Method> {
-        self.inner.as_ref().ok().map(|req| &req.head.method)
+        self.inner.as_ref().ok().map(|request| &request.head.method)
     }
 
     /// 获取请求的 HTTP 方法的可变引用。
@@ -524,14 +524,17 @@ impl RequestBuilder {
     /// use boluo_core::http::Method;
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.method_ref(), Some(&Method::GET));
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.method_ref(), Some(&Method::GET));
     ///
-    /// *req.method_mut().unwrap() = Method::POST;
-    /// assert_eq!(req.method_ref(), Some(&Method::POST));
+    /// *request.method_mut().unwrap() = Method::POST;
+    /// assert_eq!(request.method_ref(), Some(&Method::POST));
     /// ```
     pub fn method_mut(&mut self) -> Option<&mut Method> {
-        self.inner.as_mut().ok().map(|req| &mut req.head.method)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|request| &mut request.head.method)
     }
 
     /// 设置请求的 URI。
@@ -543,7 +546,7 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .uri("https://www.rust-lang.org/")
     ///     .body(())
     ///     .unwrap();
@@ -553,10 +556,10 @@ impl RequestBuilder {
         Uri: TryFrom<T>,
         <Uri as TryFrom<T>>::Error: Into<http::Error>,
     {
-        self.and_then(move |mut req| {
+        self.and_then(move |mut request| {
             let uri = TryFrom::try_from(uri).map_err(Into::into)?;
-            req.head.uri = uri;
-            Ok(req)
+            request.head.uri = uri;
+            Ok(request)
         })
     }
 
@@ -569,14 +572,14 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.uri_ref().unwrap(), "/");
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.uri_ref().unwrap(), "/");
     ///
-    /// req = req.uri("https://www.rust-lang.org/");
-    /// assert_eq!(req.uri_ref().unwrap(), "https://www.rust-lang.org/");
+    /// request = request.uri("https://www.rust-lang.org/");
+    /// assert_eq!(request.uri_ref().unwrap(), "https://www.rust-lang.org/");
     /// ```
     pub fn uri_ref(&self) -> Option<&Uri> {
-        self.inner.as_ref().ok().map(|req| &req.head.uri)
+        self.inner.as_ref().ok().map(|request| &request.head.uri)
     }
 
     /// 获取请求的 URI 的可变引用。
@@ -588,14 +591,17 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.uri_ref().unwrap(), "/");
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.uri_ref().unwrap(), "/");
     ///
-    /// *req.uri_mut().unwrap() = "https://www.rust-lang.org/".parse().unwrap();
-    /// assert_eq!(req.uri_ref().unwrap(), "https://www.rust-lang.org/");
+    /// *request.uri_mut().unwrap() = "https://www.rust-lang.org/".parse().unwrap();
+    /// assert_eq!(request.uri_ref().unwrap(), "https://www.rust-lang.org/");
     /// ```
     pub fn uri_mut(&mut self) -> Option<&mut Uri> {
-        self.inner.as_mut().ok().map(|req| &mut req.head.uri)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|request| &mut request.head.uri)
     }
 
     /// 设置请求的 HTTP 版本。
@@ -608,15 +614,15 @@ impl RequestBuilder {
     /// use boluo_core::http::Version;
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .version(Version::HTTP_2)
     ///     .body(())
     ///     .unwrap();
     /// ```
     pub fn version(self, version: Version) -> RequestBuilder {
-        self.and_then(move |mut req| {
-            req.head.version = version;
-            Ok(req)
+        self.and_then(move |mut request| {
+            request.head.version = version;
+            Ok(request)
         })
     }
 
@@ -630,14 +636,17 @@ impl RequestBuilder {
     /// use boluo_core::http::Version;
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.version_ref().unwrap(), &Version::HTTP_11);
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.version_ref().unwrap(), &Version::HTTP_11);
     ///
-    /// req = req.version(Version::HTTP_2);
-    /// assert_eq!(req.version_ref().unwrap(), &Version::HTTP_2);
+    /// request = request.version(Version::HTTP_2);
+    /// assert_eq!(request.version_ref().unwrap(), &Version::HTTP_2);
     /// ```
     pub fn version_ref(&self) -> Option<&Version> {
-        self.inner.as_ref().ok().map(|req| &req.head.version)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|request| &request.head.version)
     }
 
     /// 获取请求的 HTTP 版本的可变引用。
@@ -650,14 +659,17 @@ impl RequestBuilder {
     /// use boluo_core::http::Version;
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
-    /// assert_eq!(req.version_ref().unwrap(), &Version::HTTP_11);
+    /// let mut request = Request::builder();
+    /// assert_eq!(request.version_ref().unwrap(), &Version::HTTP_11);
     ///
-    /// *req.version_mut().unwrap() = Version::HTTP_2;
-    /// assert_eq!(req.version_ref().unwrap(), &Version::HTTP_2);
+    /// *request.version_mut().unwrap() = Version::HTTP_2;
+    /// assert_eq!(request.version_ref().unwrap(), &Version::HTTP_2);
     /// ```
     pub fn version_mut(&mut self) -> Option<&mut Version> {
-        self.inner.as_mut().ok().map(|req| &mut req.head.version)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|request| &mut request.head.version)
     }
 
     /// 将标头追加到请求中。
@@ -670,7 +682,7 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .header("Accept", "text/html")
     ///     .header("X-Custom-Foo", "bar")
     ///     .body(())
@@ -683,11 +695,11 @@ impl RequestBuilder {
         HeaderValue: TryFrom<V>,
         <HeaderValue as TryFrom<V>>::Error: Into<http::Error>,
     {
-        self.and_then(move |mut req| {
+        self.and_then(move |mut request| {
             let name = <HeaderName as TryFrom<K>>::try_from(key).map_err(Into::into)?;
             let value = <HeaderValue as TryFrom<V>>::try_from(value).map_err(Into::into)?;
-            req.head.headers.append(name, value);
-            Ok(req)
+            request.head.headers.append(name, value);
+            Ok(request)
         })
     }
 
@@ -700,17 +712,20 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .header("Accept", "text/html")
     ///     .header("X-Custom-Foo", "bar");
     ///
-    /// let headers = req.headers_ref().unwrap();
+    /// let headers = request.headers_ref().unwrap();
     ///
     /// assert_eq!(headers["Accept"], "text/html");
     /// assert_eq!(headers["X-Custom-Foo"], "bar");
     /// ```
     pub fn headers_ref(&self) -> Option<&HeaderMap<HeaderValue>> {
-        self.inner.as_ref().ok().map(|req| &req.head.headers)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|request| &request.head.headers)
     }
 
     /// 获取请求的标头集的可变引用。
@@ -723,18 +738,21 @@ impl RequestBuilder {
     /// use boluo_core::http::HeaderValue;
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder();
+    /// let mut request = Request::builder();
     ///
-    /// let headers = req.headers_mut().unwrap();
+    /// let headers = request.headers_mut().unwrap();
     /// headers.insert("Accept", HeaderValue::from_static("text/html"));
     /// headers.insert("X-Custom-Foo", HeaderValue::from_static("bar"));
     ///
-    /// let headers = req.headers_ref().unwrap();
+    /// let headers = request.headers_ref().unwrap();
     /// assert_eq!(headers["Accept"], "text/html");
     /// assert_eq!(headers["X-Custom-Foo"], "bar");
     /// ```
     pub fn headers_mut(&mut self) -> Option<&mut HeaderMap<HeaderValue>> {
-        self.inner.as_mut().ok().map(|req| &mut req.head.headers)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|request| &mut request.head.headers)
     }
 
     /// 将一个类型添加到请求的扩展中。
@@ -744,21 +762,21 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder()
+    /// let request = Request::builder()
     ///     .extension("My Extension")
     ///     .body(())
     ///     .unwrap();
     ///
-    /// assert_eq!(req.extensions().get::<&'static str>(),
+    /// assert_eq!(request.extensions().get::<&'static str>(),
     ///            Some(&"My Extension"));
     /// ```
     pub fn extension<T>(self, extension: T) -> RequestBuilder
     where
         T: Clone + Send + Sync + 'static,
     {
-        self.and_then(move |mut req| {
-            req.head.extensions.insert(extension);
-            Ok(req)
+        self.and_then(move |mut request| {
+            request.head.extensions.insert(extension);
+            Ok(request)
         })
     }
 
@@ -771,14 +789,17 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let req = Request::builder().extension("My Extension").extension(5u32);
-    /// let extensions = req.extensions_ref().unwrap();
+    /// let request = Request::builder().extension("My Extension").extension(5u32);
+    /// let extensions = request.extensions_ref().unwrap();
     ///
     /// assert_eq!(extensions.get::<&'static str>(), Some(&"My Extension"));
     /// assert_eq!(extensions.get::<u32>(), Some(&5u32));
     /// ```
     pub fn extensions_ref(&self) -> Option<&Extensions> {
-        self.inner.as_ref().ok().map(|req| &req.head.extensions)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|request| &request.head.extensions)
     }
 
     /// 获取请求的扩展的可变引用。
@@ -790,15 +811,18 @@ impl RequestBuilder {
     /// ```
     /// use boluo_core::request::Request;
     ///
-    /// let mut req = Request::builder().extension("My Extension");
-    /// let mut extensions = req.extensions_mut().unwrap();
+    /// let mut request = Request::builder().extension("My Extension");
+    /// let mut extensions = request.extensions_mut().unwrap();
     /// assert_eq!(extensions.get::<&'static str>(), Some(&"My Extension"));
     ///
     /// extensions.insert(5u32);
     /// assert_eq!(extensions.get::<u32>(), Some(&5u32));
     /// ```
     pub fn extensions_mut(&mut self) -> Option<&mut Extensions> {
-        self.inner.as_mut().ok().map(|req| &mut req.head.extensions)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|request| &mut request.head.extensions)
     }
 
     /// 消耗构建器，使用给定的主体构建请求。
@@ -817,7 +841,7 @@ impl RequestBuilder {
     ///     .unwrap();
     /// ```
     pub fn body<T>(self, body: T) -> Result<Request<T>> {
-        self.inner.map(move |req| req.map(|_| body))
+        self.inner.map(move |request| request.map(|_| body))
     }
 
     fn and_then<F>(self, func: F) -> Self

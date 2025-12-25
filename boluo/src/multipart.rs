@@ -68,12 +68,12 @@ impl Stream for Multipart {
 impl FromRequest for Multipart {
     type Error = MultipartError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let Some(boundary) = Self::parse_boundary(req.headers()) else {
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        let Some(boundary) = Self::parse_boundary(request.headers()) else {
             return Err(MultipartError::UnsupportedContentType);
         };
 
-        let stream = std::mem::take(req.body_mut()).into_data_stream();
+        let stream = std::mem::take(request.body_mut()).into_data_stream();
 
         Ok(Self {
             inner: multer::Multipart::new(stream, boundary),

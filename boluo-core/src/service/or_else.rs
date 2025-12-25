@@ -25,11 +25,14 @@ where
     type Response = S::Response;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        let fut = self.service.call(req);
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let fut = self.service.call(request);
         async move {
             let err = match fut.await {
-                Ok(res) => return Ok(res),
+                Ok(response) => return Ok(response),
                 Err(err) => err,
             };
             (self.f)(err).await

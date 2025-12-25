@@ -22,9 +22,9 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// where
     ///     S: Service<Request>,
     /// {
-    ///     service.map_request(|mut req: Request| {
-    ///         req.extensions_mut().insert("My Extension");
-    ///         req
+    ///     service.map_request(|mut request: Request| {
+    ///         request.extensions_mut().insert("My Extension");
+    ///         request
     ///     })
     /// }
     ///

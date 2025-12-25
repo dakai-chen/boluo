@@ -24,8 +24,11 @@ where
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        let fut = self.service.call(req);
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        let fut = self.service.call(request);
         async move { (self.f)(fut.await) }
     }
 }

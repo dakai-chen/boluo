@@ -51,12 +51,12 @@ pub use middleware_fn::*;
 ///     type Response = Response;
 ///     type Error = BoxError;
 ///
-///     async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-///         println!("req -> {} {}", req.method(), req.uri().path());
+///     async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+///         println!("req -> {} {}", request.method(), request.uri().path());
 ///
 ///         let result = self
 ///             .service
-///             .call(req)
+///             .call(request)
 ///             .await
 ///             .map_err(Into::into)
 ///             .and_then(|r| r.into_response().map_err(Into::into));

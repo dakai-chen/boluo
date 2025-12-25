@@ -283,10 +283,10 @@ where
                     };
 
                     let service = service.clone();
-                    let service = hyper::service::service_fn(move |mut req| {
-                        req.extensions_mut().insert(addr.clone());
+                    let service = hyper::service::service_fn(move |mut request| {
+                        request.extensions_mut().insert(addr.clone());
                         let service = service.clone();
-                        async move { service.call(req).await }
+                        async move { service.call(request).await }
                     });
 
                     let builder = self.builder.clone();

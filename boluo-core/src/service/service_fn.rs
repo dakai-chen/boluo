@@ -34,8 +34,11 @@ where
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        (self.f)(req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        (self.f)(request)
     }
 }
 

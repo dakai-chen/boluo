@@ -451,10 +451,10 @@ impl ResponseBuilder {
         StatusCode: TryFrom<T>,
         <StatusCode as TryFrom<T>>::Error: Into<http::Error>,
     {
-        self.and_then(move |mut res| {
+        self.and_then(move |mut response| {
             let status = TryFrom::try_from(status).map_err(Into::into)?;
-            res.head.status = status;
-            Ok(res)
+            response.head.status = status;
+            Ok(response)
         })
     }
 
@@ -468,14 +468,17 @@ impl ResponseBuilder {
     /// use boluo_core::http::StatusCode;
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder();
-    /// assert_eq!(res.status_ref().unwrap(), &StatusCode::OK);
+    /// let mut response = Response::builder();
+    /// assert_eq!(response.status_ref().unwrap(), &StatusCode::OK);
     ///
-    /// res = res.status(StatusCode::BAD_REQUEST);
-    /// assert_eq!(res.status_ref().unwrap(), &StatusCode::BAD_REQUEST);
+    /// response = response.status(StatusCode::BAD_REQUEST);
+    /// assert_eq!(response.status_ref().unwrap(), &StatusCode::BAD_REQUEST);
     /// ```
     pub fn status_ref(&self) -> Option<&StatusCode> {
-        self.inner.as_ref().ok().map(|res| &res.head.status)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|response| &response.head.status)
     }
 
     /// 获取响应的状态码的可变引用。
@@ -488,14 +491,17 @@ impl ResponseBuilder {
     /// use boluo_core::http::StatusCode;
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder();
-    /// assert_eq!(res.status_ref().unwrap(), &StatusCode::OK);
+    /// let mut response = Response::builder();
+    /// assert_eq!(response.status_ref().unwrap(), &StatusCode::OK);
     ///
-    /// *res.status_mut().unwrap() = StatusCode::BAD_REQUEST;
-    /// assert_eq!(res.status_ref().unwrap(), &StatusCode::BAD_REQUEST);
+    /// *response.status_mut().unwrap() = StatusCode::BAD_REQUEST;
+    /// assert_eq!(response.status_ref().unwrap(), &StatusCode::BAD_REQUEST);
     /// ```
     pub fn status_mut(&mut self) -> Option<&mut StatusCode> {
-        self.inner.as_mut().ok().map(|res| &mut res.head.status)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|response| &mut response.head.status)
     }
 
     /// 设置响应的 HTTP 版本。
@@ -514,9 +520,9 @@ impl ResponseBuilder {
     ///     .unwrap();
     /// ```
     pub fn version(self, version: Version) -> ResponseBuilder {
-        self.and_then(move |mut res| {
-            res.head.version = version;
-            Ok(res)
+        self.and_then(move |mut response| {
+            response.head.version = version;
+            Ok(response)
         })
     }
 
@@ -530,14 +536,17 @@ impl ResponseBuilder {
     /// use boluo_core::http::Version;
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder();
-    /// assert_eq!(res.version_ref().unwrap(), &Version::HTTP_11);
+    /// let mut response = Response::builder();
+    /// assert_eq!(response.version_ref().unwrap(), &Version::HTTP_11);
     ///
-    /// res = res.version(Version::HTTP_2);
-    /// assert_eq!(res.version_ref().unwrap(), &Version::HTTP_2);
+    /// response = response.version(Version::HTTP_2);
+    /// assert_eq!(response.version_ref().unwrap(), &Version::HTTP_2);
     /// ```
     pub fn version_ref(&self) -> Option<&Version> {
-        self.inner.as_ref().ok().map(|res| &res.head.version)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|response| &response.head.version)
     }
 
     /// 获取响应的 HTTP 版本的可变引用。
@@ -550,14 +559,17 @@ impl ResponseBuilder {
     /// use boluo_core::http::Version;
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder();
-    /// assert_eq!(res.version_ref().unwrap(), &Version::HTTP_11);
+    /// let mut response = Response::builder();
+    /// assert_eq!(response.version_ref().unwrap(), &Version::HTTP_11);
     ///
-    /// *res.version_mut().unwrap() = Version::HTTP_2;
-    /// assert_eq!(res.version_ref().unwrap(), &Version::HTTP_2);
+    /// *response.version_mut().unwrap() = Version::HTTP_2;
+    /// assert_eq!(response.version_ref().unwrap(), &Version::HTTP_2);
     /// ```
     pub fn version_mut(&mut self) -> Option<&mut Version> {
-        self.inner.as_mut().ok().map(|res| &mut res.head.version)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|response| &mut response.head.version)
     }
 
     /// 将标头追加到响应中。
@@ -584,11 +596,11 @@ impl ResponseBuilder {
         HeaderValue: TryFrom<V>,
         <HeaderValue as TryFrom<V>>::Error: Into<http::Error>,
     {
-        self.and_then(move |mut res| {
+        self.and_then(move |mut response| {
             let name = <HeaderName as TryFrom<K>>::try_from(key).map_err(Into::into)?;
             let value = <HeaderValue as TryFrom<V>>::try_from(value).map_err(Into::into)?;
-            res.head.headers.append(name, value);
-            Ok(res)
+            response.head.headers.append(name, value);
+            Ok(response)
         })
     }
 
@@ -601,17 +613,20 @@ impl ResponseBuilder {
     /// ```
     /// use boluo_core::response::Response;
     ///
-    /// let res = Response::builder()
+    /// let response = Response::builder()
     ///     .header("Accept", "text/html")
     ///     .header("X-Custom-Foo", "bar");
     ///
-    /// let headers = res.headers_ref().unwrap();
+    /// let headers = response.headers_ref().unwrap();
     ///
     /// assert_eq!(headers["Accept"], "text/html");
     /// assert_eq!(headers["X-Custom-Foo"], "bar");
     /// ```
     pub fn headers_ref(&self) -> Option<&HeaderMap<HeaderValue>> {
-        self.inner.as_ref().ok().map(|res| &res.head.headers)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|response| &response.head.headers)
     }
 
     /// 获取响应的标头集的可变引用。
@@ -624,18 +639,21 @@ impl ResponseBuilder {
     /// use boluo_core::http::HeaderValue;
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder();
+    /// let mut response = Response::builder();
     ///
-    /// let headers = res.headers_mut().unwrap();
+    /// let headers = response.headers_mut().unwrap();
     /// headers.insert("Accept", HeaderValue::from_static("text/html"));
     /// headers.insert("X-Custom-Foo", HeaderValue::from_static("bar"));
     ///
-    /// let headers = res.headers_ref().unwrap();
+    /// let headers = response.headers_ref().unwrap();
     /// assert_eq!( headers["Accept"], "text/html" );
     /// assert_eq!( headers["X-Custom-Foo"], "bar" );
     /// ```
     pub fn headers_mut(&mut self) -> Option<&mut HeaderMap<HeaderValue>> {
-        self.inner.as_mut().ok().map(|res| &mut res.head.headers)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|response| &mut response.head.headers)
     }
 
     /// 将一个类型添加到响应的扩展中。
@@ -657,9 +675,9 @@ impl ResponseBuilder {
     where
         T: Clone + Send + Sync + 'static,
     {
-        self.and_then(move |mut res| {
-            res.head.extensions.insert(extension);
-            Ok(res)
+        self.and_then(move |mut response| {
+            response.head.extensions.insert(extension);
+            Ok(response)
         })
     }
 
@@ -672,14 +690,17 @@ impl ResponseBuilder {
     /// ```
     /// use boluo_core::response::Response;
     ///
-    /// let res = Response::builder().extension("My Extension").extension(5u32);
-    /// let extensions = res.extensions_ref().unwrap();
+    /// let response = Response::builder().extension("My Extension").extension(5u32);
+    /// let extensions = response.extensions_ref().unwrap();
     ///
     /// assert_eq!(extensions.get::<&'static str>(), Some(&"My Extension"));
     /// assert_eq!(extensions.get::<u32>(), Some(&5u32));
     /// ```
     pub fn extensions_ref(&self) -> Option<&Extensions> {
-        self.inner.as_ref().ok().map(|res| &res.head.extensions)
+        self.inner
+            .as_ref()
+            .ok()
+            .map(|response| &response.head.extensions)
     }
 
     /// 获取响应的扩展的可变引用。
@@ -691,15 +712,18 @@ impl ResponseBuilder {
     /// ```
     /// use boluo_core::response::Response;
     ///
-    /// let mut res = Response::builder().extension("My Extension");
-    /// let mut extensions = res.extensions_mut().unwrap();
+    /// let mut response = Response::builder().extension("My Extension");
+    /// let mut extensions = response.extensions_mut().unwrap();
     /// assert_eq!(extensions.get::<&'static str>(), Some(&"My Extension"));
     ///
     /// extensions.insert(5u32);
     /// assert_eq!(extensions.get::<u32>(), Some(&5u32));
     /// ```
     pub fn extensions_mut(&mut self) -> Option<&mut Extensions> {
-        self.inner.as_mut().ok().map(|res| &mut res.head.extensions)
+        self.inner
+            .as_mut()
+            .ok()
+            .map(|response| &mut response.head.extensions)
     }
 
     /// 消耗构建器，使用给定的主体构建响应。
@@ -718,7 +742,7 @@ impl ResponseBuilder {
     ///     .unwrap();
     /// ```
     pub fn body<T>(self, body: T) -> Result<Response<T>> {
-        self.inner.map(move |res| res.map(|_| body))
+        self.inner.map(move |response| response.map(|_| body))
     }
 
     fn and_then<F>(self, func: F) -> Self

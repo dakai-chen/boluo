@@ -58,8 +58,8 @@ where
 {
     type Error = QueryError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let query = req.uri().query().unwrap_or_default();
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        let query = request.uri().query().unwrap_or_default();
         serde_urlencoded::from_str::<T>(query)
             .map(|value| Query(value))
             .map_err(QueryError::FailedToDeserialize)
@@ -108,8 +108,10 @@ impl RawQuery {
 impl FromRequest for RawQuery {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(RawQuery(req.uri().query().unwrap_or_default().to_owned()))
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(RawQuery(
+            request.uri().query().unwrap_or_default().to_owned(),
+        ))
     }
 }
 

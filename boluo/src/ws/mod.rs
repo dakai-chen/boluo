@@ -198,24 +198,24 @@ impl std::fmt::Debug for WebSocketUpgrade {
 impl FromRequest for WebSocketUpgrade {
     type Error = WebSocketUpgradeError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        if !util::header_eq_ignore_case(req.headers(), header::CONNECTION, "upgrade") {
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        if !util::header_eq_ignore_case(request.headers(), header::CONNECTION, "upgrade") {
             return Err(WebSocketUpgradeError::InvalidConnectionHeader);
         }
-        if !util::header_eq_ignore_case(req.headers(), header::UPGRADE, "websocket") {
+        if !util::header_eq_ignore_case(request.headers(), header::UPGRADE, "websocket") {
             return Err(WebSocketUpgradeError::InvalidUpgradeHeader);
         }
-        if !util::header_eq(req.headers(), header::SEC_WEBSOCKET_VERSION, "13") {
+        if !util::header_eq(request.headers(), header::SEC_WEBSOCKET_VERSION, "13") {
             return Err(WebSocketUpgradeError::InvalidSecWebSocketVersionHeader);
         }
 
-        let sec_websocket_key = req
+        let sec_websocket_key = request
             .headers()
             .get(header::SEC_WEBSOCKET_KEY)
             .cloned()
             .ok_or(WebSocketUpgradeError::MissingSecWebSocketKeyHeader)?;
 
-        let on_upgrade = req
+        let on_upgrade = request
             .extensions_mut()
             .remove::<OnUpgrade>()
             .ok_or(WebSocketUpgradeError::ConnectionNotUpgradable)?;

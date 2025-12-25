@@ -53,8 +53,8 @@ where
 {
     type Error = TypedHeaderError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Option::<TypedHeader<T>>::from_request(req)
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Option::<TypedHeader<T>>::from_request(request)
             .await?
             .ok_or_else(|| TypedHeaderError::MissingHeader { name: T::name() })
     }
@@ -66,8 +66,9 @@ where
 {
     type Error = TypedHeaderError;
 
-    async fn from_request(req: &mut Request) -> Result<Option<Self>, Self::Error> {
-        req.headers()
+    async fn from_request(request: &mut Request) -> Result<Option<Self>, Self::Error> {
+        request
+            .headers()
             .typed_try_get()
             .map(|v| v.map(TypedHeader))
             .map_err(|source| TypedHeaderError::ParseError {

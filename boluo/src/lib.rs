@@ -115,8 +115,8 @@
 //! impl FromRequest for Host {
 //!     type Error = Infallible;
 //!
-//!     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-//!         let value = req.headers().get(header::HOST).map(|v| v.to_owned());
+//!     async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+//!         let value = request.headers().get(header::HOST).map(|v| v.to_owned());
 //!         Ok(Host(value))
 //!     }
 //! }

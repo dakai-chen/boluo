@@ -25,12 +25,12 @@ use crate::response::{Response, ResponseParts};
 ///     type Error = T::Error;
 ///
 ///     fn into_response(self) -> Result<Response, Self::Error> {
-///         let mut res = self.0.into_response()?;
-///         res.headers_mut().insert(
+///         let mut response = self.0.into_response()?;
+///         response.headers_mut().insert(
 ///             header::CONTENT_TYPE,
 ///             HeaderValue::from_static(mime::TEXT_HTML_UTF_8.as_ref()),
 ///         );
-///         Ok(res)
+///         Ok(response)
 ///     }
 /// }
 ///
@@ -92,12 +92,12 @@ impl IntoResponse for Cow<'static, str> {
     type Error = Infallible;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let mut res = Response::new(Body::from(self));
-        res.headers_mut().insert(
+        let mut response = Response::new(Body::from(self));
+        response.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static(mime::TEXT_PLAIN_UTF_8.as_ref()),
         );
-        Ok(res)
+        Ok(response)
     }
 }
 
@@ -121,12 +121,12 @@ impl IntoResponse for Cow<'static, [u8]> {
     type Error = Infallible;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let mut res = Response::new(Body::from(self));
-        res.headers_mut().insert(
+        let mut response = Response::new(Body::from(self));
+        response.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static(mime::APPLICATION_OCTET_STREAM.as_ref()),
         );
-        Ok(res)
+        Ok(response)
     }
 }
 
@@ -134,12 +134,12 @@ impl IntoResponse for Bytes {
     type Error = Infallible;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let mut res = Response::new(Body::from(self));
-        res.headers_mut().insert(
+        let mut response = Response::new(Body::from(self));
+        response.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static(mime::APPLICATION_OCTET_STREAM.as_ref()),
         );
-        Ok(res)
+        Ok(response)
     }
 }
 
@@ -199,10 +199,10 @@ macro_rules! into_response_tuples {
             type Error = BoxError;
 
             fn into_response(self) -> Result<Response, Self::Error> {
-                let ($($ty),*, res) = self;
+                let ($($ty),*, response) = self;
 
-                let res = res.into_response().map_err(Into::into)?;
-                let (parts, body) = res.into_inner();
+                let response = response.into_response().map_err(Into::into)?;
+                let (parts, body) = response.into_inner();
                 $(
                     let parts = $tyr.into_response_parts(parts).map_err(Into::into)?;
                 )*

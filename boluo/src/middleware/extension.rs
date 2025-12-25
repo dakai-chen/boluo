@@ -30,8 +30,8 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
-        req.extensions_mut().insert(self.value.clone());
-        self.service.call(req).await
+    async fn call(&self, mut request: Request) -> Result<Self::Response, Self::Error> {
+        request.extensions_mut().insert(self.value.clone());
+        self.service.call(request).await
     }
 }

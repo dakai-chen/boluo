@@ -15,18 +15,18 @@ where
 {
     type Error = FormError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        if req.method() == Method::GET || req.method() == Method::HEAD {
-            Query::from_request(req)
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        if request.method() == Method::GET || request.method() == Method::HEAD {
+            Query::from_request(request)
                 .await
                 .map(|Query(value)| Form(value))
                 .map_err(FormError::from_extract_query_error)
         } else {
-            if !has_content_type(req.headers(), &mime::APPLICATION_WWW_FORM_URLENCODED) {
+            if !has_content_type(request.headers(), &mime::APPLICATION_WWW_FORM_URLENCODED) {
                 return Err(FormError::UnsupportedContentType);
             }
 
-            let bytes = Bytes::from_request(req)
+            let bytes = Bytes::from_request(request)
                 .await
                 .map_err(FormError::FailedToBufferBody)?;
 

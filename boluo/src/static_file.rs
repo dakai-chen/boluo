@@ -49,8 +49,8 @@ impl Service<Request> for ServeFile {
     type Response = Response;
     type Error = ServeFileError;
 
-    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-        serve_file(req.into_parts(), &self.path).await
+    async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+        serve_file(request.into_parts(), &self.path).await
     }
 }
 
@@ -80,9 +80,9 @@ impl Service<Request> for ServeDir {
     type Response = Response;
     type Error = ServeFileError;
 
-    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-        if let Some(path) = sanitize_path(&self.root, req.uri().path()) {
-            serve_file(req.into_parts(), &path).await
+    async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+        if let Some(path) = sanitize_path(&self.root, request.uri().path()) {
+            serve_file(request.into_parts(), &path).await
         } else {
             Err(ServeFileError::NotFound)
         }

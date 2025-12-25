@@ -35,8 +35,8 @@ fn router_benchmark(c: &mut Criterion) {
 
     c.bench_function("router", |b| {
         b.to_async(&runtime).iter(|| async {
-            for req in black_box(requests()) {
-                let _ = router_a.call(req).await;
+            for request in black_box(requests()) {
+                let _ = router_a.call(request).await;
             }
         })
     });

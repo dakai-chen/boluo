@@ -29,8 +29,11 @@ impl<Req, Res, Err> Service<Req> for BoxService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.service.call(req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(request)
     }
 }
 
@@ -66,8 +69,11 @@ impl<Req, Res, Err> Service<Req> for ArcService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.service.call(req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(request)
     }
 }
 
@@ -111,8 +117,11 @@ impl<Req, Res, Err> Service<Req> for BoxCloneService<Req, Res, Err> {
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.service.call(req)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.service.call(request)
     }
 }
 
@@ -151,7 +160,7 @@ trait DynService<Req>: Send + Sync {
     type Response;
     type Error;
 
-    fn call<'a>(&'a self, req: Req) -> BoxFuture<'a, Result<Self::Response, Self::Error>>
+    fn call<'a>(&'a self, request: Req) -> BoxFuture<'a, Result<Self::Response, Self::Error>>
     where
         Req: 'a;
 }
@@ -163,10 +172,10 @@ where
     type Response = S::Response;
     type Error = S::Error;
 
-    fn call<'a>(&'a self, req: Req) -> BoxFuture<'a, Result<Self::Response, Self::Error>>
+    fn call<'a>(&'a self, request: Req) -> BoxFuture<'a, Result<Self::Response, Self::Error>>
     where
         Req: 'a,
     {
-        Box::pin(Service::call(self, req))
+        Box::pin(Service::call(self, request))
     }
 }

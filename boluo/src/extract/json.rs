@@ -13,12 +13,12 @@ where
 {
     type Error = JsonError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        if !is_json_content_type(req.headers()) {
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        if !is_json_content_type(request.headers()) {
             return Err(JsonError::UnsupportedContentType);
         }
 
-        let bytes = Bytes::from_request(req)
+        let bytes = Bytes::from_request(request)
             .await
             .map_err(JsonError::FailedToBufferBody)?;
 

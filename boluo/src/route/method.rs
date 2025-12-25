@@ -77,11 +77,11 @@ impl Service<Request> for MethodRouter {
     type Response = Response;
     type Error = BoxError;
 
-    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-        let Some(service) = self.match_method(req.method()) else {
-            return Err(RouteError::method_not_allowed(req).into());
+    async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+        let Some(service) = self.match_method(request.method()) else {
+            return Err(RouteError::method_not_allowed(request).into());
         };
-        service.call(req).await
+        service.call(request).await
     }
 }
 

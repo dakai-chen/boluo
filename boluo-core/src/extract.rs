@@ -26,8 +26,8 @@ use crate::request::{Request, RequestParts};
 /// impl FromRequest for Host {
 ///     type Error = Infallible;
 ///
-///     async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-///         let value = req.headers().get(header::HOST).map(|v| v.to_owned());
+///     async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+///         let value = request.headers().get(header::HOST).map(|v| v.to_owned());
 ///         Ok(Host(value))
 ///     }
 /// }
@@ -42,7 +42,9 @@ pub trait FromRequest: Sized {
     type Error;
 
     /// 根据 [`Request`] 创建提取器实例。
-    fn from_request(req: &mut Request) -> impl Future<Output = Result<Self, Self::Error>> + Send;
+    fn from_request(
+        request: &mut Request,
+    ) -> impl Future<Output = Result<Self, Self::Error>> + Send;
 }
 
 /// 可以根据 [`Request`] 创建的类型，用于实现提取器。
@@ -65,8 +67,8 @@ pub trait FromRequest: Sized {
 /// impl OptionalFromRequest for Host {
 ///     type Error = Infallible;
 ///
-///     async fn from_request(req: &mut Request) -> Result<Option<Self>, Self::Error> {
-///         Ok(req.headers().get(header::HOST).map(|v| Host(v.to_owned())))
+///     async fn from_request(request: &mut Request) -> Result<Option<Self>, Self::Error> {
+///         Ok(request.headers().get(header::HOST).map(|v| Host(v.to_owned())))
 ///     }
 /// }
 ///
@@ -83,7 +85,7 @@ pub trait OptionalFromRequest: Sized {
 
     /// 根据 [`Request`] 创建提取器实例。
     fn from_request(
-        req: &mut Request,
+        request: &mut Request,
     ) -> impl Future<Output = Result<Option<Self>, Self::Error>> + Send;
 }
 
@@ -93,8 +95,8 @@ where
 {
     type Error = T::Error;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        T::from_request(req).await
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        T::from_request(request).await
     }
 }
 
@@ -104,8 +106,8 @@ where
 {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(T::from_request(req).await)
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(T::from_request(request).await)
     }
 }
 
@@ -119,9 +121,9 @@ macro_rules! from_request_tuples {
         {
             type Error = BoxError;
 
-            async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
+            async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
                 $(
-                    let $ty = $ty::from_request(req).await.map_err(Into::into)?;
+                    let $ty = $ty::from_request(request).await.map_err(Into::into)?;
                 )*
                 Ok(($($ty,)*))
             }
@@ -153,24 +155,24 @@ from_request_tuples!(
 impl FromRequest for Body {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(std::mem::take(req.body_mut()))
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(std::mem::take(request.body_mut()))
     }
 }
 
 impl FromRequest for Bytes {
     type Error = BoxError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        std::mem::take(req.body_mut()).to_bytes().await
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        std::mem::take(request.body_mut()).to_bytes().await
     }
 }
 
 impl FromRequest for String {
     type Error = BoxError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let bytes = Bytes::from_request(req).await?;
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        let bytes = Bytes::from_request(request).await?;
         Ok(std::str::from_utf8(&bytes)?.to_owned())
     }
 }
@@ -178,48 +180,48 @@ impl FromRequest for String {
 impl FromRequest for Method {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.method().clone())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.method().clone())
     }
 }
 
 impl FromRequest for Uri {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.uri().clone())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.uri().clone())
     }
 }
 
 impl FromRequest for Version {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.version())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.version())
     }
 }
 
 impl FromRequest for HeaderMap {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.headers().clone())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.headers().clone())
     }
 }
 
 impl FromRequest for Extensions {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.extensions().clone())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.extensions().clone())
     }
 }
 
 impl FromRequest for RequestParts {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        Ok(req.parts().clone())
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        Ok(request.parts().clone())
     }
 }
 

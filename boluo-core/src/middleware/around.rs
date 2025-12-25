@@ -12,12 +12,12 @@ use crate::service::Service;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
 /// // 日志中间件
-/// async fn log<S>(prefix: &&str, req: Request, service: &S) -> Result<S::Response, S::Error>
+/// async fn log<S>(prefix: &&str, request: Request, service: &S) -> Result<S::Response, S::Error>
 /// where
 ///     S: Service<Request>,
 /// {
-///     println!("{prefix}: {} {}", req.method(), req.uri().path());
-///     service.call(req).await
+///     println!("{prefix}: {} {}", request.method(), request.uri().path());
+///     service.call(request).await
 /// }
 ///
 /// let service = handler_fn(|| async {});
@@ -74,8 +74,11 @@ where
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.f.call(&self.state, req, &self.service)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.f.call(&self.state, request, &self.service)
     }
 }
 
@@ -104,7 +107,7 @@ where
     fn call(
         &self,
         state: &'a T,
-        req: R,
+        request: R,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
@@ -122,10 +125,10 @@ where
     fn call(
         &self,
         state: &'a T,
-        req: Req,
+        request: Req,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send {
-        self(state, req, service)
+        self(state, request, service)
     }
 }
 
@@ -140,12 +143,12 @@ where
 /// use boluo_core::service::{Service, ServiceExt};
 ///
 /// // 日志中间件
-/// async fn log<S>(req: Request, service: &S) -> Result<S::Response, S::Error>
+/// async fn log<S>(request: Request, service: &S) -> Result<S::Response, S::Error>
 /// where
 ///     S: Service<Request>,
 /// {
-///     println!("HTTP: {} {}", req.method(), req.uri().path());
-///     service.call(req).await
+///     println!("HTTP: {} {}", request.method(), request.uri().path());
+///     service.call(request).await
 /// }
 ///
 /// let service = handler_fn(|| async {});
@@ -192,8 +195,11 @@ where
     type Response = Res;
     type Error = Err;
 
-    fn call(&self, req: Req) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
-        self.f.call(req, &self.service)
+    fn call(
+        &self,
+        request: Req,
+    ) -> impl Future<Output = Result<Self::Response, Self::Error>> + Send {
+        self.f.call(request, &self.service)
     }
 }
 
@@ -218,7 +224,7 @@ where
 
     fn call(
         &self,
-        req: R,
+        request: R,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
@@ -234,9 +240,9 @@ where
 
     fn call(
         &self,
-        req: Req,
+        request: Req,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send {
-        self(req, service)
+        self(request, service)
     }
 }

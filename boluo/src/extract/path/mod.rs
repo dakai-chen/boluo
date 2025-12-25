@@ -53,9 +53,10 @@ impl RawPathParams {
 impl FromRequest for RawPathParams {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
         Ok(RawPathParams(
-            req.extensions()
+            request
+                .extensions()
                 .get::<PathParams>()
                 .map(|PathParams(params)| params.clone())
                 .unwrap_or_default(),
@@ -143,8 +144,8 @@ where
 {
     type Error = PathError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let path_params = match req.extensions().get::<PathParams>() {
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        let path_params = match request.extensions().get::<PathParams>() {
             Some(PathParams(path_params)) => &path_params[..],
             None => &[],
         };

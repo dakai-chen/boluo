@@ -11,8 +11,8 @@ where
 {
     type Error = ExtensionError;
 
-    async fn from_request(req: &mut Request) -> Result<Self, Self::Error> {
-        let opt = Option::<Extension<T>>::from_request(req)
+    async fn from_request(request: &mut Request) -> Result<Self, Self::Error> {
+        let opt = Option::<Extension<T>>::from_request(request)
             .await
             .map_err(|e| match e {})?;
         opt.ok_or_else(|| ExtensionError::MissingExtension {
@@ -27,8 +27,8 @@ where
 {
     type Error = Infallible;
 
-    async fn from_request(req: &mut Request) -> Result<Option<Self>, Self::Error> {
-        Ok(req
+    async fn from_request(request: &mut Request) -> Result<Option<Self>, Self::Error> {
+        Ok(request
             .extensions()
             .get::<T>()
             .map(|value| Extension(value.clone())))

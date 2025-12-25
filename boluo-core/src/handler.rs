@@ -79,8 +79,8 @@ where
     type Response = Response;
     type Error = BoxError;
 
-    async fn call(&self, req: Request) -> Result<Self::Response, Self::Error> {
-        (self.f)(req).await.into_response().map_err(Into::into)
+    async fn call(&self, request: Request) -> Result<Self::Response, Self::Error> {
+        (self.f)(request).await.into_response().map_err(Into::into)
     }
 }
 
@@ -98,9 +98,9 @@ macro_rules! handler_tuples {
             type Response = Response;
             type Error = BoxError;
 
-            async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
+            async fn call(&self, mut request: Request) -> Result<Self::Response, Self::Error> {
                 $(
-                    let $ty = $ty::from_request(&mut req).await.map_err(Into::into)?;
+                    let $ty = $ty::from_request(&mut request).await.map_err(Into::into)?;
                 )*
                 (self.f)($($ty,)*).await.into_response().map_err(Into::into)
             }
@@ -118,11 +118,11 @@ macro_rules! handler_tuples {
             type Response = Response;
             type Error = BoxError;
 
-            async fn call(&self, mut req: Request) -> Result<Self::Response, Self::Error> {
+            async fn call(&self, mut request: Request) -> Result<Self::Response, Self::Error> {
                 $(
-                    let $ty = $ty::from_request(&mut req).await.map_err(Into::into)?;
+                    let $ty = $ty::from_request(&mut request).await.map_err(Into::into)?;
                 )*
-                (self.f)($($ty,)* req).await.into_response().map_err(Into::into)
+                (self.f)($($ty,)* request).await.into_response().map_err(Into::into)
             }
         }
     };

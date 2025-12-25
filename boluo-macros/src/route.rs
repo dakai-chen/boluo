@@ -221,7 +221,7 @@ impl ToTokens for Route {
 
                 async fn call(
                     &self,
-                    req: #crate_path::request::Request,
+                    request: #crate_path::request::Request,
                 ) -> ::std::result::Result<Self::Response, Self::Error> {
                     #item_fn
 
@@ -235,7 +235,7 @@ impl ToTokens for Route {
                     let service = #crate_path::handler::handler_fn(#name);
                     let service = assert_service(service);
 
-                    #crate_path::service::Service::call(&service, req).await
+                    #crate_path::service::Service::call(&service, request).await
                 }
             }
 

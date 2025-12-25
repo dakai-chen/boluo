@@ -23,9 +23,9 @@ impl Service<HyperRequest<Incoming>> for ServiceToHyper {
     type Response = HyperResponse<Body>;
     type Error = Infallible;
 
-    async fn call(&self, req: HyperRequest<Incoming>) -> Result<Self::Response, Self::Error> {
+    async fn call(&self, request: HyperRequest<Incoming>) -> Result<Self::Response, Self::Error> {
         self.service
-            .call(request_from_hyper(req))
+            .call(request_from_hyper(request))
             .await
             .map(response_to_hyper)
     }
@@ -58,25 +58,25 @@ where
     })
 }
 
-fn request_from_hyper(req: HyperRequest<Incoming>) -> Request {
-    let (parts, body) = req.into_parts();
-    let mut req = Request::new(Body::new(body));
-    *req.method_mut() = parts.method;
-    *req.uri_mut() = parts.uri;
-    *req.version_mut() = parts.version;
-    *req.headers_mut() = parts.headers;
-    *req.extensions_mut() = replace_hyper_upgrade(parts.extensions);
-    req
+fn request_from_hyper(request: HyperRequest<Incoming>) -> Request {
+    let (parts, body) = request.into_parts();
+    let mut request = Request::new(Body::new(body));
+    *request.method_mut() = parts.method;
+    *request.uri_mut() = parts.uri;
+    *request.version_mut() = parts.version;
+    *request.headers_mut() = parts.headers;
+    *request.extensions_mut() = replace_hyper_upgrade(parts.extensions);
+    request
 }
 
-fn response_to_hyper(res: Response) -> HyperResponse<Body> {
-    let (parts, body) = res.into_inner();
-    let mut res = HyperResponse::new(body);
-    *res.status_mut() = parts.status;
-    *res.version_mut() = parts.version;
-    *res.headers_mut() = parts.headers;
-    *res.extensions_mut() = parts.extensions;
-    res
+fn response_to_hyper(response: Response) -> HyperResponse<Body> {
+    let (parts, body) = response.into_inner();
+    let mut response = HyperResponse::new(body);
+    *response.status_mut() = parts.status;
+    *response.version_mut() = parts.version;
+    *response.headers_mut() = parts.headers;
+    *response.extensions_mut() = parts.extensions;
+    response
 }
 
 fn upgrade_from_hyper(on_upgrade: HyperOnUpgrade) -> OnUpgrade {

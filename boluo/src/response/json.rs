@@ -16,12 +16,12 @@ where
             Ok(data) => data,
             Err(e) => return Err(JsonResponseError::FailedToSerialize(e)),
         };
-        let mut res = Response::new(Body::from(data));
-        res.headers_mut().insert(
+        let mut response = Response::new(Body::from(data));
+        response.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static(mime::APPLICATION_JSON.as_ref()),
         );
-        Ok(res)
+        Ok(response)
     }
 }
 

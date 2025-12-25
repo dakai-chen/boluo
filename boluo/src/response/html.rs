@@ -14,11 +14,11 @@ where
     type Error = T::Error;
 
     fn into_response(self) -> Result<Response, Self::Error> {
-        let mut res = self.0.into_response()?;
-        res.headers_mut().insert(
+        let mut response = self.0.into_response()?;
+        response.headers_mut().insert(
             header::CONTENT_TYPE,
             HeaderValue::from_static(mime::TEXT_HTML_UTF_8.as_ref()),
         );
-        Ok(res)
+        Ok(response)
     }
 }
