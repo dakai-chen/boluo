@@ -1,6 +1,5 @@
 //! 包含 `boluo` 的核心类型和特征，是框架的基础。
 
-#![forbid(unsafe_code)]
 #![warn(
     missing_debug_implementations,
     missing_docs,

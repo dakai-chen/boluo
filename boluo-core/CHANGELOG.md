@@ -3,6 +3,7 @@
 ## 新增
 
 - 完善 `IntoResponse` 接口，添加 `into_response_always` 辅助方法。
+- 添加 `Body::downcast*` 系列方法。
 
 # 0.6.0
 
