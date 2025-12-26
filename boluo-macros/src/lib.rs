@@ -1,4 +1,4 @@
-//! `boluo` 的宏。
+//! 提供 `boluo` 框架所需的宏定义，简化路由等功能的使用。
 
 #![forbid(unsafe_code)]
 #![warn(

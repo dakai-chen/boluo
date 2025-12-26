@@ -2,7 +2,7 @@
     boluo-core
 </h1>
 
-`boluo` 的核心类型和特征。
+包含 `boluo` 的核心类型和特征，是框架的基础。
 
 ## 支持的最低 Rust 版本（MSRV）
 

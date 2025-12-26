@@ -1,4 +1,4 @@
-//! `boluo` 的核心类型和特征。
+//! 包含 `boluo` 的核心类型和特征，是框架的基础。
 
 #![forbid(unsafe_code)]
 #![warn(
