@@ -14,7 +14,7 @@ pub struct BoxService<Req, Res, Err> {
 }
 
 impl<Req, Res, Err> BoxService<Req, Res, Err> {
-    /// 将服务转换为[`Service`]特征对象并装箱。
+    /// 将服务转换为 [`Service`] 特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + 'static,
@@ -54,7 +54,7 @@ pub struct ArcService<Req, Res, Err> {
 }
 
 impl<Req, Res, Err> ArcService<Req, Res, Err> {
-    /// 将服务转换为[`Service`]特征对象并装箱。
+    /// 将服务转换为 [`Service`] 特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + 'static,
@@ -102,7 +102,7 @@ pub struct BoxCloneService<Req, Res, Err> {
 }
 
 impl<Req, Res, Err> BoxCloneService<Req, Res, Err> {
-    /// 将服务转换为[`Service`]特征对象并装箱。
+    /// 将服务转换为 [`Service`] 特征对象并装箱。
     pub fn new<S>(service: S) -> Self
     where
         S: Service<Req, Response = Res, Error = Err> + Clone + 'static,
@@ -139,23 +139,6 @@ impl<Req, Res, Err> std::fmt::Debug for BoxCloneService<Req, Res, Err> {
     }
 }
 
-trait DynCloneService<Req>: DynService<Req> {
-    fn clone_box(
-        &self,
-    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>>;
-}
-
-impl<S, Req> DynCloneService<Req> for S
-where
-    S: Service<Req> + Clone + 'static,
-{
-    fn clone_box(
-        &self,
-    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>> {
-        Box::new(self.clone())
-    }
-}
-
 trait DynService<Req>: Send + Sync {
     type Response;
     type Error;
@@ -167,7 +150,7 @@ trait DynService<Req>: Send + Sync {
 
 impl<S, Req> DynService<Req> for S
 where
-    S: Service<Req> + ?Sized,
+    S: ?Sized + Service<Req>,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -177,5 +160,22 @@ where
         Req: 'a,
     {
         Box::pin(Service::call(self, request))
+    }
+}
+
+trait DynCloneService<Req>: DynService<Req> {
+    fn clone_box(
+        &self,
+    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>>;
+}
+
+impl<S, Req> DynCloneService<Req> for S
+where
+    S: ?Sized + Service<Req> + Clone + 'static,
+{
+    fn clone_box(
+        &self,
+    ) -> Box<dyn DynCloneService<Req, Response = Self::Response, Error = Self::Error>> {
+        Box::new(self.clone())
     }
 }

@@ -63,7 +63,7 @@ pub trait Service<Request>: Send + Sync {
 
 impl<S, Req> Service<Req> for &mut S
 where
-    S: Service<Req> + ?Sized,
+    S: ?Sized + Service<Req>,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -78,7 +78,7 @@ where
 
 impl<S, Req> Service<Req> for &S
 where
-    S: Service<Req> + ?Sized,
+    S: ?Sized + Service<Req>,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -93,7 +93,7 @@ where
 
 impl<S, Req> Service<Req> for Box<S>
 where
-    S: Service<Req> + ?Sized,
+    S: ?Sized + Service<Req>,
 {
     type Response = S::Response;
     type Error = S::Error;
@@ -108,7 +108,7 @@ where
 
 impl<S, Req> Service<Req> for Arc<S>
 where
-    S: Service<Req> + ?Sized,
+    S: ?Sized + Service<Req>,
 {
     type Response = S::Response;
     type Error = S::Error;
