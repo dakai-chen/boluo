@@ -45,6 +45,14 @@ pub trait IntoResponse {
 
     /// 得到一个 [`Response`] 实例。
     fn into_response(self) -> Result<Response, Self::Error>;
+
+    /// 对于不会失败的 IntoResponse 类型，可使用此方法直接获取 [`Response`] 实例。
+    fn into_response_always(self) -> Response
+    where
+        Self: Sized + IntoResponse<Error = Infallible>,
+    {
+        self.into_response().unwrap_or_else(|e| match e {})
+    }
 }
 
 /// 用于向响应添加头部组件的特征。

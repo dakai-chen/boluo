@@ -1,5 +1,9 @@
 # unreleased
 
+## 新增
+
+- 完善 `IntoResponse` 接口，添加 `into_response_always` 辅助方法。
+
 # 0.6.0
 
 ## 破坏
