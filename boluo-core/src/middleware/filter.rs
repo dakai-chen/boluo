@@ -105,25 +105,25 @@ where
     type Err;
 
     fn call(
-        &self,
+        &'a self,
         state: &'a T,
         request: R,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, T, S, F, Fut, Req, Res, Err> FilterWithState<'a, T, S, Req> for F
+impl<'a, T, S, F, Req, Res, Err> FilterWithState<'a, T, S, Req> for F
 where
     T: ?Sized + 'a,
     S: ?Sized + 'a,
-    F: Fn(&'a T, Req, &'a S) -> Fut,
-    Fut: Future<Output = Result<Res, Err>> + Send + 'a,
+    F: ?Sized + AsyncFn(&'a T, Req, &'a S) -> Result<Res, Err> + 'a,
+    F::CallRefFuture<'a>: Send + 'a,
 {
     type Res = Res;
     type Err = Err;
 
     fn call(
-        &self,
+        &'a self,
         state: &'a T,
         request: Req,
         service: &'a S,
@@ -223,23 +223,23 @@ where
     type Err;
 
     fn call(
-        &self,
+        &'a self,
         request: R,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, S, F, Fut, Req, Res, Err> Filter<'a, S, Req> for F
+impl<'a, S, F, Req, Res, Err> Filter<'a, S, Req> for F
 where
     S: ?Sized + 'a,
-    F: Fn(Req, &'a S) -> Fut,
-    Fut: Future<Output = Result<Res, Err>> + Send + 'a,
+    F: ?Sized + AsyncFn(Req, &'a S) -> Result<Res, Err> + 'a,
+    F::CallRefFuture<'a>: Send + 'a,
 {
     type Res = Res;
     type Err = Err;
 
     fn call(
-        &self,
+        &'a self,
         request: Req,
         service: &'a S,
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send {

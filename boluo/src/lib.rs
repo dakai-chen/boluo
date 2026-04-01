@@ -256,6 +256,7 @@
 //! [`Middleware`]: crate::middleware::Middleware
 //! [`ServiceExt::with`]: crate::service::ServiceExt::with
 
+#![feature(async_fn_traits)]
 #![forbid(unsafe_code)]
 #![warn(
     missing_debug_implementations,

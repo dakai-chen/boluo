@@ -9,6 +9,7 @@
 - 调整 features 配置，使 SSE 不强制依赖 tokio。
 - 将 tokio-tungstenite 依赖的版本提升到 0.29，并重构 ws 模块，不再对外暴露 tokio-tungstenite 的类型。
 - 重构静态文件服务模块。
+- 使用 AsyncFn* 重构异步闭包约束，使闭包可以返回借用其捕获值的 Future。
 
 ## 新增
 

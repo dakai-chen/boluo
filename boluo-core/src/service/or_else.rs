@@ -16,11 +16,11 @@ impl<S, F> OrElse<S, F> {
     }
 }
 
-impl<S, F, Fut, Req, Err> Service<Req> for OrElse<S, F>
+impl<S, F, Req, Err> Service<Req> for OrElse<S, F>
 where
     S: Service<Req>,
-    F: Fn(S::Error) -> Fut + Send + Sync,
-    Fut: Future<Output = Result<S::Response, Err>> + Send,
+    F: AsyncFn(S::Error) -> Result<S::Response, Err> + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
 {
     type Response = S::Response;
     type Error = Err;

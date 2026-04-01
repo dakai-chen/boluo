@@ -149,10 +149,10 @@ impl WebSocketUpgrade {
     ///     }
     /// }
     /// ```
-    pub fn on_upgrade<F, Fut>(self, callback: F) -> Result<impl IntoResponse, BoxError>
+    pub fn on_upgrade<F>(self, callback: F) -> Result<impl IntoResponse, BoxError>
     where
-        F: FnOnce(WebSocket) -> Fut + Send + 'static,
-        Fut: Future<Output = ()> + Send + 'static,
+        F: AsyncFnOnce(WebSocket) -> () + Send + 'static,
+        F::CallOnceFuture: Send + 'static,
     {
         let WebSocketUpgrade {
             config,

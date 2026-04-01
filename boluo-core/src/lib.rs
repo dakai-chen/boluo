@@ -1,5 +1,6 @@
 //! 包含 `boluo` 的核心类型和特征，是框架的基础。
 
+#![feature(async_fn_traits)]
 #![warn(
     missing_debug_implementations,
     missing_docs,

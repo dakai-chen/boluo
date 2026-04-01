@@ -26,10 +26,10 @@ pub struct ServiceFn<F> {
     f: F,
 }
 
-impl<F, Fut, Req, Res, Err> Service<Req> for ServiceFn<F>
+impl<F, Req, Res, Err> Service<Req> for ServiceFn<F>
 where
-    F: Fn(Req) -> Fut + Send + Sync,
-    Fut: Future<Output = Result<Res, Err>> + Send,
+    F: AsyncFn(Req) -> Result<Res, Err> + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
 {
     type Response = Res;
     type Error = Err;

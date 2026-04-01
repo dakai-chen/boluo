@@ -56,11 +56,11 @@ impl<F, T> std::fmt::Debug for HandlerFn<F, T> {
     }
 }
 
-impl<F, Fut> Service<Request> for HandlerFn<F, ()>
+impl<F, Output> Service<Request> for HandlerFn<F, ()>
 where
-    F: Fn() -> Fut + Send + Sync,
-    Fut: Future + Send,
-    Fut::Output: IntoResponse,
+    F: AsyncFn() -> Output + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
+    Output: IntoResponse,
 {
     type Response = Response;
     type Error = BoxError;
@@ -70,11 +70,11 @@ where
     }
 }
 
-impl<F, Fut> Service<Request> for HandlerFn<F, Request>
+impl<F, Output> Service<Request> for HandlerFn<F, Request>
 where
-    F: Fn(Request) -> Fut + Send + Sync,
-    Fut: Future + Send,
-    Fut::Output: IntoResponse,
+    F: AsyncFn(Request) -> Output + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
+    Output: IntoResponse,
 {
     type Response = Response;
     type Error = BoxError;
@@ -87,11 +87,11 @@ where
 macro_rules! handler_tuples {
     ($($ty:ident),*) => {
         #[allow(non_snake_case)]
-        impl<F, Fut, $($ty,)*> Service<Request> for HandlerFn<F, ($($ty,)*)>
+        impl<F, Output, $($ty,)*> Service<Request> for HandlerFn<F, ($($ty,)*)>
         where
-            F: Fn($($ty,)*) -> Fut + Send + Sync,
-            Fut: Future + Send,
-            Fut::Output: IntoResponse,
+            F: AsyncFn($($ty,)*) -> Output + Send + Sync,
+            for<'a> F::CallRefFuture<'a>: Send,
+            Output: IntoResponse,
             $($ty: FromRequest + Send,)*
             $(<$ty as FromRequest>::Error: Into<BoxError>,)*
         {
@@ -107,11 +107,11 @@ macro_rules! handler_tuples {
         }
 
         #[allow(non_snake_case)]
-        impl<F, Fut, $($ty,)*> Service<Request> for HandlerFn<F, ($($ty,)* Request)>
+        impl<F, Output, $($ty,)*> Service<Request> for HandlerFn<F, ($($ty,)* Request)>
         where
-            F: Fn($($ty,)* Request) -> Fut + Send + Sync,
-            Fut: Future + Send,
-            Fut::Output: IntoResponse,
+            F: AsyncFn($($ty,)* Request) -> Output + Send + Sync,
+            for<'a> F::CallRefFuture<'a>: Send,
+            Output: IntoResponse,
             $($ty: FromRequest + Send,)*
             $(<$ty as FromRequest>::Error: Into<BoxError>,)*
         {

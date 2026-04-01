@@ -16,11 +16,11 @@ impl<S, F> Then<S, F> {
     }
 }
 
-impl<S, F, Fut, Req, Res, Err> Service<Req> for Then<S, F>
+impl<S, F, Req, Res, Err> Service<Req> for Then<S, F>
 where
     S: Service<Req>,
-    F: Fn(Result<S::Response, S::Error>) -> Fut + Send + Sync,
-    Fut: Future<Output = Result<Res, Err>> + Send,
+    F: AsyncFn(Result<S::Response, S::Error>) -> Result<Res, Err> + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
 {
     type Response = Res;
     type Error = Err;

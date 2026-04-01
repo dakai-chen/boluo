@@ -15,7 +15,7 @@ async fn main() {
 
 #[boluo::route("/", method = "GET")]
 async fn echo(upgrade: WebSocketUpgrade) -> impl IntoResponse {
-    upgrade.on_upgrade(|mut socket| async move {
+    upgrade.on_upgrade(async |mut socket| {
         while let Some(Ok(message)) = socket.recv().await {
             if let Err(e) = socket.send(message).await {
                 eprintln!("{e}");

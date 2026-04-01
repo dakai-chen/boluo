@@ -71,11 +71,11 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     result
     /// });
     /// ```
-    fn then<F, Fut, Res, Err>(self, f: F) -> Then<Self, F>
+    fn then<F, Res, Err>(self, f: F) -> Then<Self, F>
     where
         Self: Sized,
-        F: Fn(Result<Self::Response, Self::Error>) -> Fut + Send + Sync,
-        Fut: Future<Output = Result<Res, Err>> + Send,
+        F: AsyncFn(Result<Self::Response, Self::Error>) -> Result<Res, Err> + Send + Sync,
+        for<'a> F::CallRefFuture<'a>: Send,
     {
         assert_service(Then::new(self, f))
     }
@@ -85,26 +85,27 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// # 例子
     ///
     /// ```
+    /// use boluo_core::BoxError;
     /// use boluo_core::body::Body;
     /// use boluo_core::handler::handler_fn;
+    /// use boluo_core::response::Response;
     /// use boluo_core::service::ServiceExt;
-    /// use boluo_core::BoxError;
     ///
     /// async fn hello() -> &'static str {
     ///     "Hello, World!"
     /// }
     ///
     /// let service = handler_fn(hello);
-    /// let service = service.and_then(|response| async move {
+    /// let service = service.and_then(|response: Response| async move {
     ///     // 清空响应主体。
     ///     Ok::<_, BoxError>(response.map(|_| Body::empty()))
     /// });
     /// ```
-    fn and_then<F, Fut, Res>(self, f: F) -> AndThen<Self, F>
+    fn and_then<F, Res>(self, f: F) -> AndThen<Self, F>
     where
         Self: Sized,
-        F: Fn(Self::Response) -> Fut + Send + Sync,
-        Fut: Future<Output = Result<Res, Self::Error>> + Send,
+        F: AsyncFn(Self::Response) -> Result<Res, Self::Error> + Send + Sync,
+        for<'a> F::CallRefFuture<'a>: Send,
     {
         assert_service(AndThen::new(self, f))
     }
@@ -114,6 +115,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// # 例子
     ///
     /// ```
+    /// use boluo_core::BoxError;
     /// use boluo_core::handler::handler_fn;
     /// use boluo_core::http::StatusCode;
     /// use boluo_core::response::IntoResponse;
@@ -135,7 +137,7 @@ pub trait ServiceExt<Req>: Service<Req> {
     /// }
     ///
     /// let service = handler_fn(throw_error);
-    /// let service = service.or_else(|err| async move {
+    /// let service = service.or_else(|err: BoxError| async move {
     ///     // 捕获错误并转换为响应。
     ///     if let Some(e) = err.downcast_ref::<MyError>() {
     ///         let status = StatusCode::INTERNAL_SERVER_ERROR;
@@ -144,11 +146,11 @@ pub trait ServiceExt<Req>: Service<Req> {
     ///     Err(err)
     /// });
     /// ```
-    fn or_else<F, Fut, Err>(self, f: F) -> OrElse<Self, F>
+    fn or_else<F, Err>(self, f: F) -> OrElse<Self, F>
     where
         Self: Sized,
-        F: Fn(Self::Error) -> Fut + Send + Sync,
-        Fut: Future<Output = Result<Self::Response, Err>> + Send,
+        F: AsyncFn(Self::Error) -> Result<Self::Response, Err> + Send + Sync,
+        for<'a> F::CallRefFuture<'a>: Send,
     {
         assert_service(OrElse::new(self, f))
     }

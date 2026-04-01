@@ -16,11 +16,11 @@ impl<S, F> AndThen<S, F> {
     }
 }
 
-impl<S, F, Fut, Req, Res> Service<Req> for AndThen<S, F>
+impl<S, F, Req, Res> Service<Req> for AndThen<S, F>
 where
     S: Service<Req>,
-    F: Fn(S::Response) -> Fut + Send + Sync,
-    Fut: Future<Output = Result<Res, S::Error>> + Send,
+    F: AsyncFn(S::Response) -> Result<Res, S::Error> + Send + Sync,
+    for<'a> F::CallRefFuture<'a>: Send,
 {
     type Response = Res;
     type Error = S::Error;
