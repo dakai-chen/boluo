@@ -1,7 +1,7 @@
 use boluo::BoxError;
 use boluo::http::HeaderName;
 use boluo::http::header::AUTHORIZATION;
-use boluo::middleware::around_with_state_fn;
+use boluo::middleware::filter_fn_with_state;
 use boluo::request::Request;
 use boluo::response::{IntoResponse, Response};
 use boluo::route::Router;
@@ -16,7 +16,7 @@ async fn main() {
     let app = Router::new()
         .mount(hello)
         // 将中间件挂载到服务上
-        .with(around_with_state_fn(AUTHORIZATION, required_request_header));
+        .with(filter_fn_with_state(AUTHORIZATION, required_request_header));
 
     Server::new(listener).run(app).await.unwrap();
 }

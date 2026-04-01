@@ -7,7 +7,7 @@ use crate::service::Service;
 ///
 /// ```
 /// use boluo_core::handler::handler_fn;
-/// use boluo_core::middleware::around_with_state_fn;
+/// use boluo_core::middleware::filter_fn_with_state;
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
@@ -21,24 +21,24 @@ use crate::service::Service;
 /// }
 ///
 /// let service = handler_fn(|| async {});
-/// let service = service.with(around_with_state_fn("HTTP", log));
+/// let service = service.with(filter_fn_with_state("HTTP", log));
 /// ```
-pub fn around_with_state_fn<T, F>(state: T, f: F) -> AroundWithStateFn<T, F> {
-    AroundWithStateFn { state, f }
+pub fn filter_fn_with_state<T, F>(state: T, f: F) -> FilterFnWithState<T, F> {
+    FilterFnWithState { state, f }
 }
 
-/// 详情查看 [`around_with_state_fn`]。
+/// 详情查看 [`filter_fn_with_state`]。
 #[derive(Clone, Copy)]
-pub struct AroundWithStateFn<T, F> {
+pub struct FilterFnWithState<T, F> {
     state: T,
     f: F,
 }
 
-impl<T, F, S> Middleware<S> for AroundWithStateFn<T, F> {
-    type Service = AroundWithStateFnService<T, F, S>;
+impl<T, F, S> Middleware<S> for FilterFnWithState<T, F> {
+    type Service = FilterFnWithStateService<T, F, S>;
 
     fn transform(self, service: S) -> Self::Service {
-        AroundWithStateFnService {
+        FilterFnWithStateService {
             state: self.state,
             f: self.f,
             service,
@@ -46,29 +46,29 @@ impl<T, F, S> Middleware<S> for AroundWithStateFn<T, F> {
     }
 }
 
-impl<T, F> std::fmt::Debug for AroundWithStateFn<T, F>
+impl<T, F> std::fmt::Debug for FilterFnWithState<T, F>
 where
     T: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AroundWithStateFn")
+        f.debug_struct("FilterFnWithState")
             .field("state", &self.state)
             .field("f", &std::any::type_name::<F>())
             .finish()
     }
 }
 
-/// 中间件 [`AroundWithStateFn`] 返回的服务。
+/// 中间件 [`FilterFnWithState`] 返回的服务。
 #[derive(Clone, Copy)]
-pub struct AroundWithStateFnService<T, F, S> {
+pub struct FilterFnWithStateService<T, F, S> {
     state: T,
     f: F,
     service: S,
 }
 
-impl<T, F, S, Req, Res, Err> Service<Req> for AroundWithStateFnService<T, F, S>
+impl<T, F, S, Req, Res, Err> Service<Req> for FilterFnWithStateService<T, F, S>
 where
-    for<'a> F: AroundWithState<'a, T, S, Req, Res = Res, Err = Err>,
+    for<'a> F: FilterWithState<'a, T, S, Req, Res = Res, Err = Err>,
     Self: Send + Sync,
 {
     type Response = Res;
@@ -82,13 +82,13 @@ where
     }
 }
 
-impl<T, F, S> std::fmt::Debug for AroundWithStateFnService<T, F, S>
+impl<T, F, S> std::fmt::Debug for FilterFnWithStateService<T, F, S>
 where
     T: std::fmt::Debug,
     S: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AroundWithStateFnService")
+        f.debug_struct("FilterFnWithStateService")
             .field("state", &self.state)
             .field("f", &std::any::type_name::<F>())
             .field("service", &self.service)
@@ -96,7 +96,7 @@ where
     }
 }
 
-trait AroundWithState<'a, T, S, R>
+trait FilterWithState<'a, T, S, R>
 where
     T: ?Sized,
     S: ?Sized,
@@ -112,7 +112,7 @@ where
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, T, S, F, Fut, Req, Res, Err> AroundWithState<'a, T, S, Req> for F
+impl<'a, T, S, F, Fut, Req, Res, Err> FilterWithState<'a, T, S, Req> for F
 where
     T: ?Sized + 'a,
     S: ?Sized + 'a,
@@ -138,7 +138,7 @@ where
 ///
 /// ```
 /// use boluo_core::handler::handler_fn;
-/// use boluo_core::middleware::around_fn;
+/// use boluo_core::middleware::filter_fn;
 /// use boluo_core::request::Request;
 /// use boluo_core::service::{Service, ServiceExt};
 ///
@@ -152,44 +152,44 @@ where
 /// }
 ///
 /// let service = handler_fn(|| async {});
-/// let service = service.with(around_fn(log));
+/// let service = service.with(filter_fn(log));
 /// ```
-pub fn around_fn<F>(f: F) -> AroundFn<F> {
-    AroundFn { f }
+pub fn filter_fn<F>(f: F) -> FilterFn<F> {
+    FilterFn { f }
 }
 
-/// 详情查看 [`around_fn`]。
+/// 详情查看 [`filter_fn`]。
 #[derive(Clone, Copy)]
-pub struct AroundFn<F> {
+pub struct FilterFn<F> {
     f: F,
 }
 
-impl<F, S> Middleware<S> for AroundFn<F> {
-    type Service = AroundFnService<F, S>;
+impl<F, S> Middleware<S> for FilterFn<F> {
+    type Service = FilterFnService<F, S>;
 
     fn transform(self, service: S) -> Self::Service {
-        AroundFnService { f: self.f, service }
+        FilterFnService { f: self.f, service }
     }
 }
 
-impl<F> std::fmt::Debug for AroundFn<F> {
+impl<F> std::fmt::Debug for FilterFn<F> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AroundFn")
+        f.debug_struct("FilterFn")
             .field("f", &std::any::type_name::<F>())
             .finish()
     }
 }
 
-/// 中间件 [`AroundFn`] 返回的服务。
+/// 中间件 [`FilterFn`] 返回的服务。
 #[derive(Clone, Copy)]
-pub struct AroundFnService<F, S> {
+pub struct FilterFnService<F, S> {
     f: F,
     service: S,
 }
 
-impl<F, S, Req, Res, Err> Service<Req> for AroundFnService<F, S>
+impl<F, S, Req, Res, Err> Service<Req> for FilterFnService<F, S>
 where
-    for<'a> F: Around<'a, S, Req, Res = Res, Err = Err>,
+    for<'a> F: Filter<'a, S, Req, Res = Res, Err = Err>,
     Self: Send + Sync,
 {
     type Response = Res;
@@ -203,19 +203,19 @@ where
     }
 }
 
-impl<F, S> std::fmt::Debug for AroundFnService<F, S>
+impl<F, S> std::fmt::Debug for FilterFnService<F, S>
 where
     S: std::fmt::Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AroundFnService")
+        f.debug_struct("FilterFnService")
             .field("f", &std::any::type_name::<F>())
             .field("service", &self.service)
             .finish()
     }
 }
 
-trait Around<'a, S, R>
+trait Filter<'a, S, R>
 where
     S: ?Sized,
 {
@@ -229,7 +229,7 @@ where
     ) -> impl Future<Output = Result<Self::Res, Self::Err>> + Send;
 }
 
-impl<'a, S, F, Fut, Req, Res, Err> Around<'a, S, Req> for F
+impl<'a, S, F, Fut, Req, Res, Err> Filter<'a, S, Req> for F
 where
     S: ?Sized + 'a,
     F: Fn(Req, &'a S) -> Fut,

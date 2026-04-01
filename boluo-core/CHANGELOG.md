@@ -1,5 +1,9 @@
 # unreleased
 
+## 破坏
+
+- 将 `around_with_state_fn` 和 `around_fn` 分别重命名为 `filter_fn_with_state` 和 `filter_fn`，并重构相关代码。
+
 ## 新增
 
 - 完善 `IntoResponse` 接口，添加 `into_response_always` 辅助方法。

@@ -1,5 +1,5 @@
 use boluo::BoxError;
-use boluo::middleware::around_fn;
+use boluo::middleware::filter_fn;
 use boluo::request::Request;
 use boluo::response::{IntoResponse, Response};
 use boluo::route::Router;
@@ -11,7 +11,7 @@ use tokio::net::TcpListener;
 async fn main() {
     let listener = TcpListener::bind("127.0.0.1:3000").await.unwrap();
 
-    let app = Router::new().mount(hello).with(around_fn(log));
+    let app = Router::new().mount(hello).with(filter_fn(log));
 
     Server::new(listener).run(app).await.unwrap();
 }
