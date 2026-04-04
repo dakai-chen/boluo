@@ -229,13 +229,13 @@ impl<S> IntoMethodRoute for MethodRoute<S> {
     }
 }
 
-pub(super) trait WithMiddleware<M> {
+pub(super) trait ApplyMiddleware<M> {
     type Output;
 
     fn with(self, middleware: M) -> Self::Output;
 }
 
-impl<M> WithMiddleware<M> for MethodRouter
+impl<M> ApplyMiddleware<M> for MethodRouter
 where
     M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
     M::Service: Service<Request> + 'static,

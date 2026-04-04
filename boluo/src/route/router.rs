@@ -10,13 +10,13 @@ use boluo_core::response::{IntoResponse, Response};
 use boluo_core::service::{ArcService, Service};
 use matchit::{Match, MatchError};
 
-use super::method::{MergeToMethodRouter, MethodRouter, WithMiddleware};
+use super::method::{ApplyMiddleware, MergeToMethodRouter, MethodRouter};
 use super::{IntoMethodRoute, MethodRoute, RouteError, RouterError};
 
 pub(super) const PRIVATE_TAIL_PARAM: &str = "__private__boluo_tail_param";
 pub(super) const PRIVATE_TAIL_PARAM_CAPTURE: &str = "{*__private__boluo_tail_param}";
 
-fn normalize_tail_param_capture(path: &str) -> String {
+fn normalize_private_tail_param(path: &str) -> String {
     if let Some(path) = path.strip_suffix("{*}") {
         format!("{path}{PRIVATE_TAIL_PARAM_CAPTURE}")
     } else {
@@ -49,10 +49,7 @@ struct RouterInner {
 }
 
 impl RouterInner {
-    fn match_route<'m, 'p>(
-        &'m self,
-        path: &'p str,
-    ) -> Result<Match<'m, 'p, &'m RouteId>, MatchError> {
+    fn route_at<'m, 'p>(&'m self, path: &'p str) -> Result<Match<'m, 'p, &'m RouteId>, MatchError> {
         self.inner.at(path)
     }
 
@@ -68,29 +65,23 @@ impl RouterInner {
         if let Some(id) = self.get_id(path) {
             Ok(id)
         } else {
-            self.__insert(path)
+            self.insert_path(path)
         }
     }
 
     fn remove(&mut self, path: &str) -> Option<RouteId> {
         self.path_to_id.remove(path).inspect(|id| {
+            let normalize_path = normalize_private_tail_param(path);
             self.id_to_path.remove(id);
-            self.inner.remove(normalize_tail_param_capture(path));
+            self.inner.remove(normalize_path);
         })
     }
 
-    #[inline]
-    fn generate_next_id(&mut self) -> Option<RouteId> {
-        self.id.next().inspect(|&id| {
-            self.id = id;
-        })
-    }
+    fn insert_path(&mut self, path: &str) -> Result<RouteId, RouterError> {
+        let id = self.next_id().ok_or(RouterError::TooManyPath)?;
+        let normalize_path = normalize_private_tail_param(path);
 
-    /// 仅供 `RouterInner` 内部使用，不检查路径是否存在。
-    fn __insert(&mut self, path: &str) -> Result<RouteId, RouterError> {
-        let id = self.generate_next_id().ok_or(RouterError::TooManyPath)?;
-
-        if let Err(e) = self.inner.insert(normalize_tail_param_capture(path), id) {
+        if let Err(e) = self.inner.insert(normalize_path, id) {
             return Err(RouterError::from_matchit_insert_error(path.to_owned(), e));
         }
 
@@ -99,6 +90,13 @@ impl RouterInner {
         self.path_to_id.insert(shared_path, id);
 
         Ok(id)
+    }
+
+    #[inline]
+    fn next_id(&mut self) -> Option<RouteId> {
+        self.id.next().inspect(|&id| {
+            self.id = id;
+        })
     }
 }
 
@@ -411,7 +409,7 @@ impl Router {
         let other = other.into();
         for (id, endpoint) in other.table {
             self = self.add_endpoint_with(
-                other.inner.get_path(id).unwrap(),
+                Router::get_path_unchecked(&other.inner, id),
                 endpoint,
                 middleware.clone(),
             )?;
@@ -479,11 +477,9 @@ impl Router {
 
         let other = other.into();
         for (id, endpoint) in other.table {
-            self = self.add_endpoint_with(
-                &combine_path_segments(path, other.inner.get_path(id).unwrap()),
-                endpoint,
-                middleware.clone(),
-            )?;
+            let opath = Router::get_path_unchecked(&other.inner, id);
+            let cpath = combine_path_segments(path, opath);
+            self = self.add_endpoint_with(&cpath, endpoint, middleware.clone())?;
         }
         Ok(self)
     }
@@ -547,7 +543,7 @@ impl Router {
     /// ```
     pub fn iter(&self) -> impl Iterator<Item = RouteEntry<'_>> {
         self.table.iter().flat_map(|(&id, endpoint)| {
-            let path = self.inner.get_path(id).unwrap();
+            let path = Router::get_path_unchecked(&self.inner, id);
             endpoint.as_ref().iter().map(move |(method, service)| {
                 let endpoint = match endpoint {
                     Endpoint::Route(_) => Endpoint::Route(service),
@@ -565,7 +561,7 @@ impl Router {
         middleware: M,
     ) -> Result<Self, RouterError>
     where
-        T: WithMiddleware<M>,
+        T: ApplyMiddleware<M>,
         T::Output: MergeToMethodRouter,
     {
         self.add_endpoint(path, endpoint.map(|s| s.with(middleware)))
@@ -636,6 +632,13 @@ impl Router {
         Some(router)
     }
 
+    /// 获取有效路由 ID 对应的路径。
+    fn get_path_unchecked(inner: &RouterInner, id: RouteId) -> &str {
+        inner
+            .get_path(id)
+            .expect("path must exist for valid id (bug in boluo)")
+    }
+
     fn validate_path(path: &str) -> Result<(), RouterError> {
         if !path.starts_with('/') {
             return Err(RouterError::InvalidPath {
@@ -658,7 +661,7 @@ impl Service<Request> for Router {
     type Error = BoxError;
 
     async fn call(&self, mut request: Request) -> Result<Self::Response, Self::Error> {
-        let Ok(Match { value: id, params }) = self.inner.match_route(request.uri().path()) else {
+        let Ok(Match { value: id, params }) = self.inner.route_at(request.uri().path()) else {
             return Err(RouteError::not_found(request).into());
         };
         let Some(endpoint) = self.table.get(id) else {
