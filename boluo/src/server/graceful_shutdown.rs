@@ -2,33 +2,28 @@ use std::pin::Pin;
 use std::time::Duration;
 
 use tokio::sync::watch::{self, Receiver, Sender};
-use tokio_util::sync::CancellationToken;
 
 /// 优雅关机，用于等待服务器完成剩余请求。
 #[derive(Debug)]
 pub struct GracefulShutdown {
     tx: Sender<()>,
     rx: Receiver<()>,
-    shutdown_signal: CancellationToken,
 }
 
 #[derive(Debug, Clone)]
 pub(super) struct Monitor {
     rx: Receiver<()>,
-    shutdown_signal: CancellationToken,
 }
 
 impl Monitor {
     /// 监视任务并在接收到关机信号时执行关机操作。
-    pub(super) async fn watch<T>(self, task: T, shutdown: impl FnOnce(Pin<&mut T>)) -> T::Output
+    pub(super) async fn watch<T>(mut self, task: T, shutdown: impl FnOnce(Pin<&mut T>)) -> T::Output
     where
         T: Future,
     {
-        let _rx = self.rx;
         let mut task = std::pin::pin!(task);
-
         tokio::select! {
-            _ = self.shutdown_signal.cancelled() => {
+            _ = self.rx.changed() => {
                 shutdown(task.as_mut());
                 task.await
             }
@@ -41,18 +36,13 @@ impl GracefulShutdown {
     /// 创建新的 `GracefulShutdown` 实例。
     pub(super) fn new() -> Self {
         let (tx, rx) = watch::channel(());
-        Self {
-            tx,
-            rx,
-            shutdown_signal: CancellationToken::new(),
-        }
+        Self { tx, rx }
     }
 
     /// 创建一个 `Monitor` 实例，用于监视任务。
     pub(super) fn monitor(&self) -> Monitor {
         Monitor {
             rx: self.rx.clone(),
-            shutdown_signal: self.shutdown_signal.clone(),
         }
     }
 
@@ -64,14 +54,10 @@ impl GracefulShutdown {
     /// 该函数返回 `true` 表示服务器完成了所有剩余请求，
     /// 返回 `false` 表示在超时时间内服务器未能完成所有剩余请求。
     pub async fn shutdown(self, timeout: Option<Duration>) -> bool {
-        let GracefulShutdown {
-            tx,
-            rx,
-            shutdown_signal,
-        } = self;
+        let GracefulShutdown { tx, rx } = self;
 
         drop(rx);
-        shutdown_signal.cancel();
+        tx.send_modify(|_| {});
 
         tokio::select! {
             _ = tx.closed() => true,
