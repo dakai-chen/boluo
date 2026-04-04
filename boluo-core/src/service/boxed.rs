@@ -171,7 +171,7 @@ trait DynCloneService<Req>: DynService<Req> {
 
 impl<S, Req> DynCloneService<Req> for S
 where
-    S: ?Sized + Service<Req> + Clone + 'static,
+    S: Service<Req> + Clone + 'static,
 {
     fn clone_box(
         &self,
