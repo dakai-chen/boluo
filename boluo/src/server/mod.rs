@@ -289,14 +289,13 @@ where
                         async move { service.call(request).await }
                     });
 
-                    let builder = self.builder.clone();
                     let monitor = graceful_shutdown.monitor();
 
-                    tokio::spawn(async move {
-                        let conn = builder.serve_connection_with_upgrades(TokioIo::new(conn), service);
-                        let conn = monitor.watch(conn, |conn| conn.graceful_shutdown());
-                        conn.await
-                    });
+                    let conn = TokioIo::new(conn);
+                    let conn = self.builder.serve_connection_with_upgrades(conn, service).into_owned();
+                    let conn = monitor.watch(conn, |conn| conn.graceful_shutdown());
+
+                    tokio::spawn(conn);
                 }
             }
         };
