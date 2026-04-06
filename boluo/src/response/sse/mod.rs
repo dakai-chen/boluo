@@ -4,7 +4,7 @@ mod event;
 mod keep_alive;
 
 pub use event::{Event, EventBuilder, EventValueError};
-pub use keep_alive::KeepAlive;
+pub use keep_alive::{KeepAlive, KeepAliveStream};
 
 use std::convert::Infallible;
 use std::pin::Pin;
@@ -16,28 +16,23 @@ use boluo_core::http::header;
 use boluo_core::response::{IntoResponse, Response};
 use futures_util::Stream;
 
-use self::keep_alive::KeepAliveStream;
-
 /// 服务器发送事件。
 #[derive(Clone)]
 pub struct Sse<S> {
     stream: S,
-    keep_alive: Option<KeepAlive>,
 }
 
 impl<S> Sse<S> {
     /// 创建一个新的 [`Sse`] 实例。
     pub fn new(stream: S) -> Self {
-        Self {
-            stream,
-            keep_alive: None,
-        }
+        Self { stream }
     }
 
     /// 保持连接。
-    pub fn keep_alive(mut self, keep_alive: KeepAlive) -> Self {
-        self.keep_alive = Some(keep_alive);
-        self
+    pub fn keep_alive(self, keep_alive: KeepAlive) -> Sse<KeepAliveStream<S>> {
+        Sse {
+            stream: KeepAliveStream::new(keep_alive, self.stream),
+        }
     }
 }
 
@@ -45,7 +40,6 @@ impl<S> std::fmt::Debug for Sse<S> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Sse")
             .field("stream", &std::any::type_name::<S>())
-            .field("keep_alive", &self.keep_alive)
             .finish()
     }
 }
@@ -60,7 +54,6 @@ where
     fn into_response(self) -> Result<Response, Self::Error> {
         let body = SseBody {
             stream: self.stream,
-            keep_alive: self.keep_alive.map(KeepAliveStream::new),
         };
 
         Response::builder()
@@ -75,8 +68,6 @@ pin_project_lite::pin_project! {
     struct SseBody<S> {
         #[pin]
         stream: S,
-        #[pin]
-        keep_alive: Option<KeepAliveStream>,
     }
 }
 
@@ -93,24 +84,10 @@ where
     ) -> Poll<Option<Result<Frame<Bytes>, Self::Error>>> {
         let this = self.project();
 
-        match this.stream.poll_next(cx) {
-            Poll::Pending => {
-                if let Some(keep_alive) = this.keep_alive.as_pin_mut() {
-                    keep_alive
-                        .poll_event(cx)
-                        .map(|e| Some(Ok(Frame::data(Bytes::from(e.to_string())))))
-                } else {
-                    Poll::Pending
-                }
-            }
-            Poll::Ready(Some(Ok(event))) => {
-                if let Some(keep_alive) = this.keep_alive.as_pin_mut() {
-                    keep_alive.reset();
-                }
-                Poll::Ready(Some(Ok(Frame::data(Bytes::from(event.to_string())))))
-            }
-            Poll::Ready(Some(Err(error))) => Poll::Ready(Some(Err(error))),
-            Poll::Ready(None) => Poll::Ready(None),
+        match std::task::ready!(this.stream.poll_next(cx)) {
+            Some(Ok(event)) => Poll::Ready(Some(Ok(Frame::data(Bytes::from(event.to_string()))))),
+            Some(Err(error)) => Poll::Ready(Some(Err(error))),
+            None => Poll::Ready(None),
         }
     }
 }

@@ -1,4 +1,5 @@
-use std::{borrow::Cow, time::Duration};
+use std::borrow::Cow;
+use std::time::Duration;
 
 /// 服务器发送的事件。
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
@@ -12,25 +13,54 @@ pub struct Event {
 
 impl Event {
     /// 创建新的构建器以构建事件。
-    ///
-    /// # 例子
-    ///
-    /// ```
-    /// use std::time::Duration;
-    ///
-    /// use boluo::response::sse::Event;
-    ///
-    /// let event = Event::builder()
-    ///     .data("hello world")
-    ///     .build()
-    ///     .unwrap();
-    ///
-    /// let event_string = format!("{event}");
-    ///
-    /// assert_eq!(event_string, "data: hello world\n\n");
-    /// ```
     pub fn builder() -> EventBuilder {
         EventBuilder::new()
+    }
+
+    /// 创建一个空事件。
+    pub fn new() -> Event {
+        Event::default()
+    }
+
+    /// 设置事件的注释字段。
+    ///
+    /// # 恐慌
+    ///
+    /// 如果设置的值包含换行符或回车符。
+    pub fn comment(self, value: impl Into<Cow<'static, str>>) -> Self {
+        EventBuilder::from(self).comment(value).build().unwrap()
+    }
+
+    /// 设置事件的重试超时字段。
+    pub fn retry(self, value: Duration) -> Self {
+        EventBuilder::from(self).retry(value).build().unwrap()
+    }
+
+    /// 设置事件的标识符字段。
+    ///
+    /// # 恐慌
+    ///
+    /// 如果设置的值包含换行符或回车符。
+    pub fn id(self, value: impl Into<Cow<'static, str>>) -> Self {
+        EventBuilder::from(self).id(value).build().unwrap()
+    }
+
+    /// 设置事件的名称字段。
+    ///
+    /// # 恐慌
+    ///
+    /// 如果设置的值包含换行符或回车符。
+    pub fn event(self, value: impl Into<Cow<'static, str>>) -> Self {
+        EventBuilder::from(self).event(value).build().unwrap()
+    }
+
+    /// 设置事件的数据字段。
+    ///
+    /// # 恐慌
+    ///
+    /// 如果设置的值包含回车符。
+    pub fn data(self, value: impl Into<Cow<'static, str>>) -> Self {
+        EventBuilder::from(self).data(value).build().unwrap()
     }
 }
 
@@ -49,43 +79,40 @@ impl std::fmt::Display for Event {
             writeln!(f, "event: {event}")?;
         }
         if let Some(data) = &self.data {
-            for line in data.lines() {
-                writeln!(f, "data: {line}")?;
+            if data.is_empty() {
+                writeln!(f, "data: ")?;
+            } else {
+                for line in data.lines() {
+                    writeln!(f, "data: {line}")?;
+                }
             }
         }
         writeln!(f)
     }
 }
 
-/// 事件的构建器。
+/// 事件构建器。
 #[derive(Debug)]
 pub struct EventBuilder {
     inner: Result<Event, EventValueError>,
 }
 
+impl From<Event> for EventBuilder {
+    fn from(event: Event) -> Self {
+        Self { inner: Ok(event) }
+    }
+}
+
+impl Default for EventBuilder {
+    fn default() -> Self {
+        Self::from(Event::default())
+    }
+}
+
 impl EventBuilder {
-    /// 创建构建器的默认实例以构建事件。
-    ///
-    /// # 例子
-    ///
-    /// ```
-    /// use std::time::Duration;
-    ///
-    /// use boluo::response::sse::EventBuilder;
-    ///
-    /// let event = EventBuilder::new()
-    ///     .data("hello world")
-    ///     .build()
-    ///     .unwrap();
-    ///
-    /// let event_string = format!("{event}");
-    ///
-    /// assert_eq!(event_string, "data: hello world\n\n");
-    /// ```
+    /// 创建构建器实例。
     pub fn new() -> Self {
-        Self {
-            inner: Ok(Event::default()),
-        }
+        Self::default()
     }
 
     /// 设置事件的注释字段。
@@ -95,7 +122,7 @@ impl EventBuilder {
     /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn comment(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
-            Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
+            Self::validate_field(value).map(|value| {
                 event.comment = Some(value);
                 event
             })
@@ -119,7 +146,7 @@ impl EventBuilder {
     /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn id(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
-            Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
+            Self::validate_field(value).map(|value| {
                 event.id = Some(value);
                 event
             })
@@ -133,7 +160,7 @@ impl EventBuilder {
     /// 如果设置的值包含换行符或回车符，则调用 [`EventBuilder::build`] 将返回错误。
     pub fn event(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
-            Self::not_contains_newlines_or_carriage_returns(value).map(|value| {
+            Self::validate_field(value).map(|value| {
                 event.event = Some(value);
                 event
             })
@@ -148,7 +175,7 @@ impl EventBuilder {
     pub fn data(self, value: impl Into<Cow<'static, str>>) -> Self {
         self.and_then(|mut event| {
             let value: Cow<'static, str> = value.into();
-            Self::not_contains_carriage_returns(value).map(|value| {
+            Self::validate_data(value).map(|value| {
                 event.data = Some(value);
                 event
             })
@@ -173,7 +200,7 @@ impl EventBuilder {
         }
     }
 
-    fn not_contains_newlines_or_carriage_returns(
+    fn validate_field(
         value: impl Into<Cow<'static, str>>,
     ) -> Result<Cow<'static, str>, EventValueError> {
         let value = value.into();
@@ -184,7 +211,7 @@ impl EventBuilder {
         }
     }
 
-    fn not_contains_carriage_returns(
+    fn validate_data(
         value: impl Into<Cow<'static, str>>,
     ) -> Result<Cow<'static, str>, EventValueError> {
         let value = value.into();
@@ -196,13 +223,7 @@ impl EventBuilder {
     }
 }
 
-impl Default for EventBuilder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// SSE 事件值不能包含换行或回车。
+/// SSE 字段值非法（包含换行符或回车符）。
 pub struct EventValueError {
     _priv: (),
 }
@@ -217,7 +238,7 @@ impl std::fmt::Display for EventValueError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "SSE event value cannot contain newlines or carriage returns"
+            "SSE field value cannot contain newlines or carriage returns"
         )
     }
 }
@@ -231,48 +252,72 @@ mod tests {
     use super::Event;
 
     #[test]
+    fn empty() {
+        let event = Event::new();
+        assert_eq!(format!("{event}"), "\n");
+    }
+
+    #[test]
     fn comment() {
-        let event = Event::builder().comment("xx").build().unwrap();
+        let event = Event::new().comment("");
+        assert_eq!(format!("{event}"), ": \n\n");
+
+        let event = Event::new().comment("xx");
         assert_eq!(format!("{event}"), ": xx\n\n");
     }
 
     #[test]
     fn retry() {
-        let event = Event::builder()
-            .retry(Duration::from_secs(1))
-            .build()
-            .unwrap();
+        let event = Event::new().retry(Duration::from_secs(1));
         assert_eq!(format!("{event}"), "retry: 1000\n\n");
     }
 
     #[test]
     fn id() {
-        let event = Event::builder().id("1").build().unwrap();
+        let event = Event::new().id("");
+        assert_eq!(format!("{event}"), "id: \n\n");
+
+        let event = Event::new().id("1");
         assert_eq!(format!("{event}"), "id: 1\n\n");
     }
 
     #[test]
     fn event() {
-        let event = Event::builder().event("message").build().unwrap();
+        let event = Event::new().event("");
+        assert_eq!(format!("{event}"), "event: \n\n");
+
+        let event = Event::new().event("message");
         assert_eq!(format!("{event}"), "event: message\n\n");
     }
 
     #[test]
     fn data() {
-        let event = Event::builder().data("hello\nworld\n").build().unwrap();
+        let event = Event::new().data("");
+        assert_eq!(format!("{event}"), "data: \n\n");
+
+        let event = Event::new().data("hello\nworld\n");
         assert_eq!(format!("{event}"), "data: hello\ndata: world\n\n");
     }
 
     #[test]
     fn all() {
-        let event = Event::builder()
+        let event = Event::new()
+            .comment("")
+            .retry(Duration::from_secs(1))
+            .id("")
+            .event("")
+            .data("");
+        assert_eq!(
+            format!("{event}"),
+            ": \nretry: 1000\nid: \nevent: \ndata: \n\n"
+        );
+
+        let event = Event::new()
             .comment("xx")
             .retry(Duration::from_secs(1))
             .id("1")
             .event("message")
-            .data("hello\nworld\n")
-            .build()
-            .unwrap();
+            .data("hello\nworld\n");
         assert_eq!(
             format!("{event}"),
             ": xx\nretry: 1000\nid: 1\nevent: message\ndata: hello\ndata: world\n\n"
