@@ -50,7 +50,10 @@ impl GracefulShutdown {
     ///
     /// - 返回 Ok：表示服务器完成了所有剩余请求。
     /// - 返回 Err：表示在指定时间内服务器未能完成所有剩余请求。
-    pub async fn shutdown(self, timeout: Option<Duration>) -> Result<(), GracefulShutdownTimeout> {
+    pub async fn shutdown(
+        self,
+        timeout: impl Into<Option<Duration>>,
+    ) -> Result<(), GracefulShutdownTimeout> {
         let GracefulShutdown { tx, rx } = self;
 
         drop(rx);
@@ -63,8 +66,8 @@ impl GracefulShutdown {
     }
 }
 
-async fn sleep(timeout: Option<Duration>) {
-    if let Some(timeout) = timeout {
+async fn sleep(timeout: impl Into<Option<Duration>>) {
+    if let Some(timeout) = timeout.into() {
         tokio::time::sleep(timeout).await
     } else {
         std::future::pending().await
