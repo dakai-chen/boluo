@@ -3,7 +3,7 @@
 mod compat;
 mod graceful_shutdown;
 
-pub use graceful_shutdown::GracefulShutdown;
+pub use graceful_shutdown::{GracefulShutdown, GracefulShutdownTimeout};
 
 use std::time::Duration;
 
@@ -252,29 +252,33 @@ where
     {
         self.run_with_graceful_shutdown(service, std::future::pending())
             .await
+            .map(|_| ())
     }
 
-    /// 运行服务器，并设置关机信号用于启动优雅关机。
-    pub async fn run_with_graceful_shutdown<S, G>(
+    /// 运行服务器，直到收到关机信号。
+    ///
+    /// 收到信号后停止接收新连接，并返回 [`GracefulShutdown`] 用于等待所有连接关闭。
+    pub async fn run_with_graceful_shutdown<S, F>(
         &mut self,
         service: S,
-        signal: G,
-    ) -> Result<(), RunError<L::Error>>
+        signal: F,
+    ) -> Result<GracefulShutdown, RunError<L::Error>>
     where
         S: Service<Request> + 'static,
         S::Response: IntoResponse,
         S::Error: Into<BoxError>,
-        G: Future<Output = Option<Duration>> + Send + 'static,
+        F: Future<Output = ()>,
     {
         let mut signal = std::pin::pin!(signal);
 
         let service = compat::service_to_hyper(service);
         let graceful_shutdown = GracefulShutdown::new();
 
-        let timeout = loop {
+        loop {
             tokio::select! {
-                timeout = signal.as_mut() => {
-                    break timeout;
+                _ = signal.as_mut() => {
+                    // 停止接收新连接
+                    break;
                 }
                 incoming = self.listener.accept() => {
                     let (conn, addr) = match incoming {
@@ -298,21 +302,15 @@ where
                     tokio::spawn(conn);
                 }
             }
-        };
-
-        if !graceful_shutdown.shutdown(timeout).await {
-            return Err(RunError::GracefulShutdownTimeout);
         }
 
-        Ok(())
+        Ok(graceful_shutdown)
     }
 }
 
 /// 服务器运行错误。
 #[derive(Debug)]
 pub enum RunError<E> {
-    /// 优雅关机超时。
-    GracefulShutdownTimeout,
     /// 监听器发生错误。
     Listener(E, GracefulShutdown),
 }
@@ -320,7 +318,6 @@ pub enum RunError<E> {
 impl<E: std::fmt::Display> std::fmt::Display for RunError<E> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            RunError::GracefulShutdownTimeout => write!(f, "server graceful shutdown timeout"),
             RunError::Listener(e, _) => {
                 write!(f, "the server encountered an error while running ({e})")
             }

@@ -48,20 +48,17 @@ impl GracefulShutdown {
 
     /// 发出关机信号，在指定时间内等待服务器完成剩余请求。
     ///
-    /// 如果超时时间设置为 `None`，则该函数将持续等待，直到服务器完成所有剩余请求为止。
-    /// 如果设置了超时时间，则该函数将在超时时间到达时返回。
-    ///
-    /// 该函数返回 `true` 表示服务器完成了所有剩余请求，
-    /// 返回 `false` 表示在超时时间内服务器未能完成所有剩余请求。
-    pub async fn shutdown(self, timeout: Option<Duration>) -> bool {
+    /// - 返回 Ok：表示服务器完成了所有剩余请求。
+    /// - 返回 Err：表示在指定时间内服务器未能完成所有剩余请求。
+    pub async fn shutdown(self, timeout: Option<Duration>) -> Result<(), GracefulShutdownTimeout> {
         let GracefulShutdown { tx, rx } = self;
 
         drop(rx);
         tx.send_modify(|_| {});
 
         tokio::select! {
-            _ = tx.closed() => true,
-            _ = sleep(timeout) => false,
+            _ = tx.closed() => Ok(()),
+            _ = sleep(timeout) => Err(GracefulShutdownTimeout { _priv: () }),
         }
     }
 }
@@ -73,3 +70,22 @@ async fn sleep(timeout: Option<Duration>) {
         std::future::pending().await
     }
 }
+
+/// 优雅关机超时。
+pub struct GracefulShutdownTimeout {
+    _priv: (),
+}
+
+impl std::fmt::Debug for GracefulShutdownTimeout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("GracefulShutdownTimeout").finish()
+    }
+}
+
+impl std::fmt::Display for GracefulShutdownTimeout {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "server graceful shutdown timeout")
+    }
+}
+
+impl std::error::Error for GracefulShutdownTimeout {}

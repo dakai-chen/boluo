@@ -13,17 +13,16 @@ async fn main() {
 
     let shutdown = async {
         tokio::signal::ctrl_c().await.ok(); // 等待 ctrl + c 信号
-        Some(Duration::from_secs(60))
     };
 
-    let res = Server::new(listener)
-        // 根据 ctrl + c 信号优雅的关闭服务器
+    let result = Server::new(listener)
         .run_with_graceful_shutdown(app, shutdown)
         .await;
 
-    // 如果服务器内部的监听器出错，那么等待服务器内部的请求处理完成
-    if let Err(RunError::Listener(_, graceful)) = res {
-        graceful.shutdown(Some(Duration::from_secs(60))).await;
+    match result {
+        Ok(graceful) | Err(RunError::Listener(_, graceful)) => {
+            graceful.shutdown(Some(Duration::from_secs(60))).await.ok();
+        }
     }
 }
 
