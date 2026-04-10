@@ -1,9 +1,11 @@
 //! 服务器发送事件（SSE）。
 
 mod event;
+#[cfg(feature = "tokio")]
 mod keep_alive;
 
 pub use event::{Event, EventBuilder, EventValueError};
+#[cfg(feature = "tokio")]
 pub use keep_alive::{KeepAlive, KeepAliveStream};
 
 use std::convert::Infallible;
@@ -29,6 +31,7 @@ impl<S> Sse<S> {
     }
 
     /// 保持连接。
+    #[cfg(feature = "tokio")]
     pub fn keep_alive(self, keep_alive: KeepAlive) -> Sse<KeepAliveStream<S>> {
         Sse {
             stream: KeepAliveStream::new(keep_alive, self.stream),

@@ -48,6 +48,12 @@ tokio = { version = "1", features = ["full"] }
 
 [features]
 default = ["http1"]
+
+# 运行时无关功能
+multipart = ["multer"]
+sse = ["tokio?/time", "memchr"]
+
+# 运行时相关功能
 server = [
     "hyper-util/server",
     "hyper-util/tokio",
@@ -57,8 +63,6 @@ server = [
 ]
 http1 = ["server", "hyper/http1", "hyper-util/http1"]
 http2 = ["server", "hyper/http2", "hyper-util/http2"]
-multipart = ["multer"]
-sse = ["tokio/time", "memchr"]
 ws = [
     "hyper",
     "hyper-util/tokio",
@@ -69,6 +73,8 @@ ws = [
     "base64",
 ]
 static-file = ["tokio/fs", "tokio/io-util", "tokio-util/io", "mime_guess"]
+
+# 运行时
 tokio = ["dep:tokio", "tokio/net"]
 
 [package.metadata.docs.rs]
