@@ -7,6 +7,7 @@
 - 重构 SSE 模块，修复事件格式在部分场景下错误的问题。
 - 重构优雅关机，返回 `GracefulShutdown` 交由用户控制。
 - 调整 features 配置，使 SSE 不强制依赖 tokio。
+- 将 tokio-tungstenite 依赖的版本提升到 0.29，并重构 ws 模块，不再对外暴露 tokio-tungstenite 的类型。
 
 # 0.7.0
 

@@ -4,10 +4,6 @@ use boluo_core::BoxError;
 use bytes::Bytes;
 use tokio_tungstenite::tungstenite as ts;
 
-pub use tokio_tungstenite::tungstenite::Utf8Bytes;
-pub use tokio_tungstenite::tungstenite::protocol::CloseFrame;
-pub use tokio_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
-
 /// An enum representing the various forms of a WebSocket message.
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Message {
@@ -30,21 +26,21 @@ pub enum Message {
 impl Message {
     pub(super) fn into_tungstenite(self) -> ts::Message {
         match self {
-            Self::Text(text) => ts::Message::Text(text),
+            Self::Text(text) => ts::Message::Text(text.into_tungstenite()),
             Self::Binary(binary) => ts::Message::Binary(binary),
             Self::Ping(ping) => ts::Message::Ping(ping),
             Self::Pong(pong) => ts::Message::Pong(pong),
-            Self::Close(close) => ts::Message::Close(close),
+            Self::Close(close) => ts::Message::Close(close.map(CloseFrame::into_tungstenite)),
         }
     }
 
     pub(super) fn from_tungstenite(message: ts::Message) -> Message {
         match message {
-            ts::Message::Text(text) => Self::Text(text),
+            ts::Message::Text(text) => Self::Text(Utf8Bytes::from_tungstenite(text)),
             ts::Message::Binary(binary) => Self::Binary(binary),
             ts::Message::Ping(ping) => Self::Ping(ping),
             ts::Message::Pong(pong) => Self::Pong(pong),
-            ts::Message::Close(close) => Self::Close(close),
+            ts::Message::Close(close) => Self::Close(close.map(CloseFrame::from_tungstenite)),
             ts::Message::Frame(_) => unreachable!(),
         }
     }
@@ -217,5 +213,190 @@ impl<'a> From<&'a [u8]> for Message {
 impl From<Message> for Bytes {
     fn from(message: Message) -> Self {
         message.into_bytes()
+    }
+}
+
+/// UTF-8 wrapper for [Bytes].
+///
+/// An [Utf8Bytes] is always guaranteed to contain valid UTF-8.
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
+pub struct Utf8Bytes(ts::Utf8Bytes);
+
+impl Utf8Bytes {
+    /// Creates from a static str.
+    #[inline]
+    pub const fn from_static(str: &'static str) -> Self {
+        Self(ts::Utf8Bytes::from_static(str))
+    }
+
+    /// Returns as a string slice.
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
+
+    fn into_tungstenite(self) -> ts::Utf8Bytes {
+        self.0
+    }
+
+    fn from_tungstenite(data: ts::Utf8Bytes) -> Utf8Bytes {
+        Self(data)
+    }
+}
+
+impl std::fmt::Display for Utf8Bytes {
+    #[inline]
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::ops::Deref for Utf8Bytes {
+    type Target = str;
+
+    #[inline]
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
+    }
+}
+
+impl core::hash::Hash for Utf8Bytes {
+    fn hash<H: core::hash::Hasher>(&self, state: &mut H) {
+        self.as_str().hash(state)
+    }
+}
+
+impl PartialOrd for Utf8Bytes {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Utf8Bytes {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.as_str().cmp(other.as_str())
+    }
+}
+
+impl<T> PartialEq<T> for Utf8Bytes
+where
+    for<'a> &'a str: PartialEq<T>,
+{
+    /// ```
+    /// use boluo::ws::Utf8Bytes;
+    ///
+    /// let payload = Utf8Bytes::from_static("foo123");
+    /// assert_eq!(payload, "foo123");
+    /// assert_eq!(payload, "foo123".to_string());
+    /// assert_eq!(payload, &"foo123".to_string());
+    /// assert_eq!(payload, std::borrow::Cow::from("foo123"));
+    /// ```
+    #[inline]
+    fn eq(&self, other: &T) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl From<&str> for Utf8Bytes {
+    #[inline]
+    fn from(s: &str) -> Self {
+        Self(s.into())
+    }
+}
+
+impl From<String> for Utf8Bytes {
+    #[inline]
+    fn from(s: String) -> Self {
+        Self(s.into())
+    }
+}
+
+impl From<Cow<'_, str>> for Utf8Bytes {
+    #[inline]
+    fn from(s: Cow<'_, str>) -> Self {
+        match s {
+            Cow::Borrowed(s) => s.into(),
+            Cow::Owned(s) => s.into(),
+        }
+    }
+}
+
+impl TryFrom<&[u8]> for Utf8Bytes {
+    type Error = std::str::Utf8Error;
+
+    #[inline]
+    fn try_from(v: &[u8]) -> Result<Self, Self::Error> {
+        Ok(std::str::from_utf8(v)?.into())
+    }
+}
+
+impl TryFrom<Vec<u8>> for Utf8Bytes {
+    type Error = std::str::Utf8Error;
+
+    #[inline]
+    fn try_from(v: Vec<u8>) -> Result<Self, Self::Error> {
+        Bytes::from(v).try_into()
+    }
+}
+
+impl TryFrom<Cow<'_, [u8]>> for Utf8Bytes {
+    type Error = std::str::Utf8Error;
+
+    #[inline]
+    fn try_from(v: Cow<'_, [u8]>) -> Result<Self, Self::Error> {
+        match v {
+            Cow::Borrowed(v) => v.try_into(),
+            Cow::Owned(v) => v.try_into(),
+        }
+    }
+}
+
+impl TryFrom<Bytes> for Utf8Bytes {
+    type Error = std::str::Utf8Error;
+
+    #[inline]
+    fn try_from(bytes: Bytes) -> Result<Self, Self::Error> {
+        Ok(Self(bytes.try_into()?))
+    }
+}
+
+impl From<Utf8Bytes> for Bytes {
+    #[inline]
+    fn from(Utf8Bytes(bytes): Utf8Bytes) -> Self {
+        bytes.into()
+    }
+}
+
+/// Status code used to indicate why an endpoint is closing the WebSocket connection.
+pub type CloseCode = u16;
+
+/// A struct representing the close command.
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct CloseFrame {
+    /// The reason as a code.
+    pub code: CloseCode,
+    /// The reason as text string.
+    pub reason: Utf8Bytes,
+}
+
+impl CloseFrame {
+    fn into_tungstenite(self) -> ts::protocol::CloseFrame {
+        ts::protocol::CloseFrame {
+            code: ts::protocol::frame::coding::CloseCode::from(self.code),
+            reason: self.reason.into_tungstenite(),
+        }
+    }
+
+    fn from_tungstenite(data: ts::protocol::CloseFrame) -> CloseFrame {
+        CloseFrame {
+            code: data.code.into(),
+            reason: Utf8Bytes::from_tungstenite(data.reason),
+        }
+    }
+}
+
+impl std::fmt::Display for CloseFrame {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({})", self.reason, self.code)
     }
 }
