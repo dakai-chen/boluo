@@ -10,6 +10,10 @@
 - 将 tokio-tungstenite 依赖的版本提升到 0.29，并重构 ws 模块，不再对外暴露 tokio-tungstenite 的类型。
 - 重构静态文件服务模块。
 
+## 新增
+
+- 新增 `Router::with_for_each` 方法，为路由器内所有服务应用中间件。
+
 # 0.7.0
 
 ## 破坏

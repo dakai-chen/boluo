@@ -484,6 +484,24 @@ impl Router {
         Ok(self)
     }
 
+    /// 为路由器内所有服务应用中间件。
+    pub fn with_for_each<M>(mut self, middleware: M) -> Self
+    where
+        M: Middleware<ArcService<Request, Response, BoxError>> + Clone,
+        M::Service: Service<Request> + 'static,
+        <M::Service as Service<Request>>::Response: IntoResponse,
+        <M::Service as Service<Request>>::Error: Into<BoxError>,
+    {
+        self.table.iter_mut().for_each(|(_, endpoint)| {
+            endpoint.as_mut().iter_mut().for_each(|(_, service)| {
+                *service = boluo_core::util::__into_arc_service(
+                    middleware.clone().transform(service.clone()),
+                );
+            });
+        });
+        self
+    }
+
     /// 从路由器中移除指定的路由。
     ///
     /// # 例子

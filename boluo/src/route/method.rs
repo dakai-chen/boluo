@@ -45,6 +45,20 @@ impl MethodRouter {
             .chain(self.any.as_ref().map(|service| (None, service)))
     }
 
+    pub(super) fn iter_mut(
+        &mut self,
+    ) -> impl Iterator<
+        Item = (
+            Option<&Method>,
+            &mut ArcService<Request, Response, BoxError>,
+        ),
+    > {
+        self.map
+            .iter_mut()
+            .map(|(method, service)| (Some(method), service))
+            .chain(self.any.as_mut().map(|service| (None, service)))
+    }
+
     pub(super) fn remove<'a>(
         &mut self,
         method: impl Into<Option<&'a Method>>,
