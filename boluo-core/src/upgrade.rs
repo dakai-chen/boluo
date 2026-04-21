@@ -10,10 +10,12 @@ use futures_io::{AsyncRead, AsyncWrite};
 
 use crate::BoxError;
 
+type UpgradeFuture = BoxFuture<'static, Result<Upgraded, BoxError>>;
+
 /// 用于处理 HTTP 升级请求，获取升级后的连接。
 #[derive(Clone)]
 pub struct OnUpgrade {
-    fut: Arc<Mutex<BoxFuture<'static, Result<Upgraded, BoxError>>>>,
+    fut: Arc<Mutex<Option<UpgradeFuture>>>,
 }
 
 impl OnUpgrade {
@@ -23,16 +25,28 @@ impl OnUpgrade {
         T: Future<Output = Result<Upgraded, BoxError>> + Send + 'static,
     {
         Self {
-            fut: Arc::new(Mutex::new(Box::pin(fut))),
+            fut: Arc::new(Mutex::new(Some(Box::pin(fut)))),
         }
     }
 }
 
 impl Future for OnUpgrade {
-    type Output = Result<Upgraded, BoxError>;
+    type Output = Result<Upgraded, OnUpgradeError>;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.fut.lock().unwrap().as_mut().poll(cx)
+        let mut guard = self.fut.lock().unwrap();
+
+        let Some(fut) = guard.as_mut() else {
+            return Poll::Ready(Err(OnUpgradeError::Consumed));
+        };
+
+        let poll = fut.as_mut().poll(cx);
+
+        if poll.is_ready() {
+            guard.take();
+        }
+
+        poll.map_err(OnUpgradeError::Failed)
     }
 }
 
@@ -115,6 +129,26 @@ impl<T: AsyncRead + AsyncWrite + Unpin + 'static> IO for T {
         self
     }
 }
+
+/// HTTP 协议升级错误。
+#[derive(Debug)]
+pub enum OnUpgradeError {
+    /// 升级任务已被消费。
+    Consumed,
+    /// 协议升级过程失败。
+    Failed(BoxError),
+}
+
+impl std::fmt::Display for OnUpgradeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            OnUpgradeError::Consumed => write!(f, "http upgrade future has already been consumed"),
+            OnUpgradeError::Failed(e) => write!(f, "http upgrade failed: {e}"),
+        }
+    }
+}
+
+impl std::error::Error for OnUpgradeError {}
 
 #[cfg(test)]
 mod tests {

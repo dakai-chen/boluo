@@ -15,7 +15,7 @@ use boluo_core::http::StatusCode;
 use boluo_core::http::header::{self, HeaderValue};
 use boluo_core::request::Request;
 use boluo_core::response::{IntoResponse, Response};
-use boluo_core::upgrade::{OnUpgrade, Upgraded};
+use boluo_core::upgrade::{OnUpgrade, OnUpgradeError, Upgraded};
 use futures_util::{FutureExt, Sink, SinkExt, Stream, StreamExt, ready};
 use tokio_tungstenite::WebSocketStream;
 use tokio_tungstenite::tungstenite::protocol::{self, WebSocketConfig};
@@ -43,7 +43,7 @@ use tokio_util::compat::{Compat, FuturesAsyncReadCompatExt};
 pub struct WebSocketUpgrade {
     config: WebSocketConfig,
     sec_websocket_key: HeaderValue,
-    on_upgrade_error: Option<Box<dyn FnOnce(BoxError) + Send>>,
+    on_upgrade_error: Option<Box<dyn FnOnce(OnUpgradeError) + Send>>,
     on_upgrade: OnUpgrade,
 }
 
@@ -121,7 +121,7 @@ impl WebSocketUpgrade {
     /// 使用方式请参阅 [`WebSocketUpgrade::on_upgrade`] 函数中的说明。
     pub fn on_upgrade_error<F>(mut self, callback: F) -> Self
     where
-        F: FnOnce(BoxError) + Send + 'static,
+        F: FnOnce(OnUpgradeError) + Send + 'static,
     {
         self.on_upgrade_error = Some(Box::new(callback));
         self
